@@ -16,92 +16,218 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 
 ---
 
-## Stato del progetto
+## Il problema
 
-🚧 **In sviluppo — fasi 0-3 su 10.**
+Un consulente finanziario segue dieci, venti aziende contemporaneamente. Per ognuna
+deve rispondere alle stesse domande: **quanto margina davvero?** **quanto tempo ha
+prima di un problema di cassa?** **quanto valgono i soldi fermi in magazzino?**
+**cosa cambia se assume una persona, o se chiede un altro finanziamento?**
 
-L'applicazione si avvia, autentica, gestisce l'anagrafica dei clienti e delle loro
-aziende, importa il piano dei conti da Excel e ne calcola il bilancio riclassificato
-con tutti gli indici. Quello che manca è mostrarlo: le sette viste di analisi. La roadmap
-completa, fase per fase, è in [`AGENTS.md` §13](./AGENTS.md); le formule e lo schema
-dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
+Oggi quelle risposte arrivano da un foglio Excel costruito negli anni: bravissimo,
+ma da rifare a mano per ogni cliente e per ogni mese. Un errore in una formula non
+si vede finché non è troppo tardi, e i numeri vivono sul computer del consulente,
+lontani dall'imprenditore che dovrebbe leggerli.
 
-| Fatto | In arrivo |
-|---|---|
-| Scaffolding Electron + React + Tailwind + Express + SQLite cifrato | Le sette viste di analisi |
-| Scelta del ruolo all'avvio, login JWT, ruoli Consulente / Azienda | Previsione di cassa e scadenziario |
-| Anagrafica Clienti e Aziende, con archiviazione e rimozione | Fidi, mutui e leasing |
-| Schema dati del motore: conti, tag, periodi, saldi | Scenari "cosa succede se" |
-| Riclassificazione nei tre schemi e indici di bilancio | Sincronizzazione Consulente ↔ Azienda |
-| Import Excel del piano dei conti, con riepilogo pre-conferma | Installer per l'app Azienda |
-| Backup del database e status bar di servizio | |
+## Cosa fa DaProdFinanza
 
-### Per provarlo
+Prende quel metodo e lo trasforma in un programma.
 
-Gli eseguibili di prova sono nella pagina [Releases](https://github.com/cammo22/DaProdFinanza/releases):
-`DaProdFinanza-Setup-x.y.z.exe` per installarlo, oppure la versione *portable* che
-si lancia e basta. Windows x64.
+Il consulente carica il piano dei conti dell'azienda — lo stesso file Excel che usa
+già — e il programma fa il resto: **riclassifica il bilancio**, cioè riordina i conti
+grezzi in un prospetto leggibile che mostra dove nascono i margini e dove si perdono;
+**calcola gli indici** che misurano redditività, solidità e liquidità; **prevede la
+cassa** delle prossime settimane incrociando incassi attesi, pagamenti e rate dei
+finanziamenti; e **simula gli scenari**, per vedere l'effetto di una decisione prima
+di prenderla.
 
-Non sono firmati: al primo avvio SmartScreen chiede conferma (*Ulteriori informazioni
-→ Esegui comunque*). Al primo avvio l'app chiede di creare l'account del Consulente.
+Tutto senza dipendere da internet, senza un abbonamento a un servizio esterno, e
+senza che i numeri di un'azienda escano dal computer di chi ha il diritto di vederli.
 
-### Per svilupparlo
+## Due programmi, due punti di vista
 
-```bash
-npm install
-npm run dev
-```
-
-Al primo avvio l'app chiede di creare l'account del Consulente. Il database è cifrato
-a riposo (SQLCipher) e la chiave è protetta da DPAPI: vive in `%APPDATA%/daprodfinanza`,
-i dati di lavoro in `Documenti/DaProdFinanza`.
-
-Per ricostruire gli eseguibili: `npm run dist` (escono in `release/`).
-
-In sviluppo un seed crea due account di prova — `cammo` / `1234` (Consulente) e
-`Pizzeria DaProd` / `1234` (Azienda) — mostrati direttamente sulle card di accesso.
-Per provarli sulla build compilata: `npm run demo`. Il seed non gira mai in
-un'installazione normale.
-
-## Cos'è
-
-Un consulente segue più **aziende clienti** in parallelo. Per ognuna vuole sapere, senza
-rifare ogni volta lo stesso Excel: quanto margina davvero, quanto tempo ha prima di un
-problema di cassa, quanto vale il magazzino che tiene fermo i soldi, e cosa cambia se
-assume una persona o chiede un altro finanziamento.
-
-DaProdFinanza è pensato in **due parti**, sullo stesso principio già in produzione su
-[IrideeCRM](https://github.com/cammo22/DaProd-IRIS) (stesso studio, altro prodotto):
-
-| | **DaProdFinanza** (il consulente) | **DaProdFinanza Cliente** (l'azienda) |
+| | **DaProdFinanza** | **DaProdFinanza Cliente** |
 |---|---|---|
-| Chi lo usa | Il professionista | Ogni azienda seguita |
-| Cosa vede | Tutti i clienti e le loro aziende, vista aggregata | Solo i propri numeri |
-| Cosa fa | Configura, riclassifica, simula scenari | Carica dati (fatture, estratti conto), consulta i propri KPI |
-| Dati | Tutto, su tutte le aziende | Solo i propri, anche offline |
+| Chi lo usa | Il consulente, nel suo studio | Ogni azienda seguita |
+| Cosa vede | Tutti i clienti e tutte le loro aziende | Solo i propri numeri |
+| Cosa fa | Configura, riclassifica, simula scenari | Carica i propri dati, consulta i propri KPI |
+| Se salta la rete | Continua a funzionare | Continua a funzionare |
 
-Le due app si parlano in rete privata via **Tailscale** (con un trasporto di riserva per
-quando un'azienda non riesce a configurarlo) — nessun server pubblico necessario, nessun
-dominio, nessun dato che passa da terzi per l'uso quotidiano.
+I due programmi si parlano su una rete privata (Tailscale, con un collegamento di
+riserva per quando un'azienda non riesce a configurarlo). Nessun server pubblico,
+nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 
-## I moduli
+## Le sette viste
 
-Sette viste, tutte già disegnate nella fase di analisi (dettaglio completo in `AGENTS.md` §10):
-
-- **Panoramica** — la situazione del mese in un colpo d'occhio, con alert automatici
-- **Conto Economico** — riclassificato a margine di contribuzione, con budget e anno precedente a confronto
-- **Stato Patrimoniale** — attivo/passivo riclassificati, indici patrimoniali e finanziari
-- **Capitale Circolante** — DSO, DIO, DPO, Cash Conversion Cycle, con trend e alert
-- **Tesoreria / Cash Flow** — previsione di liquidità su 7/30/60/90 giorni e 6 mesi, scadenziario
-- **Banche e Finanziamenti** — fidi, mutui, leasing e il loro impatto sulla cassa futura
-- **Analisi & Simulazioni** — "cosa succede se": scenari what-if su ricavi, costi, investimenti, finanziamenti
+- **Panoramica** — la situazione del mese in un colpo d'occhio, con gli avvisi che si
+  accendono da soli quando qualcosa peggiora
+- **Conto Economico** — dove nascono e dove finiscono i soldi, con budget e anno
+  precedente a confronto
+- **Stato Patrimoniale** — cosa possiede l'azienda, e con quali soldi lo ha pagato
+- **Capitale Circolante** — quanto tempo passa fra il pagare i fornitori e l'incassare
+  dai clienti: è lì che la cassa si blocca
+- **Tesoreria** — quanti soldi ci saranno in banca fra una settimana, un mese, tre mesi
+- **Banche e Finanziamenti** — fidi, mutui e leasing, e quanto pesano sulla cassa futura
+- **Analisi & Simulazioni** — "cosa succede se": assumo, investo, alzo i prezzi
 
 ## Come nasce
 
-Il motore di calcolo non è teoria: è l'estrazione e generalizzazione di uno strumento
-Excel che un consulente finanziario usa già oggi con i propri clienti (piano dei conti
-taggato, tre schemi di riclassificazione, indici di bilancio con soglie). Il dettaglio
-completo, formula per formula, è in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
+Il motore di calcolo non è teoria da manuale: è l'estrazione di uno strumento Excel
+che un consulente finanziario usa già oggi con i propri clienti — piano dei conti
+classificato, tre modi alternativi di riclassificare il bilancio, indici con le soglie
+che lui stesso applica.
+
+Quel metodo è stato letto riga per riga, generalizzato e reso anonimo, e vive in
+[`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md): formula per formula,
+liberamente consultabile. I file originali dei clienti restano fuori da qui.
+
+---
+
+## A che punto siamo
+
+Il programma si avvia, riconosce chi entra, gestisce l'anagrafica dei clienti e delle
+loro aziende, importa il piano dei conti da Excel e ne calcola il bilancio
+riclassificato con tutti gli indici. **Quello che manca è mostrarlo**: le schermate di
+analisi sono la prossima cosa da costruire.
+
+| | Fase | Stato |
+|---|---|---|
+| 0 | Impalcatura del programma | ✅ Fatta |
+| 1 | Accesso, ruoli, anagrafica clienti e aziende | ✅ Fatta |
+| 2 | Struttura dati del motore di calcolo | ✅ Fatta |
+| 3 | Riclassificazione, indici, import Excel | 🟡 Quasi — serve un file cliente **con i saldi** per la verifica finale |
+| 4 | Le prime tre schermate di analisi | ⬜ Prossima |
+| 5-7 | Cassa, banche, simulazioni | ⬜ |
+| 8-9 | Collegamento fra i due programmi | ⬜ |
+| 10 | Installatori | 🟡 Già disponibili, da rifinire |
+
+La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
+[`AGENTS.md` §13](./AGENTS.md).
+
+## Provarlo
+
+Gli eseguibili sono nella pagina **[Releases](https://github.com/cammo22/DaProdFinanza/releases)**:
+`DaProdFinanza-Setup-x.y.z.exe` per installarlo, oppure la versione *portable* che si
+lancia e basta. Windows a 64 bit.
+
+Non sono ancora firmati con un certificato, quindi al primo avvio Windows mostra un
+avviso: *Ulteriori informazioni → Esegui comunque*. Poi il programma chiede di creare
+l'account del consulente e si parte.
+
+I dati restano sul computer: il database sta in `%APPDATA%\DaProdFinanza` ed è
+**cifrato**, con la chiave protetta dal sistema operativo. Le cartelle di lavoro e i
+backup stanno in `Documenti\DaProdFinanza`.
+
+<br>
+
+---
+
+<br>
+
+# Parte tecnica
+
+Da qui in giù serve solo a chi mette le mani nel codice.
+
+## Stack
+
+| Layer | Tecnologia |
+|---|---|
+| Desktop | Electron 44 |
+| Interfaccia | React 19 + Tailwind CSS 4 |
+| Backend | Node.js + Express 5, embedded nel processo main |
+| Database | SQLite **cifrato** (`better-sqlite3-multiple-ciphers`, SQLCipher) |
+| Autenticazione | JWT, password con scrypt |
+| Build | electron-vite + TypeScript, electron-builder per gli installatori |
+| Test | Vitest |
+
+Convenzione di progetto: **identificatori in inglese, interfaccia in italiano**.
+
+## Architettura
+
+```
+[Azienda 1] ──┐
+[Azienda 2] ──┼── REST su rete privata ──► [CONSULENTE]
+[Azienda N] ──┘                            Express + SQLite cifrato
+```
+
+Ogni installazione ha il proprio SQLite locale e funziona offline. Il consulente è la
+fonte di verità per la configurazione, l'azienda per i propri dati grezzi. Il
+collegamento fra i due arriva in fase 8: oggi il server Express ascolta **solo su
+127.0.0.1**, con porta effimera, e non è esposto verso la rete.
+
+## Struttura
+
+```
+src/
+├── main/            processo Electron
+│   ├── db/          apertura del database cifrato e migrazioni versionate
+│   ├── import/      lettura dei file Excel
+│   ├── lib/         percorsi su disco, segreti (DPAPI), scrypt, JWT
+│   └── server/      REST: routes/ → services/
+├── preload/         unico ponte main ↔ renderer (contextIsolation attivo)
+├── renderer/        React + Tailwind
+└── shared/
+    ├── engine/      il motore di calcolo: funzioni pure, zero dipendenze
+    └── types.ts     tipi condivisi
+```
+
+### Il motore di calcolo
+
+`src/shared/engine/` non sa che esiste un database: riceve una lista di conti con i
+loro saldi e restituisce prospetti e indici. Le formule sono la parte più delicata del
+prodotto, e così si verificano in isolamento.
+
+Due convenzioni da conoscere prima di leggerlo:
+
+- **I costi sono positivi**, e sono le formule a sottrarli. Vale anche per i debiti.
+- **Un indice indefinito vale `null`, non zero.** Un rapporto con denominatore zero non
+  è zero: scrivere "0%" su un bilancio racconterebbe una bugia.
+
+E una scelta di modellazione: **gli importi sono interi in centesimi**, mai numeri in
+virgola mobile. Su un bilancio riclassificato si sommano centinaia di righe, e un
+errore di un centesimo farebbe "non quadrare" attivo e passivo.
+
+### L'import Excel
+
+`src/main/import/chart-of-accounts.ts` riconosce le sezioni dalle intestazioni di
+categoria e le colonne dai nomi in prima riga — **mai da numeri di riga fissi**, perché
+file di clienti e periodi diversi non sono identici.
+
+L'anteprima non scrive niente: elenca righe riconosciute, righe da mappare a mano,
+doppioni e impronta SHA-256 del file. Scrivere è una chiamata separata, in una sola
+transazione, che rifiuta di sovrascrivere un periodo già caricato senza conferma
+esplicita, e un periodo chiuso in ogni caso.
+
+## Comandi
+
+```bash
+npm install            # installa e ricompila il modulo nativo per Electron
+npm run dev            # avvio in sviluppo, con ricarica a caldo
+npm run test           # i test del motore e dell'import
+npm run build          # controllo dei tipi + test + build
+npm run dist           # installatore e portable in release/
+npm run demo           # build compilata, con gli account di prova attivi
+npm run verify:schema  # prova i vincoli del database e fa rollback
+```
+
+In sviluppo un seed crea due account di prova — `cammo` / `1234` (consulente) e
+`Pizzeria DaProd` / `1234` (azienda) — mostrati sulle card di accesso. **Il seed non
+gira mai in un'installazione normale** e va rimosso prima della distribuzione vera.
+
+## Test
+
+I test più importanti non verificano che il codice giri, ma che i conti tornino. Il
+principale: **i tre schemi di riclassificazione devono arrivare allo stesso EBIT e allo
+stesso utile**, perché sono tre presentazioni dello stesso risultato. Se una formula
+viene trascritta male, lì si spacca.
+
+Due test girano sul file Excel reale del consulente quando è presente nella cartella di
+lavoro; in CI vengono saltati, perché quel file non sta nella repo.
+
+## Documenti di progetto
+
+- [`AGENTS.md`](./AGENTS.md) — prodotto, architettura, moduli, roadmap fase per fase
+- [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md) — il motore di calcolo:
+  schema dei conti, tre riclassificazioni, tutte le formule degli indici
 
 ## Licenza
 
