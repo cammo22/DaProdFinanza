@@ -18,6 +18,9 @@ function createWindow(): void {
     title: 'DaProdFinanza',
     backgroundColor: '#0b1120',
     autoHideMenuBar: true,
+    // In pacchetto l'icona la dà l'eseguibile; in sviluppo va indicata a mano,
+    // altrimenti la finestra mostra quella di Electron.
+    ...(is.dev ? { icon: join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
       // La build è ESM: electron-vite emette il preload come `.mjs`.
       preload: join(__dirname, '../preload/index.mjs'),

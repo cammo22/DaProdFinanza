@@ -1,5 +1,6 @@
 import type { Role } from '@shared/enums'
 import type { DemoCredential } from '@shared/types'
+import { Logo } from '../components/Logo'
 
 /**
  * Porta d'ingresso dell'app — rende esplicito il modello a due varianti di
@@ -69,14 +70,13 @@ export function RoleGate({
 }): React.JSX.Element {
   return (
     <div className="flex h-full flex-col items-center justify-center bg-ink-950 p-8">
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink-100">
-          DaProd<span className="text-brand-300">Finanza</span>
-        </h1>
-        <p className="mt-2 text-xs uppercase tracking-[0.2em] text-ink-400">
+      <div className="mb-10 flex flex-col items-center text-center">
+        <Logo size={132} />
+        <h1 className="sr-only">DaProdFinanza</h1>
+        <p className="mt-4 text-xs uppercase tracking-[0.2em] text-ink-400">
           Controllo di gestione
         </p>
-        <p className="mt-6 text-sm text-ink-300">Come vuoi entrare?</p>
+        <p className="mt-7 text-sm text-ink-300">Come vuoi entrare?</p>
       </div>
 
       <div className="grid w-full max-w-3xl grid-cols-2 gap-5">

@@ -29,6 +29,14 @@ win:
       arch: [x64]
 
 nsis:
+  # Icone e grafiche vengono da build/ (vedi buildResources). Sono esplicitate
+  # invece di lasciarle al rilevamento automatico perché i formati sono
+  # vincolati: sidebar 164x314 e intestazione 150x57, entrambe BMP.
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerSidebar: build/installerSidebar.bmp
+  uninstallerSidebar: build/uninstallerSidebar.bmp
+  installerHeader: build/installerHeader.bmp
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true

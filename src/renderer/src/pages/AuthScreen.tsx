@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ROLE_LABELS, type Role } from '@shared/enums'
 import { useAuth } from '../lib/auth'
+import { Logo } from '../components/Logo'
 import { Alert, Button, Field, TextInput } from '../components/ui'
 
 function Shell({
@@ -19,11 +20,10 @@ function Shell({
   return (
     <div className="flex h-full items-center justify-center bg-ink-950 p-8">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink-100">
-            DaProd<span className="text-brand-300">Finanza</span>
-          </h1>
-          <p className="mt-1 text-xs uppercase tracking-widest text-ink-400">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo size={88} />
+          <h1 className="sr-only">DaProdFinanza</h1>
+          <p className="mt-3 text-xs uppercase tracking-widest text-ink-400">
             Controllo di gestione
           </p>
         </div>

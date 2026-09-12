@@ -3,6 +3,7 @@ import { ROLE_LABELS, type Role } from '@shared/enums'
 import type { Company } from '@shared/types'
 import { api } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
+import { Logo } from './components/Logo'
 import { StatusBar } from './components/StatusBar'
 import { Alert, Button } from './components/ui'
 import { LoginScreen, SetupScreen } from './pages/AuthScreen'
@@ -58,8 +59,13 @@ function AppShell({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   return (
     <div className="flex h-full flex-col bg-ink-950">
       <header className="flex items-center gap-4 border-b border-ink-700 bg-ink-900 px-6 py-3">
-        <span className="text-sm font-semibold tracking-tight text-ink-100">
-          DaProd<span className="text-brand-300">Finanza</span>
+        <span className="flex items-center gap-2.5">
+          <Logo size={30} />
+          {/* Il wordmark sta in un solo elemento: altrimenti il `gap` del flex
+              si infilerebbe anche fra "DaProd" e "Finanza". */}
+          <span className="text-sm font-semibold tracking-tight text-ink-100">
+            DaProd<span className="text-brand-300">Finanza</span>
+          </span>
         </span>
         <span className="rounded-md border border-brand-500/40 bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-300">
           {ROLE_LABELS[user.role]}
