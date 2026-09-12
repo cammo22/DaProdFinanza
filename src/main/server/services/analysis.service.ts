@@ -5,12 +5,10 @@ import {
   ratios,
   DEFAULT_SCHEME,
   SCHEMES,
-  type BalanceSheet,
   type EngineAccount,
-  type IncomeStatement,
-  type Ratios,
   type Scheme
 } from '@shared/engine'
+import type { Analysis } from '@shared/analysis'
 import type { FiscalPeriod, Scenario } from '@shared/types'
 import { getDatabase } from '../../db'
 import { HttpError } from '../http-error'
@@ -57,19 +55,6 @@ export function engineAccounts(
           AND b.deleted = 0 AND a.deleted = 0 AND a.active = 1`
     )
     .all(companyUuid, periodUuid, scenario) as EngineAccount[]
-}
-
-export interface Analysis {
-  period: FiscalPeriod
-  scenario: Scenario
-  scheme: Scheme
-  /** Quanti conti hanno concorso al calcolo: serve a non leggere zeri a vuoto. */
-  accountCount: number
-  incomeStatement: IncomeStatement
-  /** Gli altri due schemi, per la vista alternativa di §3. */
-  alternativeSchemes: IncomeStatement[]
-  balanceSheet: BalanceSheet
-  ratios: Ratios
 }
 
 export function analyse(

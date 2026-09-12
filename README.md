@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%203%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%204%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -86,8 +86,9 @@ liberamente consultabile. I file originali dei clienti restano fuori da qui.
 
 Il programma si avvia, riconosce chi entra, gestisce l'anagrafica dei clienti e delle
 loro aziende, importa il piano dei conti da Excel e ne calcola il bilancio
-riclassificato con tutti gli indici. **Quello che manca è mostrarlo**: le schermate di
-analisi sono la prossima cosa da costruire.
+riclassificato con tutti gli indici — e adesso lo **mostra**: panoramica con avvisi
+automatici, conto economico riclassificato e stato patrimoniale con tutti gli indici.
+Quello che manca è la parte di cassa: previsione, scadenziario, banche, simulazioni.
 
 | | Fase | Stato |
 |---|---|---|
@@ -95,8 +96,8 @@ analisi sono la prossima cosa da costruire.
 | 1 | Accesso, ruoli, anagrafica clienti e aziende | ✅ Fatta |
 | 2 | Struttura dati del motore di calcolo | ✅ Fatta |
 | 3 | Riclassificazione, indici, import Excel | 🟡 Quasi — serve un file cliente **con i saldi** per la verifica finale |
-| 4 | Le prime tre schermate di analisi | ⬜ Prossima |
-| 5-7 | Cassa, banche, simulazioni | ⬜ |
+| 4 | Le prime tre schermate di analisi | ✅ Fatta |
+| 5-7 | Cassa, banche, simulazioni | ⬜ Prossima |
 | 8-9 | Collegamento fra i due programmi | ⬜ |
 | 10 | Installatori | 🟡 Già disponibili, da rifinire |
 

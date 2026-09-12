@@ -2,7 +2,7 @@
 
 > Documento master di progetto — generato da sessione di analisi e pianificazione DaProdProduzioni
 > Settore: software di controllo di gestione per consulenti finanziari aziendali (commercialisti, advisor, temporary manager)
-> Stato: **in sviluppo — Fasi 0, 1 e 2 completate, Fase 3 quasi** (scaffolding, auth, anagrafica, schema e motore di calcolo). Prossima: Fase 4, la UI. Dettaglio in §13-bis.
+> Stato: **in sviluppo — Fasi 0, 1, 2 e 4 completate, Fase 3 quasi** (impalcatura, auth, anagrafica, motore di calcolo, prime tre schermate). Prossima: Fase 5. Dettaglio in §13-bis.
 > Lingua progetto: codice EN, UI IT (convenzione DaProd, come IrideeCRM)
 
 ---
@@ -263,8 +263,8 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **1** | Auth JWT + ruoli Consulente/Azienda + anagrafica Clienti/Aziende (§10.1) | Login + CRUD Clienti/Aziende | ✅ **Fatta** (sessione 1) |
 | **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ✅ **Fatta** (sessione 1) |
 | **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | 🟡 **Quasi**: motore, indici e import fatti e verificati. Manca il file di un cliente **con i saldi**: quello consegnato è un modello vuoto (vedi `docs/MODELLO_FINANZIARIO.md` §8-bis) |
-| **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ⬜ Prossima |
-| **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ⬜ |
+| **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ✅ **Fatta** (sessione 1) — mancano i 4 grafici a 12 mesi di §10.2, che richiedono più periodi caricati |
+| **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ⬜ Prossima |
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ |
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ |
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
@@ -272,7 +272,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile e portable funzionanti (v0.0.1). Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8 |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
-### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1 + 2 + 3)
+### 13-bis. Stato alla fine della sessione 1 (Fasi 0 → 4)
 
 **Struttura del progetto** — `electron-vite` + TypeScript, come da §2:
 
