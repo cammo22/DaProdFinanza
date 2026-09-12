@@ -1,0 +1,29 @@
+# --- Materiali di origine del cliente: MAI nella repo pubblica ---
+# Screenshot con branding I.R.I.S. (mockup AI, solo riferimento grafico interno)
+# e file di lavoro con nomi di clienti reali (es. piano dei conti). Restano solo
+# in locale; la versione "pulita" e generalizzata vive in docs/MODELLO_FINANZIARIO.md.
+Panoramica.png
+Conto Economico.png
+Stato Patrimoniale.png
+Capitale Circolante.png
+Tesoreria_CashFlow + Scadenziario.png
+Banche e Finanziamenti.png
+Analisi & Simulazioni.png
+Piano Dei Conti Indy Gennaio 2026.xlsx
+cosulente finanziario aziendale.txt
+
+# --- Node / Electron (per quando si passerà al codice) ---
+node_modules/
+out/
+dist/
+release/
+*.log
+npm-debug.log*
+.env
+.env.local
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
