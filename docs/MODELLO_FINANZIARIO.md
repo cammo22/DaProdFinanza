@@ -258,6 +258,35 @@ Dal foglio `DICTIONARY` del file originale — questi valori alimentano le liste
 
 ---
 
+## 8-bis. Verifiche fatte sul file originale durante la Fase 3
+
+Implementando il motore il file Excel è stato riletto riga per riga. Tre cose emerse, da confermare col consulente.
+
+### a) Il file consegnato è un **modello vuoto**
+
+Le 384 righe conto hanno TIPO, periodo e matrice dei tag già compilati, ma **nessun codice conto, nessuna descrizione e nessun saldo**: le uniche celle piene sono le intestazioni. Le 24 sezioni corrispondono esattamente a quelle di §2, nello stesso ordine.
+
+Conseguenza pratica: non esiste ancora un caso reale su cui tarare il motore. L'importatore è stato verificato contro questo file (riconosce tutte e 24 le sezioni, zero righe da mappare a mano) e il calcolo contro un piano dei conti compilato a mano con numeri di prova. **Serve un file di un cliente vero, con i saldi, per chiudere il cerchio.**
+
+### b) Il Gross Profit di §3.3 non torna con la riga di partenza dello stesso schema
+
+§3.3 apre con `Ricavi Operativi + Rimanenze Finali`, ma poi definisce `GROSS PROFIT = Ricavi Operativi − Costo del Venduto`, senza rimanenze. Presi alla lettera insieme, i tre schemi arriverebbero a **tre EBIT diversi** — il che non può essere, perché sono tre presentazioni dello stesso risultato.
+
+L'implementazione usa `Gross Profit = (Ricavi Operativi + Rimanenze Finali) − Costo del Venduto`, che è l'unica lettura che fa quadrare i tre schemi, e un test lo verifica. **Se il consulente intende davvero escludere le rimanenze dal gross profit, va detto**: cambierebbe solo quella riga, non il risultato finale.
+
+### c) Due grandezze non hanno una fonte nel modello
+
+- **Acquisti**, che serve al DPO (§6): nel file esiste la colonna ma nessuna sezione la marca. L'implementazione usa `Costi Materie Prime + Costi Produzione`.
+- **Debiti finanziari**, che servono a PFN e Debt/Equity (§5): non esiste un tag che li distingua. L'implementazione li ricava per differenza, togliendo dai debiti totali le voci che finanziarie non sono (fornitori, enti previdenziali, TFR). Un tag esplicito sarebbe più solido.
+
+Il **DSCR** resta non calcolabile finché non esiste il modulo Banche (`AGENTS.md` §10.7): richiede le rate attese nei 12 mesi successivi. L'app mostra un trattino, non uno zero.
+
+### d) Il file contiene più informazione di questo documento
+
+Nel foglio `PIANO DEI CONTI` ogni sezione dichiara a quali aggregati contribuisce (EBITDA, EBIT, Gross Profit, Utile), non solo i Ricavi Operativi come riportato in §2.1. La matrice completa conferma gli schemi di §3 — per esempio gli Ammortamenti Operativi contribuiscono a EBIT ma non a EBITDA, e i Costi Commerciali a EBITDA ma non al Gross Profit. Il motore deriva gli aggregati dagli schemi di §3, e i due percorsi coincidono; l'unica divergenza è il Gross Profit dei proventi straordinari e finanziari, che nel file risultano inclusi mentre §3.3 non li prevede.
+
+---
+
 ## 9. Cosa manca in questo modello (da chiarire, non presente nel file originale)
 
 - Aliquote fiscali per forma giuridica/regione (per la pianificazione fiscale, `AGENTS.md` §11.6).

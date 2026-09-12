@@ -2,7 +2,7 @@
 
 > Documento master di progetto — generato da sessione di analisi e pianificazione DaProdProduzioni
 > Settore: software di controllo di gestione per consulenti finanziari aziendali (commercialisti, advisor, temporary manager)
-> Stato: **in sviluppo — Fasi 0, 1 e 2 completate** (scaffolding, auth, anagrafica, schema del motore finanziario). Prossima: Fase 3. Dettaglio in §13-bis.
+> Stato: **in sviluppo — Fasi 0, 1 e 2 completate, Fase 3 quasi** (scaffolding, auth, anagrafica, schema e motore di calcolo). Prossima: Fase 4, la UI. Dettaglio in §13-bis.
 > Lingua progetto: codice EN, UI IT (convenzione DaProd, come IrideeCRM)
 
 ---
@@ -262,8 +262,8 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **0** | Setup repo, scaffolding Electron+React+Tailwind+Express+SQLite | App che si avvia, finestra vuota | ✅ **Fatta** (sessione 1) |
 | **1** | Auth JWT + ruoli Consulente/Azienda + anagrafica Clienti/Aziende (§10.1) | Login + CRUD Clienti/Aziende | ✅ **Fatta** (sessione 1) |
 | **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ✅ **Fatta** (sessione 1) |
-| **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | ⬜ Prossima |
-| **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ⬜ |
+| **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | 🟡 **Quasi**: motore, indici e import fatti e verificati. Manca il file di un cliente **con i saldi**: quello consegnato è un modello vuoto (vedi `docs/MODELLO_FINANZIARIO.md` §8-bis) |
+| **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ⬜ Prossima |
 | **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ⬜ |
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ |
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ |
@@ -272,7 +272,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile e portable funzionanti (v0.0.1). Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8 |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
-### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1 + 2)
+### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1 + 2 + 3)
 
 **Struttura del progetto** — `electron-vite` + TypeScript, come da §2:
 
@@ -358,7 +358,32 @@ Il catalogo delle sezioni è **dato scritto nella migrazione**, non costanti nel
 
 `npm run verify:schema` apre il database reale, prova 20 inserimenti che devono essere accettati o rifiutati e chiude con ROLLBACK: verifica i CHECK, le chiavi esterne e gli indici univoci senza lasciare traccia.
 
-**Da fare in Fase 3**: il motore di riclassificazione (§3 — tre schemi, con il Margine di Contribuzione come principale), gli indici di bilancio (§5) e l'import Excel del piano dei conti (§11.1), con il riepilogo pre-conferma che §11.1 rende un requisito.
+**Fase 3 — motore di calcolo e import Excel**
+
+Il motore vive in `src/shared/engine/` ed è fatto di **funzioni pure**: non sa che esiste un database. Riceve una lista di conti con i loro saldi e restituisce prospetti e indici. È una scelta deliberata — le formule sono la parte più delicata del prodotto, e così sono verificabili in isolamento, senza montare mezza applicazione attorno.
+
+| Modulo | Cosa fa |
+|---|---|
+| `aggregates.ts` | Somma i saldi per sezione. I fondi (`ATTIVITA' NEGATIVO`) si sottraggono dentro la loro sezione |
+| `income-statement.ts` | I tre schemi di §3, con il Margine di Contribuzione come predefinito |
+| `balance-sheet.ts` | Lo stato patrimoniale di §4, più il capitale circolante netto |
+| `ratios.ts` | Gli indici di §5 e il ciclo del circolante di §6 |
+
+**Convenzione di segno**: i costi sono positivi, e sono le formule a sottrarli. Vale anche per i debiti nel passivo.
+
+**Un indice indefinito vale `null`, non zero.** Un rapporto con denominatore zero non è zero: mostrarlo come "0%" racconterebbe una bugia su un bilancio. La UI deve scrivere "—".
+
+**Import Excel (§11.1)**: `src/main/import/chart-of-accounts.ts` legge il file riconoscendo le sezioni dalle intestazioni di categoria e le colonne dai nomi in prima riga — mai da numeri di riga fissi. Produce un **riepilogo pre-conferma** (righe riconosciute, righe da mappare a mano, doppioni, impronta del file) e non scrive nulla: la scrittura è una chiamata separata, in una sola transazione, che rifiuta di sovrascrivere un periodo già caricato senza conferma esplicita e un periodo chiuso in ogni caso. L'originale viene archiviato in `aziende/<codice>/import/` prima di toccare il database.
+
+**Come è stato verificato**
+
+- **34 test** (`npm run test`), fra cui la prova che conta: i tre schemi di §3 arrivano allo stesso EBIT e allo stesso utile. Se una formula viene trascritta male, lì si spacca.
+- Due test girano sul **file vero del consulente**, quando è presente in locale: riconosce tutte e 24 le sezioni, zero righe da mappare a mano.
+- La **catena completa** (Excel → parser → database → motore → REST) è stata percorsa con un piano dei conti costruito sugli stessi numeri della fixture dei test: conto economico, stato patrimoniale e tutti gli indici coincidono con i valori verificati in isolamento.
+
+⚠️ **Tre punti aperti emersi leggendo il file, dettagliati in [`docs/MODELLO_FINANZIARIO.md` §8-bis](./docs/MODELLO_FINANZIARIO.md)**: il file consegnato è un **modello vuoto** (nessun saldo), il Gross Profit di §3.3 non torna con la riga di partenza dello stesso schema, e due grandezze (Acquisti, Debiti finanziari) non hanno una fonte esplicita nel modello.
+
+**Da fare in Fase 4**: le tre schermate di §10.2-§10.4 sopra questi dati. Il motore restituisce già tutto quello che serve.
 
 ---
 

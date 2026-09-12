@@ -4,15 +4,23 @@
     "electron.vite.config.ts",
     "src/main/**/*",
     "src/preload/**/*",
-    "src/shared/**/*"
+    "src/shared/**/*",
+    "vitest.config.ts"
   ],
   "compilerOptions": {
     "composite": true,
-    "types": ["electron-vite/node", "node"],
+    "types": [
+      "electron-vite/node",
+      "node"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["src/shared/*"],
-      "@main/*": ["src/main/*"]
+      "@shared/*": [
+        "src/shared/*"
+      ],
+      "@main/*": [
+        "src/main/*"
+      ]
     }
   }
 }

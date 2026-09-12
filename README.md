@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%202%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%203%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -18,21 +18,23 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 
 ## Stato del progetto
 
-🚧 **In sviluppo — fasi 0, 1 e 2 completate su 10.**
+🚧 **In sviluppo — fasi 0-3 su 10.**
 
 L'applicazione si avvia, autentica, gestisce l'anagrafica dei clienti e delle loro
-aziende, e il database sa già rappresentare piano dei conti, tag di riclassificazione,
-periodi e saldi. Quello che manca è il calcolo: riclassificare e produrre gli indici. La roadmap
+aziende, importa il piano dei conti da Excel e ne calcola il bilancio riclassificato
+con tutti gli indici. Quello che manca è mostrarlo: le sette viste di analisi. La roadmap
 completa, fase per fase, è in [`AGENTS.md` §13](./AGENTS.md); le formule e lo schema
 dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
 
 | Fatto | In arrivo |
 |---|---|
-| Scaffolding Electron + React + Tailwind + Express + SQLite cifrato | Schema dati del piano dei conti |
-| Scelta del ruolo all'avvio, login JWT, ruoli Consulente / Azienda | Riclassificazione e indici di bilancio |
-| Anagrafica Clienti e Aziende, con archiviazione e rimozione | Import Excel del piano dei conti |
-| Schema dati del motore: conti, tag, periodi, saldi | Le sette viste di analisi |
-| Backup del database e status bar di servizio | Sincronizzazione Consulente ↔ Azienda |
+| Scaffolding Electron + React + Tailwind + Express + SQLite cifrato | Le sette viste di analisi |
+| Scelta del ruolo all'avvio, login JWT, ruoli Consulente / Azienda | Previsione di cassa e scadenziario |
+| Anagrafica Clienti e Aziende, con archiviazione e rimozione | Fidi, mutui e leasing |
+| Schema dati del motore: conti, tag, periodi, saldi | Scenari "cosa succede se" |
+| Riclassificazione nei tre schemi e indici di bilancio | Sincronizzazione Consulente ↔ Azienda |
+| Import Excel del piano dei conti, con riepilogo pre-conferma | Installer per l'app Azienda |
+| Backup del database e status bar di servizio | |
 
 ### Per provarlo
 
