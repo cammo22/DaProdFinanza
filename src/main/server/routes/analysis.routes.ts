@@ -1,0 +1,69 @@
+import { Router, type Request } from 'express'
+import type { Scheme } from '@shared/engine'
+import type { Scenario } from '@shared/types'
+import { analyse, listPeriods } from '../services/analysis.service'
+import { applyChartOfAccounts, previewChartOfAccounts } from '../services/import.service'
+import { requireAuth, requireRole } from '../middleware/auth'
+import { HttpError } from '../http-error'
+
+/**
+ * Periodi, analisi e import di una singola azienda.
+ *
+ * L'operatore Azienda può leggere i propri numeri (§4) ma non importare il
+ * piano dei conti: quello resta al Consulente.
+ */
+export const analysisRouter: Router = Router({ mergeParams: true })
+
+analysisRouter.use(requireAuth)
+
+function param(req: Request, name: string): string {
+  const value = req.params[name]
+  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '')
+}
+
+/** Un'azienda è leggibile dal Consulente, o dal proprio operatore soltanto. */
+function assertCanRead(req: Request): string {
+  const companyUuid = param(req, 'uuid')
+  if (req.auth!.role === 'company' && req.auth!.company_uuid !== companyUuid) {
+    throw new HttpError(403, 'Operazione non consentita per questo ruolo.')
+  }
+  return companyUuid
+}
+
+analysisRouter.get('/periods', (req, res) => {
+  res.json(listPeriods(assertCanRead(req)))
+})
+
+analysisRouter.get('/periods/:periodUuid/analysis', (req, res) => {
+  const companyUuid = assertCanRead(req)
+  res.json(
+    analyse(companyUuid, param(req, 'periodUuid'), {
+      scenario: (req.query.scenario as Scenario) ?? undefined,
+      scheme: (req.query.scheme as Scheme) ?? undefined
+    })
+  )
+})
+
+/** Anteprima: legge il file e non scrive nulla (§11.1). */
+analysisRouter.post('/import/chart-of-accounts/preview', requireRole('consultant'), async (req, res) => {
+  const { filePath, valueColumn } = req.body ?? {}
+  if (!filePath) throw new HttpError(400, 'Manca il percorso del file da importare.')
+  res.json(await previewChartOfAccounts(param(req, 'uuid'), filePath, valueColumn))
+})
+
+/** Scrittura: solo dopo che il consulente ha visto l'anteprima. */
+analysisRouter.post('/import/chart-of-accounts', requireRole('consultant'), async (req, res) => {
+  const { filePath, valueColumn, year, month, scenario, overwrite } = req.body ?? {}
+  if (!filePath) throw new HttpError(400, 'Manca il percorso del file da importare.')
+  if (!Number.isInteger(year)) throw new HttpError(400, "Indicare l'anno del periodo da importare.")
+
+  res.status(201).json(
+    await applyChartOfAccounts(param(req, 'uuid'), filePath, {
+      valueColumn,
+      year,
+      month: month ?? null,
+      scenario,
+      overwrite: overwrite === true
+    })
+  )
+})

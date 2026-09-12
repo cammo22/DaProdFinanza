@@ -8,11 +8,15 @@ import {
   setCompanyArchived
 } from '../services/companies.service'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { analysisRouter } from './analysis.routes'
 
 /** Anagrafica Aziende — AGENTS.md §10.1. */
 export const companiesRouter: Router = Router()
 
 companiesRouter.use(requireAuth)
+
+// Periodi, analisi e import vivono sotto la singola azienda.
+companiesRouter.use('/:uuid', analysisRouter)
 
 function uuidParam(req: Request): string {
   const value = req.params['uuid']
