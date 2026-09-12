@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20progettazione-orange)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%201%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -18,12 +18,35 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 
 ## Stato del progetto
 
-📋 **In fase di specifica — nessun codice ancora scritto.**
+🚧 **In sviluppo — fasi 0 e 1 completate su 10.**
 
-Questa repo contiene oggi il *brief* di progetto, non l'applicazione: la specifica
-funzionale e tecnica completa vive in [`AGENTS.md`](./AGENTS.md), il motore di calcolo
-(formule, indici, schema del piano dei conti) in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
-Lo sviluppo vero e proprio parte da lì.
+L'applicazione si avvia, autentica e gestisce l'anagrafica dei clienti e delle loro
+aziende; il motore di calcolo finanziario non è ancora stato costruito. La roadmap
+completa, fase per fase, è in [`AGENTS.md` §13](./AGENTS.md); le formule e lo schema
+dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
+
+| Fatto | In arrivo |
+|---|---|
+| Scaffolding Electron + React + Tailwind + Express + SQLite cifrato | Schema dati del piano dei conti |
+| Scelta del ruolo all'avvio, login JWT, ruoli Consulente / Azienda | Riclassificazione e indici di bilancio |
+| Anagrafica Clienti e Aziende, con archiviazione e rimozione | Import Excel del piano dei conti |
+| Backup del database e status bar di servizio | Le sette viste di analisi |
+
+### Per svilupparlo
+
+```bash
+npm install
+npm run dev
+```
+
+Al primo avvio l'app chiede di creare l'account del Consulente. Il database è cifrato
+a riposo (SQLCipher) e la chiave è protetta da DPAPI: vive in `%APPDATA%/daprodfinanza`,
+i dati di lavoro in `Documenti/DaProdFinanza`.
+
+In sviluppo un seed crea due account di prova — `cammo` / `1234` (Consulente) e
+`Pizzeria DaProd` / `1234` (Azienda) — mostrati direttamente sulle card di accesso.
+Per provarli sulla build compilata: `npm run demo`. Il seed non gira mai in
+un'installazione normale.
 
 ## Cos'è
 
