@@ -1,7 +1,8 @@
-import type { Analysis } from '@shared/analysis'
+import type { Analysis, SeriesPoint } from '@shared/analysis'
 import { SCHEME_LABELS, SCHEMES, type Scheme } from '@shared/engine'
 import { euro, percent, share, tone } from '../../lib/format'
 import { Card, Select } from '../../components/ui'
+import { BarraBreakEven, CompositionePie, SerieEconomica } from '../../components/charts'
 
 /**
  * Conto Economico riclassificato — AGENTS.md §10.3.
@@ -34,15 +35,29 @@ function Kpi({
 
 export function IncomeStatementView({
   analysis,
+  serie,
   scheme,
   onScheme
 }: {
   analysis: Analysis
+  serie: SeriesPoint[]
   scheme: Scheme
   onScheme: (scheme: Scheme) => void
 }): React.JSX.Element {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
+
+  // La composizione dei costi si legge da un solo periodo: le voci a zero
+  // sparirebbero come spicchi invisibili, quindi si tolgono.
+  const fetteCosti = [
+    { nome: 'Materie prime', valore: a.costiMateriePrime },
+    { nome: 'Produzione', valore: a.costiProduzione },
+    { nome: 'Personale', valore: a.costiPersonale },
+    { nome: 'Commerciali', valore: a.costiCommerciali },
+    { nome: 'Generali e amministrativi', valore: a.costiGenerali },
+    { nome: 'Ammortamenti', valore: a.ammortamenti },
+    { nome: 'Oneri finanziari', valore: a.oneriFinanziari }
+  ].filter((fetta) => fetta.valore > 0)
 
   return (
     <div className="flex flex-col gap-5">
@@ -142,6 +157,41 @@ export function IncomeStatementView({
             })}
           </tbody>
         </table>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-5">
+        <Card title="Ricavi, costi ed EBITDA nel tempo">
+          <div className="px-3 py-4">
+            {serie.length > 1 ? (
+              <SerieEconomica dati={serie} />
+            ) : (
+              <p className="px-2 py-10 text-center text-sm text-ink-400">
+                Serve più di un periodo per disegnare un andamento. Importa altri mesi e il
+                grafico compare qui.
+              </p>
+            )}
+          </div>
+        </Card>
+
+        <Card title="Composizione dei costi">
+          <div className="px-5 py-4">
+            {fetteCosti.length > 0 ? (
+              <CompositionePie fette={fetteCosti} />
+            ) : (
+              <p className="py-10 text-center text-sm text-ink-400">Nessun costo nel periodo.</p>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <Card title="Break-even e margine di sicurezza">
+        <div className="px-5 py-5">
+          <BarraBreakEven
+            bepCents={r.bepCents}
+            ricaviCents={a.ricaviNetti}
+            margineSicurezza={r.margineSicurezzaPercent}
+          />
+        </div>
       </Card>
 
       <Card title="Gli altri due schemi — stessi conti, stesso utile">

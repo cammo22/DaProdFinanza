@@ -138,6 +138,7 @@ Da qui in giù serve solo a chi mette le mani nel codice.
 | Database | SQLite **cifrato** (`better-sqlite3-multiple-ciphers`, SQLCipher) |
 | Autenticazione | JWT, password con scrypt |
 | Build | electron-vite + TypeScript, electron-builder per gli installatori |
+| Grafici | Recharts |
 | Test | Vitest |
 
 Convenzione di progetto: **identificatori in inglese, interfaccia in italiano**.

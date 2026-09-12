@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express'
 import type { Scheme } from '@shared/engine'
 import type { Scenario } from '@shared/types'
-import { analyse, listPeriods } from '../services/analysis.service'
+import { analyse, listPeriods, series } from '../services/analysis.service'
 import { applyChartOfAccounts, previewChartOfAccounts } from '../services/import.service'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { HttpError } from '../http-error'
@@ -32,6 +32,10 @@ function assertCanRead(req: Request): string {
 
 analysisRouter.get('/periods', (req, res) => {
   res.json(listPeriods(assertCanRead(req)))
+})
+
+analysisRouter.get('/series', (req, res) => {
+  res.json(series(assertCanRead(req), { scenario: (req.query.scenario as Scenario) ?? undefined }))
 })
 
 analysisRouter.get('/periods/:periodUuid/analysis', (req, res) => {
