@@ -2,7 +2,7 @@
 
 > Documento master di progetto — generato da sessione di analisi e pianificazione DaProdProduzioni
 > Settore: software di controllo di gestione per consulenti finanziari aziendali (commercialisti, advisor, temporary manager)
-> Stato: **in sviluppo — Fasi 0 e 1 completate** (scaffolding, auth, anagrafica Clienti/Aziende). Prossima: Fase 2. Dettaglio in §13-bis.
+> Stato: **in sviluppo — Fasi 0, 1 e 2 completate** (scaffolding, auth, anagrafica, schema del motore finanziario). Prossima: Fase 3. Dettaglio in §13-bis.
 > Lingua progetto: codice EN, UI IT (convenzione DaProd, come IrideeCRM)
 
 ---
@@ -261,8 +261,8 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 |---|---|---|---|
 | **0** | Setup repo, scaffolding Electron+React+Tailwind+Express+SQLite | App che si avvia, finestra vuota | ✅ **Fatta** (sessione 1) |
 | **1** | Auth JWT + ruoli Consulente/Azienda + anagrafica Clienti/Aziende (§10.1) | Login + CRUD Clienti/Aziende | ✅ **Fatta** (sessione 1) |
-| **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ⬜ Prossima |
-| **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | ⬜ |
+| **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ✅ **Fatta** (sessione 1) |
+| **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | ⬜ Prossima |
 | **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ⬜ |
 | **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ⬜ |
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ |
@@ -272,7 +272,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | ⬜ |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
-### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1)
+### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1 + 2)
 
 **Struttura del progetto** — `electron-vite` + TypeScript, come da §2:
 
@@ -316,7 +316,32 @@ Insieme creano il cliente *Gruppo DaProd* e l'azienda *Pizzeria DaProd S.r.l.*, 
 - Le sette viste Business (§10.2-§10.8) mostrano solo l'elenco dei moduli con la fase in cui arriveranno: senza motore di riclassificazione, riempirle di dati finti su un gestionale contabile sarebbe fuorviante.
 - L'indicatore Tailscale resta grigio: il trasporto Consulente↔Azienda è Fase 8. Il server Express ascolta oggi **solo su 127.0.0.1** con porta effimera.
 
-**Da fare in Fase 2**: migrazione `002` con lo schema del motore finanziario (piano dei conti, tag di riclassificazione, % costo diretto per sezione, saldi, periodi) secondo `docs/MODELLO_FINANZIARIO.md` §1-§2.
+**Fase 2 — schema del motore finanziario** (migrazione `002_financial_model`)
+
+Traduce in tabelle `docs/MODELLO_FINANZIARIO.md` §1 e §2. Nessuna formula: il calcolo è Fase 3.
+
+| Tabella | Cosa tiene |
+|---|---|
+| `account_sections` | Le 24 sezioni di §2, con prospetto (CE/SP), TIPO prevalente, comportamento variabile/fisso e % di costo diretto di default |
+| `section_tags` | I tag applicati a ogni conto della sezione |
+| `section_detail_tags` | Le alternative fra cui il singolo conto ne sceglie una — le voci separate da "/" in §2.3-§2.4 |
+| `accounts` | Il piano dei conti di una singola azienda |
+| `company_section_settings` | La % di costo diretto per azienda (§2.2, §7: "il tornitore e la pizzeria") |
+| `fiscal_periods` | Anno oppure mese (§1); il conto economico è mensile, lo stato patrimoniale annuale (§10.4) |
+| `account_balances` | I saldi, per conto × periodo × scenario (consuntivo/budget/forecast, §3.4) |
+| `import_documents` | Nome e impronta SHA-256 dei file importati (§5, §12): tracciabilità e blocco dei doppioni |
+
+Tre scelte di modellazione da conoscere:
+
+1. **Gli importi sono interi in centesimi** (`amount_cents`), non numeri in virgola mobile. Su un bilancio riclassificato si sommano centinaia di righe: con i float una somma può sfalsare di 0,01 e far "non quadrare" attivo e passivo — l'errore che toglie fiducia a uno strumento di controllo di gestione. La conversione a euro avviene al bordo (import, UI, export). *(Non è specificato nel modello finanziario: è una decisione di implementazione.)*
+2. **I tag sono di due specie.** Quelli di `section_tags` valgono per ogni conto della sezione; quelli di `section_detail_tags` sono alternative fra cui scegliere. La distinzione viene dalle tabelle §2.3-§2.4, dove le voci separate da "/" non sono cumulative: un conto di Liquidità Differite è crediti commerciali *oppure* crediti diversi *oppure* erario c/IVA. Senza questa distinzione il DSO (§6), che vuole i soli crediti commerciali, non sarebbe calcolabile.
+3. **`ATTIVITA' NEGATIVO` sta sul conto, non sulla sezione.** Un fondo ammortamento vive dentro Immobilizzazioni Materiali: è il singolo conto a essere rettificativo, non la sezione.
+
+Il catalogo delle sezioni è **dato scritto nella migrazione**, non costanti nel codice: a runtime la fonte di verità è il database, e cambiare la metodologia richiede una nuova migrazione. Si legge da `GET /api/reference/sections`.
+
+`npm run verify:schema` apre il database reale, prova 20 inserimenti che devono essere accettati o rifiutati e chiude con ROLLBACK: verifica i CHECK, le chiavi esterne e gli indici univoci senza lasciare traccia.
+
+**Da fare in Fase 3**: il motore di riclassificazione (§3 — tre schemi, con il Margine di Contribuzione come principale), gli indici di bilancio (§5) e l'import Excel del piano dei conti (§11.1), con il riepilogo pre-conferma che §11.1 rende un requisito.
 
 ---
 

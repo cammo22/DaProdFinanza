@@ -1,5 +1,6 @@
 import type { Database } from 'better-sqlite3-multiple-ciphers'
 import { up as up001 } from './001_initial'
+import { up as up002 } from './002_financial_model'
 
 export interface Migration {
   version: number
@@ -13,7 +14,8 @@ export interface Migration {
  * Aggiungere sempre in coda, mai riscrivere una migrazione già rilasciata.
  */
 export const MIGRATIONS: Migration[] = [
-  { version: 1, name: '001_initial', up: up001 }
+  { version: 1, name: '001_initial', up: up001 },
+  { version: 2, name: '002_financial_model', up: up002 }
 ]
 
 export function runMigrations(db: Database): number {

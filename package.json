@@ -11,6 +11,7 @@
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
     "demo": "node scripts/demo.mjs",
+    "verify:schema": "electron scripts/verify-schema.cjs",
     "build": "npm run typecheck && electron-vite build",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",

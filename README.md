@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%201%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%202%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -18,10 +18,11 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 
 ## Stato del progetto
 
-🚧 **In sviluppo — fasi 0 e 1 completate su 10.**
+🚧 **In sviluppo — fasi 0, 1 e 2 completate su 10.**
 
-L'applicazione si avvia, autentica e gestisce l'anagrafica dei clienti e delle loro
-aziende; il motore di calcolo finanziario non è ancora stato costruito. La roadmap
+L'applicazione si avvia, autentica, gestisce l'anagrafica dei clienti e delle loro
+aziende, e il database sa già rappresentare piano dei conti, tag di riclassificazione,
+periodi e saldi. Quello che manca è il calcolo: riclassificare e produrre gli indici. La roadmap
 completa, fase per fase, è in [`AGENTS.md` §13](./AGENTS.md); le formule e lo schema
 dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
 
@@ -30,7 +31,8 @@ dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md
 | Scaffolding Electron + React + Tailwind + Express + SQLite cifrato | Schema dati del piano dei conti |
 | Scelta del ruolo all'avvio, login JWT, ruoli Consulente / Azienda | Riclassificazione e indici di bilancio |
 | Anagrafica Clienti e Aziende, con archiviazione e rimozione | Import Excel del piano dei conti |
-| Backup del database e status bar di servizio | Le sette viste di analisi |
+| Schema dati del motore: conti, tag, periodi, saldi | Le sette viste di analisi |
+| Backup del database e status bar di servizio | Sincronizzazione Consulente ↔ Azienda |
 
 ### Per svilupparlo
 
