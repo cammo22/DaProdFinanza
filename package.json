@@ -29,7 +29,8 @@
     "cors": "^2.8.5",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^2.0.0",

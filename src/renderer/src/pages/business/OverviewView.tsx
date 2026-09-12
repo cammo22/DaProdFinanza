@@ -1,7 +1,8 @@
-import type { Analysis } from '@shared/analysis'
+import type { Analysis, SeriesPoint } from '@shared/analysis'
 import { THRESHOLDS } from '@shared/engine'
 import { days, euro, percent, times, tone } from '../../lib/format'
 import { Card } from '../../components/ui'
+import { COLORI, SerieABarre, SerieEconomica, SerieLiquidita } from '../../components/charts'
 
 /**
  * Panoramica — AGENTS.md §10.2.
@@ -10,8 +11,9 @@ import { Card } from '../../components/ui'
  * (docs/MODELLO_FINANZIARIO.md §5): non c'è nessun modello che indovina, sono
  * confronti espliciti, e ognuno dice da quale numero arriva.
  *
- * I quattro grafici a 12 mesi previsti da §10.2 arriveranno quando ci saranno
- * più periodi caricati: con un solo periodo non c'è una serie da disegnare.
+ * I quattro grafici di §10.2 si disegnano sui periodi caricati: con uno solo
+ * non c'è un andamento da mostrare, e il riquadro lo dice invece di disegnare
+ * una linea piatta che sembrerebbe un dato.
  */
 
 type Livello = 'rosso' | 'giallo'
@@ -114,7 +116,13 @@ function Kpi({
   )
 }
 
-export function OverviewView({ analysis }: { analysis: Analysis }): React.JSX.Element {
+export function OverviewView({
+  analysis,
+  serie
+}: {
+  analysis: Analysis
+  serie: SeriesPoint[]
+}): React.JSX.Element {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
   const b = analysis.balanceSheet
@@ -208,13 +216,41 @@ export function OverviewView({ analysis }: { analysis: Analysis }): React.JSX.El
         </Card>
       </div>
 
-      <Card title="Andamento a 12 mesi">
-        <p className="px-5 py-6 text-sm text-ink-400">
-          I grafici di §10.2 si disegnano quando ci sono più periodi caricati: con un solo periodo
-          non c&apos;è una serie storica da mostrare. Importa altri mesi dalla scheda{' '}
-          <span className="text-ink-300">Import</span> e compariranno qui.
-        </p>
-      </Card>
+      {serie.length > 1 ? (
+        <div className="grid grid-cols-2 gap-5">
+          <Card title="Ricavi e costi nel tempo">
+            <div className="px-3 py-4">
+              <SerieEconomica dati={serie} />
+            </div>
+          </Card>
+          <Card title="EBITDA / MOL">
+            <div className="px-3 py-4">
+              <SerieABarre dati={serie} chiave="ebitda" nome="EBITDA" colore={COLORI.ebitda} />
+            </div>
+          </Card>
+          <Card title="Utile netto">
+            <div className="px-3 py-4">
+              <SerieABarre dati={serie} chiave="utile" nome="Utile netto" colore={COLORI.utile} />
+            </div>
+          </Card>
+          <Card title="Liquidità">
+            <div className="px-3 py-4">
+              <SerieLiquidita dati={serie} />
+              <p className="px-2 pt-2 text-xs text-ink-500">
+                La previsione a 30/60/90 giorni arriva con la Tesoreria (Fase 5).
+              </p>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <Card title="Andamento nel tempo">
+          <p className="px-5 py-6 text-sm text-ink-400">
+            I grafici si disegnano da due periodi in su: con uno solo non c&apos;è un andamento da
+            mostrare, e una linea piatta sembrerebbe un dato. Importa altri mesi dalla voce{' '}
+            <span className="text-ink-300">Import dati</span> e compariranno qui.
+          </p>
+        </Card>
+      )}
     </div>
   )
 }

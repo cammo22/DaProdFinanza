@@ -8,7 +8,7 @@ import {
   type EngineAccount,
   type Scheme
 } from '@shared/engine'
-import type { Analysis } from '@shared/analysis'
+import type { Analysis, SeriesPoint } from '@shared/analysis'
 import type { FiscalPeriod, Scenario } from '@shared/types'
 import { getDatabase } from '../../db'
 import { HttpError } from '../http-error'
@@ -55,6 +55,47 @@ export function engineAccounts(
           AND b.deleted = 0 AND a.deleted = 0 AND a.active = 1`
     )
     .all(companyUuid, periodUuid, scenario) as EngineAccount[]
+}
+
+/**
+ * Serie storica per i grafici a 12 mesi di §10.2 e §10.3.
+ *
+ * "Costi totali" qui sono i costi operativi prima degli ammortamenti: così
+ * `ricavi − costi = EBITDA` esattamente, e le tre linee del grafico si leggono
+ * senza doverci credere sulla parola.
+ */
+export function series(
+  companyUuid: string,
+  options: { scenario?: Scenario; limit?: number } = {}
+): SeriesPoint[] {
+  getCompany(companyUuid)
+  const scenario = options.scenario ?? 'actual'
+  const limit = options.limit ?? 24
+
+  const periods = listPeriods(companyUuid)
+    .filter((p) => p.period_type === 'month')
+    .concat(listPeriods(companyUuid).filter((p) => p.period_type === 'year'))
+    .slice(0, limit)
+    // Dal più vecchio al più recente: è l'ordine in cui si legge un grafico.
+    .sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0))
+
+  return periods
+    .map((period) => {
+      const accounts = engineAccounts(companyUuid, period.uuid, scenario)
+      if (accounts.length === 0) return null
+      const income = incomeStatement(accounts, DEFAULT_SCHEME).aggregates
+      const balance = balanceSheet(accounts)
+      return {
+        period_uuid: period.uuid,
+        label: period.label,
+        ricavi: income.ricaviNetti,
+        costiTotali: income.costiVariabili + income.costiFissi,
+        ebitda: income.ebitda,
+        utile: income.utile,
+        liquidita: balance.liquiditaImmediate
+      }
+    })
+    .filter((point): point is SeriesPoint => point !== null)
 }
 
 export function analyse(

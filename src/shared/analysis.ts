@@ -20,3 +20,15 @@ export interface Analysis {
   balanceSheet: BalanceSheet
   ratios: Ratios
 }
+
+/** Un punto della serie storica: tutti gli importi in centesimi. */
+export interface SeriesPoint {
+  period_uuid: string
+  label: string
+  ricavi: number
+  /** Costi operativi prima degli ammortamenti: ricavi − costi = EBITDA. */
+  costiTotali: number
+  ebitda: number
+  utile: number
+  liquidita: number
+}
