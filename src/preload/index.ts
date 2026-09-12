@@ -12,7 +12,10 @@ const api = {
   /** Backup del database cifrato — AGENTS.md §7. Restituisce il percorso creato. */
   backupDatabase: (): Promise<string> => ipcRenderer.invoke('db:backup'),
 
-  openDataFolder: (): Promise<void> => ipcRenderer.invoke('shell:open-data-folder')
+  openDataFolder: (): Promise<void> => ipcRenderer.invoke('shell:open-data-folder'),
+
+  /** Apre il dialogo di sistema per scegliere il file da importare. */
+  pickExcelFile: (): Promise<string | null> => ipcRenderer.invoke('dialog:pick-excel')
 }
 
 export type DaProdApi = typeof api

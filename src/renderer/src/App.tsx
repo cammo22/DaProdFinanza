@@ -16,7 +16,7 @@ function ConsultantShell(): React.JSX.Element {
   const [company, setCompany] = useState<Company | null>(null)
 
   return company ? (
-    <CompanyPage company={company} onBack={() => setCompany(null)} />
+    <CompanyPage company={company} onBack={() => setCompany(null)} canImport />
   ) : (
     <RegistryPage onOpenCompany={setCompany} />
   )
@@ -49,7 +49,8 @@ function CompanyShell({ companyUuid }: { companyUuid: string }): React.JSX.Eleme
 
   if (!company) return <div className="p-8 text-sm text-ink-400">Caricamento…</div>
 
-  return <CompanyPage company={company} onBack={null} />
+  // L'import del piano dei conti resta al Consulente (§4).
+  return <CompanyPage company={company} onBack={null} canImport={false} />
 }
 
 function AppShell({ onLogout }: { onLogout: () => void }): React.JSX.Element {

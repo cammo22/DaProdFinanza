@@ -59,6 +59,17 @@ function registerIpc(): void {
   ipcMain.handle('shell:open-data-folder', async () => {
     await shell.openPath(dataRoot())
   })
+
+  // Scelta del file Excel da importare. Il dialogo di sistema vive nel main:
+  // il renderer non ha, e non deve avere, accesso al filesystem.
+  ipcMain.handle('dialog:pick-excel', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Scegli il file del piano dei conti',
+      properties: ['openFile'],
+      filters: [{ name: 'Fogli di calcolo', extensions: ['xlsx', 'xlsm'] }]
+    })
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
 }
 
 app.whenReady().then(async () => {
