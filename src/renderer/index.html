@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DaProdFinanza</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      La Content-Security-Policy viene iniettata solo nella build di produzione
+      (vedi `contentSecurityPolicy()` in electron.vite.config.ts): in dev
+      bloccherebbe il preamble inline di React Fast Refresh.
+    -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

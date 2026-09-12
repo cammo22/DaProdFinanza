@@ -2,7 +2,7 @@
 
 > Documento master di progetto — generato da sessione di analisi e pianificazione DaProdProduzioni
 > Settore: software di controllo di gestione per consulenti finanziari aziendali (commercialisti, advisor, temporary manager)
-> Stato: **fase di specifica — nessun codice ancora scritto**, pronto per l'inizio sviluppo (assegnato a Opus)
+> Stato: **in sviluppo — Fasi 0, 1 e 2 completate** (scaffolding, auth, anagrafica, schema del motore finanziario). Prossima: Fase 3. Dettaglio in §13-bis.
 > Lingua progetto: codice EN, UI IT (convenzione DaProd, come IrideeCRM)
 
 ---
@@ -71,7 +71,7 @@ Stesso pattern validato in produzione su **IrideeCRM** — non ripartiamo da zer
 | Desktop wrapper | **Electron** | EXE installabile, target Win11 (compat Win10 64-bit) |
 | Frontend | **React + Tailwind CSS** | Unica codebase per le due varianti |
 | Backend interno | **Node.js + Express** | Embedded nell'app Electron (REST sul Master) |
-| Database | **SQLite** — valutare **SQLCipher** al posto di `better-sqlite3` puro | dati finanziari (saldi banca, fidi, ricavi) più sensibili dei dati IRIS: DB cifrato a riposo è un buon investimento, non solo DPAPI sui segreti |
+| Database | **SQLite cifrato** — `better-sqlite3-multiple-ciphers` (SQLCipher) ✅ *deciso, §14.9* | dati finanziari (saldi banca, fidi, ricavi) più sensibili dei dati IRIS: DB cifrato a riposo fin dalla Fase 0, non solo DPAPI sui segreti |
 | Auth | **JWT** | Token con ruolo embedded |
 | Networking | **Tailscale** (primario) + **fallback** (es. Cloudflare Tunnel) | Tailscale come rete privata di default (come IrideeCRM); se l'azienda cliente non riesce a configurarlo, un secondo trasporto di riserva — pattern già usato sul telefono di DaProdSuite ("si fa trovare dalla rete di casa, dal tunnel di Cloudflare o da Tailscale, e il client tiene quello che risponde") |
 | Installer | **electron-builder** | Installer `.exe` offline, Tailscale bundled come in IRIS |
@@ -249,7 +249,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 
 - Password: **scrypt** (come IRIS). Sessione: **JWT** con segreto per-installazione.
 - Credenziali di sync cifrate con **DPAPI** (`safeStorage` Electron), mai in chiaro su disco — come IRIS.
-- **Novità proposta rispetto a IRIS**: dati finanziari (saldi banca, fidi, utili) sono più sensibili di un CRM fotografico → valutare **SQLite cifrato (SQLCipher)** invece di `better-sqlite3` in chiaro, fin dalla Fase 2 (è una scelta di libreria iniziale, costosa da cambiare dopo).
+- **Novità rispetto a IRIS — decisa e implementata in Fase 0**: dati finanziari (saldi banca, fidi, utili) sono più sensibili di un CRM fotografico → **SQLite cifrato** con `better-sqlite3-multiple-ciphers` (SQLCipher) invece di `better-sqlite3` in chiaro. La chiave a 256 bit è generata al primo avvio e protetta da DPAPI; i backup ereditano la stessa cifratura.
 - Comunicazione Consulente↔Azienda solo su rete privata Tailscale (mai esposto su internet pubblico).
 - File importati (XML/Excel) conservati come originali in `import/` per audit — mai solo il dato estratto.
 
@@ -259,18 +259,106 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 
 | Fase | Obiettivo | Output testabile | Stato |
 |---|---|---|---|
-| **0** | Setup repo, scaffolding Electron+React+Tailwind+Express+SQLite | App che si avvia, finestra vuota | ⬜ Da iniziare |
-| **1** | Auth JWT + ruoli Consulente/Azienda + anagrafica Clienti/Aziende (§10.1) | Login + CRUD Clienti/Aziende | ⬜ |
-| **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ⬜ |
-| **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | ⬜ |
+| **0** | Setup repo, scaffolding Electron+React+Tailwind+Express+SQLite | App che si avvia, finestra vuota | ✅ **Fatta** (sessione 1) |
+| **1** | Auth JWT + ruoli Consulente/Azienda + anagrafica Clienti/Aziende (§10.1) | Login + CRUD Clienti/Aziende | ✅ **Fatta** (sessione 1) |
+| **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ✅ **Fatta** (sessione 1) |
+| **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | ⬜ Prossima |
 | **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ⬜ |
 | **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ⬜ |
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ |
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ |
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
-| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | ⬜ |
+| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile e portable funzionanti (v0.0.1). Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8 |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
+
+### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1 + 2)
+
+**Struttura del progetto** — `electron-vite` + TypeScript, come da §2:
+
+```
+src/
+├── main/          processo Electron: finestra, DB cifrato, server Express
+│   ├── db/        apertura DB + migrazioni versionate (user_version)
+│   ├── lib/       percorsi su disco (§8), segreti DPAPI, scrypt, JWT, UUID
+│   └── server/    REST: routes/ + services/ + middleware di auth
+├── preload/       unico ponte main↔renderer (contextIsolation attivo)
+├── renderer/      React + Tailwind v4
+└── shared/        tipi ed enum condivisi (dizionario §8 del modello)
+```
+
+**Cosa funziona oggi**
+
+- App Electron che si avvia con finestra funzionante (`npm run dev`, `npm run build` + `npx electron .`).
+- **Database cifrato a riposo** con `better-sqlite3-multiple-ciphers` (SQLCipher) — vedi §14 punto 9. Chiave a 256 bit generata al primo avvio e custodita con `safeStorage`/DPAPI, mai in chiaro su disco. Verificato: il file `.db` non ha l'header `SQLite format 3`.
+- Migrazione `001_initial`: tabelle `clients`, `companies`, `users`, tutte con i campi di sync di §6 (`uuid`, `created_at`, `updated_at`, `synced`, `deleted`) già previsti, pur senza sync attivo.
+- **Auth JWT** con password scrypt (§12) e segreto JWT per-installazione. Primo avvio → creazione dell'account Consulente; poi login normale.
+- **Selettore di ruolo all'avvio**: due card, *Consulente* e *Azienda*, che rendono esplicito il modello a due varianti di §1 prima ancora del login. La scelta non dà alcun potere di per sé — determina solo quale login viene mostrato — ma il server rifiuta con un messaggio esplicito un account che non corrisponde alla porta scelta ("Questo è un account Azienda. Torna indietro e scegli Azienda."). Uscendo si torna alle card, non al login dell'ultimo ruolo usato.
+- **I due ruoli di §4**: il Consulente gestisce tutti i clienti e le aziende; l'operatore Azienda entra direttamente nella propria azienda e riceve 403 su clienti e su ogni scrittura. Gating applicato lato server, non solo in UI.
+- **Anagrafica Clienti/Aziende (§10.1)**: elenco clienti con le rispettive aziende, wizard "+ Nuovo cliente" e "+ Nuova azienda" (ragione sociale, P.IVA/CF, forma giuridica, tipo di attività, data inizio collaborazione), archiviazione e rimozione (soft delete di §6), ricerca, creazione delle credenziali per l'app Azienda.
+- Codici leggibili progressivi di §5: `CLI-0001`, `CLI-0001-AZ-01`. P.IVA univoca quando presente.
+- Cartelle di lavoro di §8 create automaticamente alla nascita di un'azienda (`import/`, `export/`, `backup/`).
+- **Status bar di §7** con indicatori Database/Server/Tailscale e i pulsanti Backup e ↻ Aggiorna. Il backup produce un file cifrato in `Documenti/DaProdFinanza/backup/`.
+
+**Account dimostrativi (`src/main/db/seed.ts`)**
+
+| Ruolo | Username | Password |
+|---|---|---|
+| Consulente | `cammo` | `1234` |
+| Azienda | `Pizzeria DaProd` | `1234` |
+
+Insieme creano il cliente *Gruppo DaProd* e l'azienda *Pizzeria DaProd S.r.l.*, e le credenziali sono mostrate direttamente sulle card di scelta ruolo (con un pulsante che compila e accede).
+
+⚠️ **Il seed non deve finire in un'installazione reale**: sono credenziali note, con password sotto la policy degli 8 caratteri. Gira solo con `npm run dev` oppure `npm run demo` (che imposta `DAPROD_DEMO=1`), e solo su un database ancora vuoto. Le password create dalla UI restano soggette alla policy. **Da rimuovere prima della Fase 10 (installer).**
+
+**Eseguibili (anticipo parziale della Fase 10)**
+
+`npm run dist` produce due file in `release/`, entrambi x64:
+
+| File | A cosa serve |
+|---|---|
+| `DaProdFinanza-Setup-<versione>.exe` | Installer NSIS: sceglie la cartella, crea i collegamenti. Disinstallando **non** cancella i dati (restano in `%APPDATA%` e in Documenti). |
+| `DaProdFinanza-<versione>-portable.exe` | Nessuna installazione: si lancia e basta. Utile per provarla su una macchina senza toccare il sistema. |
+
+Il binding nativo del database cifrato sta fuori dall'archivio `asar` (`asarUnpack`), altrimenti non sarebbe caricabile a runtime. Verificato sull'eseguibile pacchettizzato: apre il database, autentica e mostra l'anagrafica; il seed dimostrativo resta correttamente spento.
+
+⚠️ **Gli eseguibili non sono firmati**: al primo avvio Windows SmartScreen mostra "PC protetto da Windows" e serve *Ulteriori informazioni → Esegui comunque*. Per toglierlo serve un certificato di code signing (OV o EV), che è un acquisto, non una riga di configurazione. Da decidere prima della distribuzione vera.
+
+**Una sola variante, per ora.** §13 prevede due installer, Consulente e Azienda. Oggi il selettore di ruolo (§10.1) copre entrambi con lo stesso eseguibile: separarli ha senso quando l'app Azienda avrà davvero un comportamento diverso, cioè dopo la Fase 8 (sync). Anticiparlo adesso vorrebbe dire mantenere due build che fanno la stessa cosa.
+
+**Versione**: si parte da `0.0.1`. Il numero è mostrato nella status bar e nelle schermate di accesso.
+
+**Cosa è volutamente un segnaposto**
+
+- Le sette viste Business (§10.2-§10.8) mostrano solo l'elenco dei moduli con la fase in cui arriveranno: senza motore di riclassificazione, riempirle di dati finti su un gestionale contabile sarebbe fuorviante.
+- L'indicatore Tailscale resta grigio: il trasporto Consulente↔Azienda è Fase 8. Il server Express ascolta oggi **solo su 127.0.0.1** con porta effimera.
+
+**Fase 2 — schema del motore finanziario** (migrazione `002_financial_model`)
+
+Traduce in tabelle `docs/MODELLO_FINANZIARIO.md` §1 e §2. Nessuna formula: il calcolo è Fase 3.
+
+| Tabella | Cosa tiene |
+|---|---|
+| `account_sections` | Le 24 sezioni di §2, con prospetto (CE/SP), TIPO prevalente, comportamento variabile/fisso e % di costo diretto di default |
+| `section_tags` | I tag applicati a ogni conto della sezione |
+| `section_detail_tags` | Le alternative fra cui il singolo conto ne sceglie una — le voci separate da "/" in §2.3-§2.4 |
+| `accounts` | Il piano dei conti di una singola azienda |
+| `company_section_settings` | La % di costo diretto per azienda (§2.2, §7: "il tornitore e la pizzeria") |
+| `fiscal_periods` | Anno oppure mese (§1); il conto economico è mensile, lo stato patrimoniale annuale (§10.4) |
+| `account_balances` | I saldi, per conto × periodo × scenario (consuntivo/budget/forecast, §3.4) |
+| `import_documents` | Nome e impronta SHA-256 dei file importati (§5, §12): tracciabilità e blocco dei doppioni |
+
+Tre scelte di modellazione da conoscere:
+
+1. **Gli importi sono interi in centesimi** (`amount_cents`), non numeri in virgola mobile. Su un bilancio riclassificato si sommano centinaia di righe: con i float una somma può sfalsare di 0,01 e far "non quadrare" attivo e passivo — l'errore che toglie fiducia a uno strumento di controllo di gestione. La conversione a euro avviene al bordo (import, UI, export). *(Non è specificato nel modello finanziario: è una decisione di implementazione.)*
+2. **I tag sono di due specie.** Quelli di `section_tags` valgono per ogni conto della sezione; quelli di `section_detail_tags` sono alternative fra cui scegliere. La distinzione viene dalle tabelle §2.3-§2.4, dove le voci separate da "/" non sono cumulative: un conto di Liquidità Differite è crediti commerciali *oppure* crediti diversi *oppure* erario c/IVA. Senza questa distinzione il DSO (§6), che vuole i soli crediti commerciali, non sarebbe calcolabile.
+3. **`ATTIVITA' NEGATIVO` sta sul conto, non sulla sezione.** Un fondo ammortamento vive dentro Immobilizzazioni Materiali: è il singolo conto a essere rettificativo, non la sezione.
+
+Il catalogo delle sezioni è **dato scritto nella migrazione**, non costanti nel codice: a runtime la fonte di verità è il database, e cambiare la metodologia richiede una nuova migrazione. Si legge da `GET /api/reference/sections`.
+
+`npm run verify:schema` apre il database reale, prova 20 inserimenti che devono essere accettati o rifiutati e chiude con ROLLBACK: verifica i CHECK, le chiavi esterne e gli indici univoci senza lasciare traccia.
+
+**Da fare in Fase 3**: il motore di riclassificazione (§3 — tre schemi, con il Margine di Contribuzione come principale), gli indici di bilancio (§5) e l'import Excel del piano dei conti (§11.1), con il riepilogo pre-conferma che §11.1 rende un requisito.
 
 ---
 
@@ -281,6 +369,10 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 1. ~~File XML di esempio mancante~~ → **chiarito**: era un refuso, il cliente intendeva l'Excel (§11.1). Nessun file XML esiste o è richiesto ora; FatturaPA resta solo un'idea di fase futura (§11.2).
 2. ~~"Tailscale" o "Tailcat"?~~ → **deciso**: Tailscale primario + trasporto di fallback (tipo Cloudflare Tunnel). Dettaglio in §2/§3/§7.
 3. ~~Licenza e visibilità della repo pubblica~~ → **deciso**: repo pubblica, licenza **MIT**, metodologia inclusa senza restrizioni in `docs/MODELLO_FINANZIARIO.md`. Resta comunque valida la regola di §0: i **file originali** (screenshot con branding IRIS, Excel col nome del cliente reale "Indy") non vanno mai committati — è una questione di riservatezza del singolo cliente del consulente, non di apertura della metodologia in sé.
+
+**Risolti (sessione 1 — Fasi 0/1):**
+
+9. ~~SQLCipher o `better-sqlite3` puro?~~ (§2, §12) → **deciso col cliente**: database **cifrato fin dalla Fase 0**, con `better-sqlite3-multiple-ciphers` (API drop-in di `better-sqlite3`, cifratura SQLCipher-compatibile). Motivo: è una scelta di libreria costosa da cambiare dopo, e rimandarla avrebbe significato migrare DB già popolati. Chiave a 256 bit protetta da DPAPI (`safeStorage`), come per i segreti di sync.
 
 **Ancora aperti (da chiarire col cliente durante lo sviluppo):**
 

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Target di prodotto è Windows (AGENTS.md §2): la CI gira lì per intercettare
+# subito problemi di build del modulo nativo cifrato, non solo di TypeScript.
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installa le dipendenze
+        run: npm ci
+
+      - name: Controllo dei tipi
+        run: npm run typecheck
+
+      - name: Build (main + preload + renderer)
+        run: npx electron-vite build

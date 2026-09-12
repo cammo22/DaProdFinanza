@@ -27,3 +27,6 @@ npm-debug.log*
 .idea/
 Thumbs.db
 .DS_Store
+
+# --- electron-vite ---
+.vite/

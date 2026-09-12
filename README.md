@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20progettazione-orange)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%202%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -18,12 +18,48 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 
 ## Stato del progetto
 
-📋 **In fase di specifica — nessun codice ancora scritto.**
+🚧 **In sviluppo — fasi 0, 1 e 2 completate su 10.**
 
-Questa repo contiene oggi il *brief* di progetto, non l'applicazione: la specifica
-funzionale e tecnica completa vive in [`AGENTS.md`](./AGENTS.md), il motore di calcolo
-(formule, indici, schema del piano dei conti) in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
-Lo sviluppo vero e proprio parte da lì.
+L'applicazione si avvia, autentica, gestisce l'anagrafica dei clienti e delle loro
+aziende, e il database sa già rappresentare piano dei conti, tag di riclassificazione,
+periodi e saldi. Quello che manca è il calcolo: riclassificare e produrre gli indici. La roadmap
+completa, fase per fase, è in [`AGENTS.md` §13](./AGENTS.md); le formule e lo schema
+dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md).
+
+| Fatto | In arrivo |
+|---|---|
+| Scaffolding Electron + React + Tailwind + Express + SQLite cifrato | Schema dati del piano dei conti |
+| Scelta del ruolo all'avvio, login JWT, ruoli Consulente / Azienda | Riclassificazione e indici di bilancio |
+| Anagrafica Clienti e Aziende, con archiviazione e rimozione | Import Excel del piano dei conti |
+| Schema dati del motore: conti, tag, periodi, saldi | Le sette viste di analisi |
+| Backup del database e status bar di servizio | Sincronizzazione Consulente ↔ Azienda |
+
+### Per provarlo
+
+Gli eseguibili di prova sono nella pagina [Releases](https://github.com/cammo22/DaProdFinanza/releases):
+`DaProdFinanza-Setup-x.y.z.exe` per installarlo, oppure la versione *portable* che
+si lancia e basta. Windows x64.
+
+Non sono firmati: al primo avvio SmartScreen chiede conferma (*Ulteriori informazioni
+→ Esegui comunque*). Al primo avvio l'app chiede di creare l'account del Consulente.
+
+### Per svilupparlo
+
+```bash
+npm install
+npm run dev
+```
+
+Al primo avvio l'app chiede di creare l'account del Consulente. Il database è cifrato
+a riposo (SQLCipher) e la chiave è protetta da DPAPI: vive in `%APPDATA%/daprodfinanza`,
+i dati di lavoro in `Documenti/DaProdFinanza`.
+
+Per ricostruire gli eseguibili: `npm run dist` (escono in `release/`).
+
+In sviluppo un seed crea due account di prova — `cammo` / `1234` (Consulente) e
+`Pizzeria DaProd` / `1234` (Azienda) — mostrati direttamente sulle card di accesso.
+Per provarli sulla build compilata: `npm run demo`. Il seed non gira mai in
+un'installazione normale.
 
 ## Cos'è
 
