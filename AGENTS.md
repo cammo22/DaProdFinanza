@@ -269,7 +269,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ |
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
-| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | ⬜ |
+| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile e portable funzionanti (v0.0.1). Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8 |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
 ### 13-bis. Stato alla fine della sessione 1 (Fasi 0 + 1 + 2)
@@ -310,6 +310,23 @@ src/
 Insieme creano il cliente *Gruppo DaProd* e l'azienda *Pizzeria DaProd S.r.l.*, e le credenziali sono mostrate direttamente sulle card di scelta ruolo (con un pulsante che compila e accede).
 
 ⚠️ **Il seed non deve finire in un'installazione reale**: sono credenziali note, con password sotto la policy degli 8 caratteri. Gira solo con `npm run dev` oppure `npm run demo` (che imposta `DAPROD_DEMO=1`), e solo su un database ancora vuoto. Le password create dalla UI restano soggette alla policy. **Da rimuovere prima della Fase 10 (installer).**
+
+**Eseguibili (anticipo parziale della Fase 10)**
+
+`npm run dist` produce due file in `release/`, entrambi x64:
+
+| File | A cosa serve |
+|---|---|
+| `DaProdFinanza-Setup-<versione>.exe` | Installer NSIS: sceglie la cartella, crea i collegamenti. Disinstallando **non** cancella i dati (restano in `%APPDATA%` e in Documenti). |
+| `DaProdFinanza-<versione>-portable.exe` | Nessuna installazione: si lancia e basta. Utile per provarla su una macchina senza toccare il sistema. |
+
+Il binding nativo del database cifrato sta fuori dall'archivio `asar` (`asarUnpack`), altrimenti non sarebbe caricabile a runtime. Verificato sull'eseguibile pacchettizzato: apre il database, autentica e mostra l'anagrafica; il seed dimostrativo resta correttamente spento.
+
+⚠️ **Gli eseguibili non sono firmati**: al primo avvio Windows SmartScreen mostra "PC protetto da Windows" e serve *Ulteriori informazioni → Esegui comunque*. Per toglierlo serve un certificato di code signing (OV o EV), che è un acquisto, non una riga di configurazione. Da decidere prima della distribuzione vera.
+
+**Una sola variante, per ora.** §13 prevede due installer, Consulente e Azienda. Oggi il selettore di ruolo (§10.1) copre entrambi con lo stesso eseguibile: separarli ha senso quando l'app Azienda avrà davvero un comportamento diverso, cioè dopo la Fase 8 (sync). Anticiparlo adesso vorrebbe dire mantenere due build che fanno la stessa cosa.
+
+**Versione**: si parte da `0.0.1`. Il numero è mostrato nella status bar e nelle schermate di accesso.
 
 **Cosa è volutamente un segnaposto**
 

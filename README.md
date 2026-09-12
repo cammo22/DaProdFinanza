@@ -34,6 +34,15 @@ dati del motore in [`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md
 | Schema dati del motore: conti, tag, periodi, saldi | Le sette viste di analisi |
 | Backup del database e status bar di servizio | Sincronizzazione Consulente ↔ Azienda |
 
+### Per provarlo
+
+Gli eseguibili di prova sono nella pagina [Releases](https://github.com/cammo22/DaProdFinanza/releases):
+`DaProdFinanza-Setup-x.y.z.exe` per installarlo, oppure la versione *portable* che
+si lancia e basta. Windows x64.
+
+Non sono firmati: al primo avvio SmartScreen chiede conferma (*Ulteriori informazioni
+→ Esegui comunque*). Al primo avvio l'app chiede di creare l'account del Consulente.
+
 ### Per svilupparlo
 
 ```bash
@@ -44,6 +53,8 @@ npm run dev
 Al primo avvio l'app chiede di creare l'account del Consulente. Il database è cifrato
 a riposo (SQLCipher) e la chiave è protetta da DPAPI: vive in `%APPDATA%/daprodfinanza`,
 i dati di lavoro in `Documenti/DaProdFinanza`.
+
+Per ricostruire gli eseguibili: `npm run dist` (escono in `release/`).
 
 In sviluppo un seed crea due account di prova — `cammo` / `1234` (Consulente) e
 `Pizzeria DaProd` / `1234` (Azienda) — mostrati direttamente sulle card di accesso.

@@ -1,0 +1,48 @@
+appId: com.daprodproduzioni.daprodfinanza
+productName: DaProdFinanza
+copyright: © DaProdProduzioni
+
+directories:
+  buildResources: build
+  output: release
+
+# Nel pacchetto finisce solo il build, non i sorgenti. Le dipendenze di
+# produzione le calcola electron-builder da solo leggendo package.json.
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+
+# Il binding nativo del database cifrato non può stare dentro l'archivio asar:
+# va estratto, altrimenti non è caricabile a runtime.
+asarUnpack:
+  - '**/*.node'
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    # Versione senza installazione: utile per provarla su una macchina
+    # senza toccare nulla del sistema.
+    - target: portable
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DaProdFinanza
+  artifactName: ${productName}-Setup-${version}.${ext}
+  # Il database e i dati di lavoro vivono fuori dalla cartella di
+  # installazione (%APPDATA% e Documenti): disinstallare non li tocca.
+  deleteAppDataOnUninstall: false
+
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
+
+# Le release si pubblicano a mano con `gh release`: nessuna pubblicazione
+# automatica da electron-builder.
+publish: null
