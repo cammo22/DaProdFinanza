@@ -6,9 +6,10 @@ import {
   DEFAULT_SCHEME,
   SCHEMES,
   type EngineAccount,
+  type IncomeAggregates,
   type Scheme
 } from '@shared/engine'
-import type { Analysis, SeriesPoint } from '@shared/analysis'
+import type { Analysis, IncomeComparison, SeriesPoint } from '@shared/analysis'
 import type { FiscalPeriod, Scenario } from '@shared/types'
 import { getDatabase } from '../../db'
 import { HttpError } from '../http-error'
@@ -130,6 +131,77 @@ export function analyse(
       balance,
       days: periodDays(period.year, period.month),
       debtServiceCents: options.debtServiceCents ?? null
-    })
+    }),
+    comparison: comparison(companyUuid, period, scenario, statement.aggregates)
+  }
+}
+
+/**
+ * Costruisce le colonne di confronto di §10.3.
+ *
+ * - **Periodo**: quello selezionato.
+ * - **YTD**: la somma dei mesi da gennaio fino a quello selezionato. Ha senso
+ *   solo su un periodo mensile: su un anno coinciderebbe col periodo stesso.
+ * - **Budget**: lo stesso periodo, scenario budget.
+ * - **Anno precedente**: lo stesso mese dell'anno prima, a consuntivo.
+ *
+ * Una colonna senza dati resta `null` invece di tornare zeri: zero e "non c'è"
+ * su un bilancio sono due informazioni diverse.
+ */
+function aggregatesOf(companyUuid: string, periodUuid: string, scenario: Scenario) {
+  const accounts = engineAccounts(companyUuid, periodUuid, scenario)
+  return accounts.length === 0 ? null : incomeStatement(accounts, DEFAULT_SCHEME).aggregates
+}
+
+function findPeriod(
+  periods: FiscalPeriod[],
+  year: number,
+  month: number | null
+): FiscalPeriod | undefined {
+  return periods.find(
+    (p) => p.year === year && (p.month ?? null) === month && p.period_type === (month === null ? 'year' : 'month')
+  )
+}
+
+export function comparison(
+  companyUuid: string,
+  period: FiscalPeriod,
+  scenario: Scenario,
+  current: IncomeAggregates
+): IncomeComparison {
+  const periods = listPeriods(companyUuid)
+
+  // YTD: somma dei mesi da gennaio al mese selezionato, compreso.
+  let ytd: IncomeAggregates | null = null
+  if (period.month !== null) {
+    const mesi = periods.filter(
+      (p) => p.period_type === 'month' && p.year === period.year && (p.month ?? 0) <= period.month!
+    )
+    const conti = mesi.flatMap((p) => engineAccounts(companyUuid, p.uuid, scenario))
+    if (conti.length > 0) ytd = incomeStatement(conti, DEFAULT_SCHEME).aggregates
+  }
+
+  const budgetPeriod = scenario === 'budget' ? null : period
+  const annoPrima = findPeriod(periods, period.year - 1, period.month)
+
+  return {
+    columns: [
+      { key: 'current', label: period.label, aggregates: current },
+      {
+        key: 'ytd',
+        label: period.month === null ? 'Anno' : `YTD ${period.year}`,
+        aggregates: ytd
+      },
+      {
+        key: 'budget',
+        label: `Budget ${period.year}`,
+        aggregates: budgetPeriod ? aggregatesOf(companyUuid, budgetPeriod.uuid, 'budget') : null
+      },
+      {
+        key: 'previousYear',
+        label: annoPrima ? annoPrima.label : `${period.year - 1}`,
+        aggregates: annoPrima ? aggregatesOf(companyUuid, annoPrima.uuid, 'actual') : null
+      }
+    ]
   }
 }

@@ -1,4 +1,4 @@
-import type { BalanceSheet, IncomeStatement, Ratios, Scheme } from './engine'
+import type { BalanceSheet, IncomeAggregates, IncomeStatement, Ratios, Scheme } from './engine'
 import type { FiscalPeriod, Scenario } from './types'
 
 /**
@@ -19,6 +19,8 @@ export interface Analysis {
   alternativeSchemes: IncomeStatement[]
   balanceSheet: BalanceSheet
   ratios: Ratios
+  /** Le colonne di confronto di §10.3. */
+  comparison: IncomeComparison
 }
 
 /** Un punto della serie storica: tutti gli importi in centesimi. */
@@ -31,4 +33,25 @@ export interface SeriesPoint {
   ebitda: number
   utile: number
   liquidita: number
+}
+
+/**
+ * Le colonne di confronto del Conto Economico — AGENTS.md §10.3.
+ *
+ * Il prospetto del consulente affianca quattro letture dello stesso periodo:
+ * il mese, il progressivo da inizio anno, il budget e lo stesso periodo
+ * dell'anno prima. Una colonna che non ha dati resta `null` e la UI la nasconde:
+ * una colonna di zeri sembrerebbe un'azienda a fatturato zero.
+ */
+export type ComparisonKey = 'current' | 'ytd' | 'budget' | 'previousYear'
+
+export interface ComparisonColumn {
+  key: ComparisonKey
+  label: string
+  /** Aggregati del periodo, oppure null se per quella colonna non ci sono dati. */
+  aggregates: IncomeAggregates | null
+}
+
+export interface IncomeComparison {
+  columns: ComparisonColumn[]
 }

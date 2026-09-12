@@ -1,6 +1,7 @@
 import type { Database } from 'better-sqlite3-multiple-ciphers'
 import { up as up001 } from './001_initial'
 import { up as up002 } from './002_financial_model'
+import { up as up003 } from './003_import_documents_no_unique_hash'
 
 export interface Migration {
   version: number
@@ -15,7 +16,8 @@ export interface Migration {
  */
 export const MIGRATIONS: Migration[] = [
   { version: 1, name: '001_initial', up: up001 },
-  { version: 2, name: '002_financial_model', up: up002 }
+  { version: 2, name: '002_financial_model', up: up002 },
+  { version: 3, name: '003_import_documents_no_unique_hash', up: up003 }
 ]
 
 export function runMigrations(db: Database): number {

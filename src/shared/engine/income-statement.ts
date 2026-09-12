@@ -180,11 +180,14 @@ export interface IncomeStatement {
   aggregates: IncomeAggregates
 }
 
-export function incomeStatement(
-  accounts: EngineAccount[],
-  scheme: Scheme = DEFAULT_SCHEME
-): IncomeStatement {
-  const a = incomeAggregates(accounts)
+/**
+ * Le righe di uno schema a partire dai soli aggregati.
+ *
+ * Separata da `incomeStatement` perché le colonne di confronto (§10.3) hanno
+ * gli aggregati di altri periodi ma non i loro conti: così si allineano riga
+ * per riga senza ricalcolare nulla.
+ */
+export function schemeLines(a: IncomeAggregates, scheme: Scheme = DEFAULT_SCHEME): IncomeLine[] {
   const head = line('ricavi_netti', 'Ricavi operativi + rimanenze finali', a.ricaviNetti, '+')
 
   let lines: IncomeLine[]
@@ -231,5 +234,13 @@ export function incomeStatement(
     ]
   }
 
-  return { scheme, label: SCHEME_LABELS[scheme], lines, aggregates: a }
+  return lines
+}
+
+export function incomeStatement(
+  accounts: EngineAccount[],
+  scheme: Scheme = DEFAULT_SCHEME
+): IncomeStatement {
+  const a = incomeAggregates(accounts)
+  return { scheme, label: SCHEME_LABELS[scheme], lines: schemeLines(a, scheme), aggregates: a }
 }
