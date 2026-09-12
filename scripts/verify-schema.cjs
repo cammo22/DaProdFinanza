@@ -67,6 +67,12 @@ app.whenReady().then(() => {
   }
 
   const now = new Date().toISOString()
+  // Anni e codici che non possono scontrarsi con dati veri: il controllo gira
+  // sul database dell'installazione, che di solito è già popolato.
+  const ANNO = 2999
+  const ANNO_PREC = 2998
+  const suffisso = randomUUID().slice(0, 8)
+  const codice = (n) => `ZZ-${suffisso}-${n}`
   const accountUuid = randomUUID()
   const yearUuid = randomUUID()
   const monthUuid = randomUUID()
@@ -87,12 +93,12 @@ app.whenReady().then(() => {
         .run(uuid, company.uuid, code, section, type, pct, now, now)
 
     console.log(' Piano dei conti')
-    check('conto valido', () => insertAccount(accountUuid, 'TEST-001', 'costi_personale', 'COSTO', null), 'accettato')
-    check('sezione inesistente', () => insertAccount(randomUUID(), 'TEST-002', 'sezione_inventata', 'COSTO', null), 'rifiutato')
-    check("TIPO fuori dai cinque di §1", () => insertAccount(randomUUID(), 'TEST-003', 'costi_personale', 'SPESA', null), 'rifiutato')
-    check('% di costo diretto oltre 100', () => insertAccount(randomUUID(), 'TEST-004', 'costi_personale', 'COSTO', 120), 'rifiutato')
-    check('codice conto duplicato nella stessa azienda', () => insertAccount(randomUUID(), 'TEST-001', 'costi_personale', 'COSTO', null), 'rifiutato')
-    check('fondo ammortamento come ATTIVITA’ NEGATIVO', () => insertAccount(randomUUID(), 'TEST-005', 'immobilizzazioni_materiali', "ATTIVITA' NEGATIVO", null), 'accettato')
+    check('conto valido', () => insertAccount(accountUuid, codice(1), 'costi_personale', 'COSTO', null), 'accettato')
+    check('sezione inesistente', () => insertAccount(randomUUID(), codice(2), 'sezione_inventata', 'COSTO', null), 'rifiutato')
+    check("TIPO fuori dai cinque di §1", () => insertAccount(randomUUID(), codice(3), 'costi_personale', 'SPESA', null), 'rifiutato')
+    check('% di costo diretto oltre 100', () => insertAccount(randomUUID(), codice(4), 'costi_personale', 'COSTO', 120), 'rifiutato')
+    check('codice conto duplicato nella stessa azienda', () => insertAccount(randomUUID(), codice(1), 'costi_personale', 'COSTO', null), 'rifiutato')
+    check('fondo ammortamento come ATTIVITA’ NEGATIVO', () => insertAccount(randomUUID(), codice(5), 'immobilizzazioni_materiali', "ATTIVITA' NEGATIVO", null), 'accettato')
 
     const insertPeriod = (uuid, type, year, month) =>
       db
@@ -104,14 +110,14 @@ app.whenReady().then(() => {
         .run(uuid, company.uuid, type, year, month, now, now)
 
     console.log('\n Periodi contabili')
-    check('anno', () => insertPeriod(yearUuid, 'year', 2026, null), 'accettato')
-    check('mese', () => insertPeriod(monthUuid, 'month', 2026, 1), 'accettato')
-    check('anno con mese valorizzato', () => insertPeriod(randomUUID(), 'year', 2027, 3), 'rifiutato')
-    check('mese senza mese', () => insertPeriod(randomUUID(), 'month', 2027, null), 'rifiutato')
-    check('mese 13', () => insertPeriod(randomUUID(), 'month', 2027, 13), 'rifiutato')
-    check('anno duplicato', () => insertPeriod(randomUUID(), 'year', 2026, null), 'rifiutato')
-    check('mese duplicato', () => insertPeriod(randomUUID(), 'month', 2026, 1), 'rifiutato')
-    check('stesso mese di un altro anno', () => insertPeriod(randomUUID(), 'month', 2025, 1), 'accettato')
+    check('anno', () => insertPeriod(yearUuid, 'year', ANNO, null), 'accettato')
+    check('mese', () => insertPeriod(monthUuid, 'month', ANNO, 1), 'accettato')
+    check('anno con mese valorizzato', () => insertPeriod(randomUUID(), 'year', ANNO_PREC, 3), 'rifiutato')
+    check('mese senza mese', () => insertPeriod(randomUUID(), 'month', ANNO_PREC, null), 'rifiutato')
+    check('mese 13', () => insertPeriod(randomUUID(), 'month', ANNO_PREC, 13), 'rifiutato')
+    check('anno duplicato', () => insertPeriod(randomUUID(), 'year', ANNO, null), 'rifiutato')
+    check('mese duplicato', () => insertPeriod(randomUUID(), 'month', ANNO, 1), 'rifiutato')
+    check('stesso mese di un altro anno', () => insertPeriod(randomUUID(), 'month', ANNO_PREC, 1), 'accettato')
 
     const insertBalance = (uuid, account, period, scenario, cents) =>
       db
@@ -121,6 +127,22 @@ app.whenReady().then(() => {
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`
         )
         .run(uuid, company.uuid, account, period, scenario, cents, now, now)
+
+    const insertDoc = (uuid, sha) =>
+      db
+        .prepare(
+          `INSERT INTO import_documents (uuid, company_uuid, kind, filename, sha256,
+                                         imported_at, created_at, updated_at, synced, deleted)
+           VALUES (?, ?, 'excel_chart_of_accounts', 'prova.xlsx', ?, ?, ?, ?, 0, 0)`
+        )
+        .run(uuid, company.uuid, sha, now, now, now)
+
+    console.log(''); console.log(' Documenti importati')
+    check('primo import di un file', () => insertDoc(randomUUID(), suffisso.padEnd(64, 'a')), 'accettato')
+    // Regressione: fino alla migrazione 003 un indice univoco impediva di
+    // importare lo stesso file due volte — cosa legittima, per esempio come
+    // budget e come consuntivo. Riconoscere un doppione non e' vietarlo.
+    check('stesso file importato di nuovo', () => insertDoc(randomUUID(), suffisso.padEnd(64, 'a')), 'accettato')
 
     console.log('\n Saldi')
     check('saldo a consuntivo', () => insertBalance(randomUUID(), accountUuid, monthUuid, 'actual', 1234567), 'accettato')

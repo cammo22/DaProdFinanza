@@ -383,7 +383,32 @@ Il motore vive in `src/shared/engine/` ed è fatto di **funzioni pure**: non sa 
 
 ⚠️ **Tre punti aperti emersi leggendo il file, dettagliati in [`docs/MODELLO_FINANZIARIO.md` §8-bis](./docs/MODELLO_FINANZIARIO.md)**: il file consegnato è un **modello vuoto** (nessun saldo), il Gross Profit di §3.3 non torna con la riga di partenza dello stesso schema, e due grandezze (Acquisti, Debiti finanziari) non hanno una fonte esplicita nel modello.
 
-**Da fare in Fase 4**: le tre schermate di §10.2-§10.4 sopra questi dati. Il motore restituisce già tutto quello che serve.
+**Fase 4 — le schermate di analisi**
+
+Navigazione a **menu laterale**, come nei mockup: in alto l'anagrafica, sotto le viste dell'azienda aperta, in fondo quelle non ancora costruite — elencate e spente, con la fase accanto. Un menu che si allunga a sorpresa disorienta più di uno che dichiara cosa manca. La navigazione vive nel guscio dell'applicazione e non dentro le pagine, così resta ferma mentre il contenuto cambia.
+
+| Vista | Cosa mostra |
+|---|---|
+| **Panoramica** (§10.2) | Avvisi automatici sulle soglie di §5, KPI economici e finanziari, quattro grafici |
+| **Conto Economico** (§10.3) | Prospetto a quattro colonne, selettore fra i tre schemi di §3, grafici |
+| **Stato Patrimoniale** (§10.4) | Attivo, passivo, capitale circolante netto e tutti gli indici con le loro soglie |
+| **Import dati** (§10.9) | Scelta del file, riepilogo pre-conferma, scrittura |
+
+Le viste leggono **lo stesso payload di analisi**: un solo calcolo per periodo, tre modi di guardarlo.
+
+**Conto economico a quattro colonne**: periodo, progressivo da inizio anno, budget e stesso periodo dell'anno precedente, ognuna con valore e % sui ricavi. Le colonne senza dati non compaiono — una colonna di trattini occupa spazio senza dire niente, una di zeri racconterebbe un'azienda a fatturato zero. `schemeLines()` è separata da `incomeStatement()` proprio per questo: le colonne di confronto hanno gli aggregati di altri periodi ma non i loro conti.
+
+**Gli avvisi della Panoramica sono regole esplicite**, non un modello che indovina: confronti sulle soglie del foglio del consulente, e ognuno dice da quale numero arriva ("Margine operativo al 12,3% — positivo dal 15% in su"). È il primo tassello dell'idea di §11.8.
+
+**Grafici** (Recharts): serie ricavi/costi/EBITDA, barre di EBITDA e utile, andamento della liquidità, composizione dei costi a ciambella, barra del break-even col margine di sicurezza. Le serie leggono l'endpoint `/series`, che calcola gli aggregati di ogni periodo caricato; sotto i due periodi il riquadro dice perché è vuoto invece di disegnare una linea piatta che sembrerebbe un dato. Donut e break-even bastano di un periodo solo.
+
+Nella serie, "costi totali" sono i costi operativi **prima degli ammortamenti**: così `ricavi − costi = EBITDA` esattamente, e le tre linee si leggono senza doverci credere sulla parola.
+
+**Due dettagli di formattazione che su un bilancio contano**: un indice indefinito si scrive "—", mai "0%"; e il raggruppamento delle migliaia resta sempre attivo anche a quattro cifre, perché in colonna "2000 €" sopra "1.050.000 €" sembra un errore di battitura.
+
+**Migrazione 003 — correzione di un vincolo della 002.** L'indice univoco su `(company_uuid, sha256)` di `import_documents` nasceva da §5, che chiede di *riconoscere* le doppie importazioni: ma riconoscere non è vietare. Lo stesso identico file si importa legittimamente più volte — come budget e come consuntivo, o su due periodi quando si riusa un modello — e il vincolo lo impediva con un errore di database invece di una spiegazione. Il riconoscimento resta nell'anteprima, dove serve. `npm run verify:schema` contiene ora il controllo di regressione, e usa anni e codici che non possono scontrarsi con dati veri.
+
+**Da fare in Fase 5**: Capitale Circolante e Tesoreria (§10.5-§10.6). Gli indici del circolante sono già calcolati dal motore; la previsione di cassa richiede scadenziario e previsioni manuali, che sono dati nuovi.
 
 ---
 

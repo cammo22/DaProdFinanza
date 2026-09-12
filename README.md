@@ -16,32 +16,103 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 
 ---
 
-## Il problema
+## Il metodo di calcolo
 
-Un consulente finanziario segue dieci, venti aziende contemporaneamente. Per ognuna
-deve rispondere alle stesse domande: **quanto margina davvero?** **quanto tempo ha
-prima di un problema di cassa?** **quanto valgono i soldi fermi in magazzino?**
-**cosa cambia se assume una persona, o se chiede un altro finanziamento?**
+Il motore di DaProdFinanza non è teoria da manuale: è l'estrazione di uno strumento
+Excel che un consulente finanziario usa già oggi con i propri clienti. Vale la pena
+conoscerlo, perché spiega come mai i numeri escono da soli.
 
-Oggi quelle risposte arrivano da un foglio Excel costruito negli anni: bravissimo,
-ma da rifare a mano per ogni cliente e per ogni mese. Un errore in una formula non
-si vede finché non è troppo tardi, e i numeri vivono sul computer del consulente,
-lontani dall'imprenditore che dovrebbe leggerli.
+### 1. Ogni conto viene classificato una volta sola
+
+Il piano dei conti di un'azienda è un elenco lungo e grezzo: *Vendite Italia*,
+*Stipendi*, *Fondo ammortamento impianti*, *Fornitori materie prime*. Preso così non
+racconta niente.
+
+Il metodo assegna ogni conto a una **sezione** — ventiquattro in tutto, dai Ricavi
+Operativi ai Debiti a Breve Termine. Da quella singola scelta discende tutto il resto:
+dove il conto finisce nel bilancio riclassificato, se pesa sul margine o sulla
+struttura, se entra nel calcolo dell'EBITDA o solo in quello dell'utile finale.
+
+Classificare un conto è l'unico lavoro manuale. Tutto quello che segue è conseguenza.
+
+### 2. I costi si dividono fra variabili e fissi, azienda per azienda
+
+Un costo variabile cresce insieme alle vendite; uno fisso c'è comunque. La differenza
+è tutto: decide il margine di contribuzione e il punto di pareggio.
+
+Ogni sezione di costo parte con una percentuale suggerita — le materie prime sono
+dirette al 100%, il personale al 70%, l'affitto allo 0% — ma **la percentuale si
+cambia azienda per azienda**. Un tornitore e una pizzeria hanno strutture di costo
+diverse, e il programma non finge il contrario.
+
+### 3. Il bilancio si riclassifica in tre modi, che devono dare lo stesso utile
+
+Riclassificare significa riordinare i conti grezzi in un prospetto che mostra dove
+nascono i margini e dove si perdono. La dottrina italiana ne prevede tre modi:
+
+- **a margine di contribuzione** — quanto resta dopo i costi che seguono le vendite
+- **a valore aggiunto** — quanta ricchezza l'azienda crea prima di pagare le persone
+- **a costo del venduto** — quanto costa davvero ciò che è stato venduto
+
+Sono **tre letture dello stesso risultato**: cambiano i passaggi intermedi, l'utile
+finale no. Il programma li calcola tutti e tre e li mostra affiancati — se non
+coincidessero, ci sarebbe un errore da qualche parte, ed è esattamente così che il
+motore viene collaudato.
+
+### 4. Lo stato patrimoniale dice con quali soldi
+
+Da una parte cosa possiede l'azienda: immobilizzazioni, magazzino, crediti, cassa.
+Dall'altra con quali soldi lo ha pagato: capitale proprio, debiti a lungo termine,
+debiti a breve. I due lati devono quadrare, e se non quadrano il programma lo dice
+invece di far finta di niente.
+
+### 5. Gli indici, con le soglie di chi li usa davvero
+
+Dal bilancio riclassificato nascono gli indici: **ROE**, **ROI**, **ROS**, **MOL%**
+per la redditività; indipendenza finanziaria e margini di struttura per la solidità;
+indici di disponibilità e liquidità per la capacità di far fronte agli impegni.
+
+Accanto a ognuno c'è la soglia che il consulente applica nel proprio foglio — *"ROS
+positivo dal 10% in su"*, *"indipendenza finanziaria sopra il 30%"* — non un giudizio
+inventato dal programma.
+
+### 6. Il ciclo del circolante: dove la cassa si blocca
+
+Quattro numeri raccontano perché un'azienda che guadagna può restare senza soldi:
+
+| | |
+|---|---|
+| **DSO** | quanti giorni passano prima che i clienti paghino |
+| **DIO** | quanti giorni la merce resta ferma in magazzino |
+| **DPO** | quanti giorni l'azienda si prende per pagare i fornitori |
+| **CCC** | i primi due meno il terzo: **i giorni in cui i soldi sono fuori** |
+
+Se i clienti pagano a 90 giorni e i fornitori vanno pagati a 30, l'azienda finanzia i
+propri clienti per due mesi — con i propri soldi, o con quelli della banca.
+
+### 7. Il punto di pareggio
+
+Quanti ricavi servono perché i conti tornino in pari, e quanto margine c'è fra i
+ricavi di oggi e quella soglia. È la domanda che un imprenditore fa per prima.
+
+---
+
+Il metodo completo, formula per formula, è in
+[`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md): liberamente
+consultabile. I file originali dei clienti da cui è stato estratto restano fuori
+da qui.
 
 ## Cosa fa DaProdFinanza
 
 Prende quel metodo e lo trasforma in un programma.
 
 Il consulente carica il piano dei conti dell'azienda — lo stesso file Excel che usa
-già — e il programma fa il resto: **riclassifica il bilancio**, cioè riordina i conti
-grezzi in un prospetto leggibile che mostra dove nascono i margini e dove si perdono;
-**calcola gli indici** che misurano redditività, solidità e liquidità; **prevede la
-cassa** delle prossime settimane incrociando incassi attesi, pagamenti e rate dei
-finanziamenti; e **simula gli scenari**, per vedere l'effetto di una decisione prima
-di prenderla.
+già — e il resto viene da sé: il bilancio riclassificato, gli indici con le loro
+soglie, la previsione di cassa delle prossime settimane, e le simulazioni per vedere
+l'effetto di una decisione prima di prenderla.
 
-Tutto senza dipendere da internet, senza un abbonamento a un servizio esterno, e
-senza che i numeri di un'azienda escano dal computer di chi ha il diritto di vederli.
+Tutto senza dipendere da internet, senza un abbonamento a un servizio esterno, e senza
+che i numeri di un'azienda escano dal computer di chi ha il diritto di vederli.
 
 ## Due programmi, due punti di vista
 
@@ -68,17 +139,6 @@ nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 - **Tesoreria** — quanti soldi ci saranno in banca fra una settimana, un mese, tre mesi
 - **Banche e Finanziamenti** — fidi, mutui e leasing, e quanto pesano sulla cassa futura
 - **Analisi & Simulazioni** — "cosa succede se": assumo, investo, alzo i prezzi
-
-## Come nasce
-
-Il motore di calcolo non è teoria da manuale: è l'estrazione di uno strumento Excel
-che un consulente finanziario usa già oggi con i propri clienti — piano dei conti
-classificato, tre modi alternativi di riclassificare il bilancio, indici con le soglie
-che lui stesso applica.
-
-Quel metodo è stato letto riga per riga, generalizzato e reso anonimo, e vive in
-[`docs/MODELLO_FINANZIARIO.md`](./docs/MODELLO_FINANZIARIO.md): formula per formula,
-liberamente consultabile. I file originali dei clienti restano fuori da qui.
 
 ---
 

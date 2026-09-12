@@ -1,5 +1,6 @@
+import { Fragment } from 'react'
 import type { Analysis, SeriesPoint } from '@shared/analysis'
-import { SCHEME_LABELS, SCHEMES, type Scheme } from '@shared/engine'
+import { SCHEME_LABELS, SCHEMES, schemeLines, type Scheme } from '@shared/engine'
 import { euro, percent, share, tone } from '../../lib/format'
 import { Card, Select } from '../../components/ui'
 import { BarraBreakEven, CompositionePie, SerieEconomica } from '../../components/charts'
@@ -59,6 +60,17 @@ export function IncomeStatementView({
     { nome: 'Oneri finanziari', valore: a.oneriFinanziari }
   ].filter((fetta) => fetta.valore > 0)
 
+  // Le colonne di confronto di §10.3. Quelle senza dati si tolgono: una colonna
+  // di trattini occupa spazio senza dire niente.
+  const colonne = analysis.comparison.columns
+    .filter((colonna) => colonna.aggregates !== null)
+    .map((colonna) => ({
+      ...colonna,
+      righe: new Map(
+        schemeLines(colonna.aggregates!, scheme).map((riga) => [riga.key, riga.amount_cents])
+      )
+    }))
+
   return (
     <div className="flex flex-col gap-5">
       <Card title="Indicatori del periodo">
@@ -111,52 +123,89 @@ export function IncomeStatementView({
           </Select>
         }
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs uppercase tracking-wider text-ink-400">
-              <th className="px-5 py-2 text-left font-medium">Voce</th>
-              <th className="px-5 py-2 text-right font-medium">Valore</th>
-              <th className="w-24 px-5 py-2 text-right font-medium">% ricavi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analysis.incomeStatement.lines.map((line) => {
-              const forte = line.kind !== 'voce'
-              const risultato = line.kind === 'risultato'
-              return (
-                <tr
-                  key={line.key}
-                  className={`border-t border-ink-800 ${forte ? 'bg-ink-900/60' : ''}`}
-                >
-                  <td
-                    className={`px-5 py-2 ${
-                      forte ? 'font-semibold text-ink-100' : 'pl-9 text-ink-300'
-                    }`}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[46rem] text-sm">
+            <thead>
+              <tr className="text-xs uppercase tracking-wider text-ink-400">
+                <th rowSpan={2} className="px-5 py-2 text-left align-bottom font-medium">
+                  Voce
+                </th>
+                {colonne.map((colonna) => (
+                  <th
+                    key={colonna.key}
+                    colSpan={2}
+                    className="border-l border-ink-800 px-5 pt-2 text-center font-medium text-ink-300"
                   >
-                    <span className="mr-2 inline-block w-3 text-ink-500">{line.sign}</span>
-                    {line.label}
-                  </td>
-                  <td
-                    className={`px-5 py-2 text-right tabular-nums ${
-                      risultato
-                        ? line.amount_cents >= 0
-                          ? 'font-semibold text-positive'
-                          : 'font-semibold text-negative'
-                        : forte
-                          ? 'font-semibold text-ink-100'
-                          : 'text-ink-300'
-                    }`}
+                    {colonna.label}
+                  </th>
+                ))}
+              </tr>
+              <tr className="text-[10px] uppercase tracking-wider text-ink-500">
+                {colonne.map((colonna) => (
+                  <Fragment key={colonna.key}>
+                    <th className="border-l border-ink-800 px-5 pb-2 text-right font-normal">€</th>
+                    <th className="px-3 pb-2 text-right font-normal">% ricavi</th>
+                  </Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {analysis.incomeStatement.lines.map((line) => {
+                const forte = line.kind !== 'voce'
+                const risultato = line.kind === 'risultato'
+                return (
+                  <tr
+                    key={line.key}
+                    className={`border-t border-ink-800 ${forte ? 'bg-ink-900/60' : ''}`}
                   >
-                    {euro(line.amount_cents)}
-                  </td>
-                  <td className="px-5 py-2 text-right tabular-nums text-xs text-ink-400">
-                    {share(line.amount_cents, a.ricaviNetti)}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                    <td
+                      className={`px-5 py-2 whitespace-nowrap ${
+                        forte ? 'font-semibold text-ink-100' : 'pl-9 text-ink-300'
+                      }`}
+                    >
+                      <span className="mr-2 inline-block w-3 text-ink-500">{line.sign}</span>
+                      {line.label}
+                    </td>
+
+                    {colonne.map((colonna) => {
+                      const valore = colonna.righe?.get(line.key)
+                      const ricavi = colonna.aggregates?.ricaviNetti ?? 0
+                      return (
+                        <Fragment key={colonna.key}>
+                          <td
+                            className={`border-l border-ink-800 px-5 py-2 text-right tabular-nums whitespace-nowrap ${
+                              valore === undefined
+                                ? 'text-ink-600'
+                                : risultato
+                                  ? valore >= 0
+                                    ? 'font-semibold text-positive'
+                                    : 'font-semibold text-negative'
+                                  : forte
+                                    ? 'font-semibold text-ink-100'
+                                    : 'text-ink-300'
+                            }`}
+                          >
+                            {valore === undefined ? '—' : euro(valore)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-xs tabular-nums text-ink-500">
+                            {valore === undefined ? '' : share(valore, ricavi)}
+                          </td>
+                        </Fragment>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {colonne.length === 1 && (
+          <p className="border-t border-ink-700 px-5 py-3 text-xs text-ink-500">
+            Le colonne di confronto — progressivo da inizio anno, budget, anno precedente —
+            compaiono quando quei dati sono caricati.
+          </p>
+        )}
       </Card>
 
       <div className="grid grid-cols-2 gap-5">
