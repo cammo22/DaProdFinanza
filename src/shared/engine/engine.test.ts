@@ -227,6 +227,24 @@ describe('Indici di bilancio (§5, §6)', () => {
     vicino(r.debtEquity, 0.8)
   })
 
+  it("usa l'EBITDA degli ultimi 12 mesi per la leva, non quello del periodo", () => {
+    // Su un mese, confrontare il debito con l'EBITDA di quel mese soltanto lo
+    // farebbe sembrare dodici volte più pesante.
+    const mensile = ratios({
+      accounts: CONTI,
+      income,
+      balance,
+      days: 30,
+      ebitdaLtmCents: euro(2_520_000),
+      debtServiceCents: euro(1_000_000)
+    })
+    vicino(mensile.pfnSuEbitda, 0.0476)
+    vicino(mensile.dscr, 2.52)
+
+    const senzaStorico = ratios({ accounts: CONTI, income, balance, days: 30, ebitdaLtmCents: null })
+    expect(senzaStorico.pfnSuEbitda).toBeNull()
+  })
+
   it('lascia il DSCR indefinito finché non arrivano le rate (Fase 6)', () => {
     expect(r.dscr).toBeNull()
     const conRate = ratios({ accounts: CONTI, income, balance, days: 365, debtServiceCents: euro(100_000) })

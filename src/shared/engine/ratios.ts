@@ -74,6 +74,14 @@ export interface RatioInput {
   days: number
   /** Rate (quota capitale + interessi) attese nei prossimi 12 mesi, in centesimi. */
   debtServiceCents?: number | null
+  /**
+   * EBITDA degli ultimi 12 mesi, in centesimi: §5 definisce così PFN/EBITDA e
+   * DSCR. Confrontare un debito con l'EBITDA di un solo mese lo farebbe
+   * sembrare dodici volte più pesante.
+   * - `undefined`: il periodo è già annuale, vale il suo EBITDA.
+   * - `null`: periodo mensile senza dodici mesi disponibili, indici indefiniti.
+   */
+  ebitdaLtmCents?: number | null
 }
 
 export function ratios({
@@ -81,8 +89,10 @@ export function ratios({
   income,
   balance,
   days,
-  debtServiceCents = null
+  debtServiceCents = null,
+  ebitdaLtmCents
 }: RatioInput): Ratios {
+  const ebitdaLeva = ebitdaLtmCents === undefined ? income.ebitda : ebitdaLtmCents
   // §5 ROS: il denominatore sono i ricavi operativi rettificati dalla
   // variazione delle rimanenze, non i ricavi netti.
   const ricaviRettificati = income.ricaviOperativi + income.variazioneRimanenze
@@ -145,9 +155,9 @@ export function ratios({
     ccc: dso !== null && dio !== null && dpo !== null ? dso + dio - dpo : null,
 
     posizioneFinanziariaNetta,
-    pfnSuEbitda: ratio(posizioneFinanziariaNetta, income.ebitda),
+    pfnSuEbitda: ebitdaLeva === null ? null : ratio(posizioneFinanziariaNetta, ebitdaLeva),
     debtEquity: ratio(debitiFinanziari, balance.patrimonioNetto),
-    dscr: debtServiceCents ? ratio(income.ebitda, debtServiceCents) : null
+    dscr: debtServiceCents && ebitdaLeva !== null ? ratio(ebitdaLeva, debtServiceCents) : null
   }
 }
 

@@ -10,11 +10,11 @@ let token: string | null = null
 
 const TOKEN_KEY = 'daprodfinanza.token'
 
-export async function initApi(): Promise<{ version: string }> {
+export async function initApi(): Promise<{ version: string; demoBuild: boolean }> {
   const info = await window.daprod.getAppInfo()
   baseUrl = info.apiBaseUrl
   token = sessionStorage.getItem(TOKEN_KEY)
-  return { version: info.version }
+  return { version: info.version, demoBuild: info.demoBuild }
 }
 
 export function setToken(value: string | null): void {

@@ -6,7 +6,13 @@ import { contextBridge, ipcRenderer } from 'electron'
  */
 const api = {
   /** URL del backend Express locale (porta effimera decisa all'avvio). */
-  getAppInfo: (): Promise<{ apiBaseUrl: string; version: string; platform: string }> =>
+  getAppInfo: (): Promise<{
+    apiBaseUrl: string
+    version: string
+    platform: string
+    /** true solo nella versione dimostrativa. */
+    demoBuild: boolean
+  }> =>
     ipcRenderer.invoke('app:info'),
 
   /** Backup del database cifrato — AGENTS.md §7. Restituisce il percorso creato. */

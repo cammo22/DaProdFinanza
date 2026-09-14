@@ -48,8 +48,12 @@ export function CompanyPage({
     try {
       const result = await api.get<FiscalPeriod[]>(`/api/companies/${company.uuid}/periods`)
       setPeriods(result)
+      // Si apre sul periodo più recente con dati a consuntivo: il più recente in
+      // assoluto può essere un mese di solo budget, e la prima schermata
+      // sarebbe vuota.
+      const predefinito = result.find((p) => p.scenarios?.includes('actual')) ?? result[0]
       setPeriodUuid((corrente) =>
-        corrente && result.some((p) => p.uuid === corrente) ? corrente : (result[0]?.uuid ?? '')
+        corrente && result.some((p) => p.uuid === corrente) ? corrente : (predefinito?.uuid ?? '')
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Caricamento dei periodi non riuscito.')
@@ -113,13 +117,24 @@ export function CompanyPage({
             <Select
               value={periodUuid}
               onChange={(e) => setPeriodUuid(e.target.value)}
-              className="w-44 py-1.5 text-xs"
+              className="w-60 py-1.5 text-xs"
             >
-              {periods.map((p) => (
-                <option key={p.uuid} value={p.uuid}>
-                  {p.label}
-                </option>
-              ))}
+              {periods.map((p) => {
+                // Un periodo senza lo scenario scelto lo dichiara già nel menu,
+                // invece di farlo scoprire aprendolo.
+                const altri =
+                  p.scenarios && p.scenarios.length > 0 && !p.scenarios.includes(scenario)
+                    ? ` · solo ${p.scenarios
+                        .map((s) => SCENARI.find((x) => x.id === s)?.label.toLowerCase())
+                        .join(', ')}`
+                    : ''
+                return (
+                  <option key={p.uuid} value={p.uuid}>
+                    {p.label}
+                    {altri}
+                  </option>
+                )
+              })}
             </Select>
             <Select
               value={scenario}

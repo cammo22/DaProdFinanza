@@ -1,3 +1,5 @@
+// Primo import di proposito: sposta la cartella dati della demo prima di tutto.
+import { DEMO_BUILD } from './build-flags'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { join } from 'node:path'
@@ -50,7 +52,8 @@ function registerIpc(): void {
   ipcMain.handle('app:info', () => ({
     apiBaseUrl: apiBaseUrl(),
     version: app.getVersion(),
-    platform: process.platform
+    platform: process.platform,
+    demoBuild: DEMO_BUILD
   }))
 
   // Pulsante "Backup" della status bar — AGENTS.md §7.

@@ -2,6 +2,8 @@ import { is } from '@electron-toolkit/utils'
 import { createClient } from '../server/services/clients.service'
 import { createCompany } from '../server/services/companies.service'
 import { insertUser } from '../server/services/auth.service'
+import { DEMO_BUILD } from '../build-flags'
+import { seedDemoFinancials } from './demo-data'
 import { getDatabase } from './index'
 
 /**
@@ -10,8 +12,9 @@ import { getDatabase } from './index'
  *
  * ⚠️ Non deve MAI finire in un'installazione reale: sono credenziali note e con
  * password fuori policy. Gira solo in sviluppo (`npm run dev`) oppure con
- * `DAPROD_DEMO=1` impostata a mano, e solo su un database ancora vuoto.
- * Da rimuovere quando il prodotto va in mano al cliente.
+ * `DAPROD_DEMO=1` impostata a mano, nella versione demo costruita da
+ * `npm run dist:demo`, e solo su un database ancora vuoto. La versione demo usa
+ * una cartella dati tutta sua (vedi build-flags.ts).
  */
 export const DEMO_PASSWORD = '1234'
 
@@ -27,7 +30,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
 ]
 
 export function isDemoMode(): boolean {
-  return is.dev || process.env['DAPROD_DEMO'] === '1'
+  return DEMO_BUILD || is.dev || process.env['DAPROD_DEMO'] === '1'
 }
 
 /** true quando il seed è attivo e i dati sono effettivamente presenti. */
@@ -63,6 +66,9 @@ export function seedDemoData(): void {
     start_date: '2026-01-07',
     notes: 'Azienda dimostrativa creata dal seed di sviluppo.'
   })
+
+  // I bilanci: 2025 completo, 2026 fino ad agosto, budget 2026.
+  seedDemoFinancials(company.uuid)
 
   insertUser(
     {

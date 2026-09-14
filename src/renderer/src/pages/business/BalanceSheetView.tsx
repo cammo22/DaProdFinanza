@@ -165,7 +165,7 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
             <Indice label="DPO" value={days(r.dpo)} nota="Giorni medi di pagamento ai fornitori" />
             <Indice label="Ciclo del circolante" value={days(r.ccc)} nota="DSO + DIO − DPO: più basso è meglio" />
             <Indice label="PFN" value={euro(r.posizioneFinanziariaNetta)} nota="Debiti finanziari meno liquidità" />
-            <Indice label="PFN / EBITDA" value={times(r.pfnSuEbitda)} nota="Multiplo di indebitamento" />
+            <Indice label="PFN / EBITDA" value={times(r.pfnSuEbitda)} nota="Sull'EBITDA degli ultimi 12 mesi" />
             <Indice label="Debt / Equity" value={times(r.debtEquity)} />
             <Indice label="DSCR" value={times(r.dscr)} nota="Arriva con il modulo Banche" />
           </div>
