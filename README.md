@@ -166,7 +166,14 @@ La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
 
 ## Provarlo
 
-Gli eseguibili sono nella pagina **[Releases](https://github.com/cammo22/DaProdFinanza/releases)**:
+Il modo più rapido per vederlo all'opera è la **versione demo**:
+`DaProdFinanza-Demo-x.y.z-portable.exe`. Si lancia senza installare niente e parte
+già con una pizzeria di esempio e due anni di bilanci caricati. Si entra come
+consulente con **`cammo` / `1234`**, oppure come azienda con **`Pizzeria DaProd` /
+`1234`**. I suoi dati restano in una cartella a parte e non si mescolano mai con
+quelli di un'installazione vera.
+
+Per usarlo davvero, sempre dalla pagina **[Releases](https://github.com/cammo22/DaProdFinanza/releases)**:
 `DaProdFinanza-Setup-x.y.z.exe` per installarlo, oppure la versione *portable* che si
 lancia e basta. Windows a 64 bit.
 
@@ -267,6 +274,7 @@ npm run dev            # avvio in sviluppo, con ricarica a caldo
 npm run test           # i test del motore e dell'import
 npm run build          # controllo dei tipi + test + build
 npm run dist           # installatore e portable in release/
+npm run dist:demo      # versione demo portable, con dati di esempio, in release/demo/
 npm run demo           # build compilata, con gli account di prova attivi
 npm run verify:schema  # prova i vincoli del database e fa rollback
 ```

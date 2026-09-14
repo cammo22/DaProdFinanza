@@ -11,6 +11,8 @@ interface AuthContextValue {
   configured: boolean
   /** Credenziali dimostrative, solo nelle build di sviluppo. */
   demo: DemoCredential[] | null
+  /** true nella versione dimostrativa costruita da `npm run dist:demo`. */
+  demoBuild: boolean
   user: SessionUser | null
   login: (username: string, password: string, role?: Role) => Promise<void>
   setupConsultant: (username: string, password: string, fullName: string) => Promise<void>
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   const [version, setVersion] = useState('')
   const [configured, setConfigured] = useState(false)
   const [demo, setDemo] = useState<DemoCredential[] | null>(null)
+  const [demoBuild, setDemoBuild] = useState(false)
   const [user, setUser] = useState<SessionUser | null>(null)
 
   useEffect(() => {
@@ -35,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       if (cancelled) return
 
       setVersion(info.version)
+      setDemoBuild(info.demoBuild)
       setConfigured(state.configured)
       setDemo(state.demo)
 
@@ -81,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ready, version, configured, demo, user, login, setupConsultant, logout }),
-    [ready, version, configured, demo, user, login, setupConsultant, logout]
+    () => ({ ready, version, configured, demo, demoBuild, user, login, setupConsultant, logout }),
+    [ready, version, configured, demo, demoBuild, user, login, setupConsultant, logout]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

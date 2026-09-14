@@ -25,12 +25,23 @@ import { getCompany } from './companies.service'
 
 export function listPeriods(companyUuid: string): FiscalPeriod[] {
   getCompany(companyUuid)
-  return getDatabase()
+  const righe = getDatabase()
     .prepare(
-      `SELECT * FROM fiscal_periods WHERE company_uuid = ? AND deleted = 0
-        ORDER BY year DESC, ifnull(month, 0) DESC`
+      `SELECT p.*,
+              (SELECT group_concat(DISTINCT b.scenario) FROM account_balances b
+                WHERE b.period_uuid = p.uuid AND b.deleted = 0) AS scenarios
+         FROM fiscal_periods p
+        WHERE p.company_uuid = ? AND p.deleted = 0
+        ORDER BY p.year DESC, ifnull(p.month, 0) DESC`
     )
-    .all(companyUuid) as FiscalPeriod[]
+    .all(companyUuid) as (Omit<FiscalPeriod, 'scenarios'> & { scenarios: string | null })[]
+
+  // Quali scenari hanno davvero dei saldi: il periodo più recente può essere un
+  // mese di solo budget, e la UI non deve aprire su una schermata vuota.
+  return righe.map((riga) => ({
+    ...riga,
+    scenarios: riga.scenarios ? (riga.scenarios.split(',') as Scenario[]) : []
+  }))
 }
 
 function getPeriod(companyUuid: string, periodUuid: string): FiscalPeriod {
@@ -99,6 +110,35 @@ export function series(
     .filter((point): point is SeriesPoint => point !== null)
 }
 
+/**
+ * EBITDA degli ultimi 12 mesi che terminano col periodo — §5, per PFN/EBITDA e
+ * DSCR. Su un periodo annuale non serve (`undefined`); su un mese servono
+ * tutti e dodici i mesi precedenti, altrimenti `null`: meglio un indice
+ * indefinito che uno calcolato su un anno a metà.
+ */
+function ebitdaUltimi12Mesi(
+  companyUuid: string,
+  period: FiscalPeriod,
+  scenario: Scenario
+): number | null | undefined {
+  if (period.month === null) return undefined
+  const periodi = listPeriods(companyUuid)
+  let somma = 0
+  for (let i = 0; i < 12; i++) {
+    const indice = period.year * 12 + (period.month - 1) - i
+    const anno = Math.floor(indice / 12)
+    const mese = (indice % 12) + 1
+    const trovato = periodi.find(
+      (p) => p.period_type === 'month' && p.year === anno && p.month === mese
+    )
+    if (!trovato) return null
+    const conti = engineAccounts(companyUuid, trovato.uuid, scenario)
+    if (conti.length === 0) return null
+    somma += incomeStatement(conti, DEFAULT_SCHEME).aggregates.ebitda
+  }
+  return somma
+}
+
 export function analyse(
   companyUuid: string,
   periodUuid: string,
@@ -130,7 +170,8 @@ export function analyse(
       income: statement.aggregates,
       balance,
       days: periodDays(period.year, period.month),
-      debtServiceCents: options.debtServiceCents ?? null
+      debtServiceCents: options.debtServiceCents ?? null,
+      ebitdaLtmCents: ebitdaUltimi12Mesi(companyUuid, period, scenario)
     }),
     comparison: comparison(companyUuid, period, scenario, statement.aggregates)
   }

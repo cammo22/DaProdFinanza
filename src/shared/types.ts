@@ -192,6 +192,8 @@ export interface FiscalPeriod extends BaseRecord {
   label: string
   /** Un periodo chiuso non viene più sovrascritto da un import (§6). */
   closed: 0 | 1
+  /** Scenari che hanno saldi in questo periodo. Presente solo nell'elenco dei periodi. */
+  scenarios?: Scenario[]
 }
 
 /**

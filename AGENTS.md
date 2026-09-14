@@ -408,6 +408,22 @@ Nella serie, "costi totali" sono i costi operativi **prima degli ammortamenti**:
 
 **Migrazione 003 — correzione di un vincolo della 002.** L'indice univoco su `(company_uuid, sha256)` di `import_documents` nasceva da §5, che chiede di *riconoscere* le doppie importazioni: ma riconoscere non è vietare. Lo stesso identico file si importa legittimamente più volte — come budget e come consuntivo, o su due periodi quando si riusa un modello — e il vincolo lo impediva con un errore di database invece di una spiegazione. Il riconoscimento resta nell'anteprima, dove serve. `npm run verify:schema` contiene ora il controllo di regressione, e usa anni e codici che non possono scontrarsi con dati veri.
 
+**Versione dimostrativa** (`npm run dist:demo` → `release/demo/DaProdFinanza-Demo-<versione>-portable.exe`)
+
+Un eseguibile portable che parte già con la Pizzeria DaProd e i suoi bilanci caricati: 2025 mese per mese più il bilancio annuale, 2026 fino ad agosto, budget 2026. Serve a far provare il programma a pieno regime senza dover preparare un file Excel. I numeri sono inventati ma coerenti — stagionalità da pizzeria, imposte che seguono l'utile, stato patrimoniale che quadra per costruzione — e stanno in `src/main/db/demo-data.ts`.
+
+Tre garanzie, perché una demo con credenziali note non deve mai confondersi con l'app vera:
+
+1. **Flag di build, non di runtime.** `__DEMO_BUILD__` è sostituito da electron-vite: nella build normale vale `false` e il codice che ne dipende sparisce dal pacchetto. Lo accende solo `dist:demo`, che alla fine ricompila `out/` senza flag.
+2. **Dati separati.** La demo usa `%APPDATA%\DaProdFinanza Demo` e `Documenti\DaProdFinanza Demo`, con un proprio appId: può convivere con l'app vera sulla stessa macchina senza toccarne database né chiave.
+3. **Striscia sempre visibile** in cima a ogni schermata: "Versione dimostrativa — i dati sono di esempio".
+
+**La vista si apre sul periodo più recente con dati a consuntivo**, non sul più recente in assoluto. È emerso collaudando l'eseguibile demo: il budget copre tutto il 2026, quindi il periodo più recente era dicembre — un mese senza consuntivo — e la prima schermata che un tester vedeva era vuota. L'elenco dei periodi porta ora gli scenari che hanno saldi, e nel menu un periodo senza lo scenario scelto lo dichiara ("Dicembre 2026 · solo budget") invece di farlo scoprire aprendolo.
+
+**PFN/EBITDA e DSCR sull'EBITDA degli ultimi 12 mesi.** §5 li definisce così, ma il motore usava l'EBITDA del periodo: su un mese il debito sembrava dodici volte più pesante, e con dati realistici la Panoramica accendeva un allarme rosso sull'indebitamento che non esisteva. Ora su un periodo mensile si sommano i dodici mesi che terminano con quello scelto; se ne manca anche uno l'indice resta indefinito. È emerso costruendo i bilanci della demo — la fixture dei test era annuale, e lì le due cose coincidono.
+
+⚠️ **Resta aperto, da chiarire col consulente**: ROE e ROI confrontano un flusso (utile, EBIT) con uno stock (patrimonio, capitale investito). §5 non dice di annualizzarli, quindi su un mese valgono circa un dodicesimo del valore annuale. Il bilancio annuale li mostra corretti.
+
 **Da fare in Fase 5**: Capitale Circolante e Tesoreria (§10.5-§10.6). Gli indici del circolante sono già calcolati dal motore; la previsione di cassa richiede scadenziario e previsioni manuali, che sono dati nuovi.
 
 ---

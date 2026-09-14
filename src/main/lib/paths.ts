@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { DEMO_BUILD } from '../build-flags'
 
 /**
  * Struttura dati su disco — AGENTS.md §8.
@@ -12,7 +13,8 @@ import { join } from 'node:path'
  * Il database e i segreti vivono invece in userData (non in Documenti):
  * non sono file che l'utente deve aprire a mano.
  */
-export const ROOT_FOLDER_NAME = 'DaProdFinanza'
+// La demo tiene le cartelle di lavoro separate da quelle dell'app vera.
+export const ROOT_FOLDER_NAME = DEMO_BUILD ? 'DaProdFinanza Demo' : 'DaProdFinanza'
 
 function ensure(dir: string): string {
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true })

@@ -1,0 +1,23 @@
+# Versione dimostrativa: un eseguibile portable che parte già con la Pizzeria
+# DaProd e i suoi bilanci caricati, da far provare senza dover preparare dati.
+#
+# Si costruisce solo con `npm run dist:demo`, che accende il flag di build
+# __DEMO_BUILD__. Nome, identificativo e cartella dati sono diversi da quelli
+# dell'app vera: le due possono convivere sulla stessa macchina senza toccarsi.
+extends: electron-builder.yml
+
+appId: com.daprodproduzioni.daprodfinanza.demo
+productName: DaProdFinanza Demo
+
+directories:
+  buildResources: build
+  output: release/demo
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: portable
+      arch: [x64]
+
+portable:
+  artifactName: DaProdFinanza-Demo-${version}-portable.${ext}

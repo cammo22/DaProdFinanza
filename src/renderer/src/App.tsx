@@ -130,10 +130,31 @@ function Root(): React.JSX.Element {
   )
 }
 
+/**
+ * Nella versione dimostrativa una striscia sempre visibile lo dice: chi la
+ * prova non deve mai scambiare la Pizzeria DaProd per dati veri.
+ */
+function Frame(): React.JSX.Element {
+  const { demoBuild } = useAuth()
+  return (
+    <div className="flex h-full flex-col">
+      {demoBuild && (
+        <div className="shrink-0 border-b border-warning/30 bg-warning/10 px-4 py-1.5 text-center text-xs text-warning">
+          <span className="font-semibold">Versione dimostrativa</span> — i dati sono di esempio e
+          restano separati da quelli di un&apos;installazione reale.
+        </div>
+      )}
+      <div className="min-h-0 flex-1">
+        <Root />
+      </div>
+    </div>
+  )
+}
+
 export default function App(): React.JSX.Element {
   return (
     <AuthProvider>
-      <Root />
+      <Frame />
     </AuthProvider>
   )
 }

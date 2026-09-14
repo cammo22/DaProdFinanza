@@ -40,6 +40,11 @@ function contentSecurityPolicy(): Plugin {
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
+    // Acceso solo da `npm run dist:demo`: nella build normale vale false e il
+    // codice che ne dipende sparisce dal pacchetto.
+    define: {
+      __DEMO_BUILD__: JSON.stringify(process.env['DAPROD_DEMO_BUILD'] === '1')
+    },
     resolve: {
       alias: {
         '@shared': resolve('src/shared'),
