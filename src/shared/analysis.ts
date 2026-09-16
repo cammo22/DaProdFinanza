@@ -1,5 +1,14 @@
-import type { BalanceSheet, IncomeAggregates, IncomeStatement, Ratios, Scheme } from './engine'
-import type { FiscalPeriod, Scenario } from './types'
+import type {
+  BalanceSheet,
+  IncomeAggregates,
+  IncomeStatement,
+  Ratios,
+  Scheme,
+  TreasuryForecast,
+  WorkingCapitalNote,
+  WorkingCapitalSnapshot
+} from './engine'
+import type { FiscalPeriod, Scenario, TreasuryItem, TreasurySettings } from './types'
 
 /**
  * Il risultato completo dell'analisi di un periodo: è il payload che il
@@ -54,4 +63,42 @@ export interface ComparisonColumn {
 
 export interface IncomeComparison {
   columns: ComparisonColumn[]
+}
+
+/**
+ * Vista Capitale Circolante — AGENTS.md §10.5, docs/MODELLO_FINANZIARIO.md §6.
+ * I confronti sono due, come nei mockup: le card guardano la fine dell'anno
+ * precedente, la tabella degli indici lo stesso periodo dell'anno prima.
+ */
+export interface WorkingCapitalView {
+  period: FiscalPeriod
+  scenario: Scenario
+  current: WorkingCapitalSnapshot
+  previousYear: { label: string; snapshot: WorkingCapitalSnapshot } | null
+  previousYearEnd: { label: string; snapshot: WorkingCapitalSnapshot } | null
+  /** Fino a 24 mesi che terminano col periodo scelto, dal più vecchio. */
+  series: WorkingCapitalPoint[]
+  notes: WorkingCapitalNote[]
+  aging: { openCents: number; overdueCents: number }
+}
+
+export interface WorkingCapitalPoint {
+  period_uuid: string
+  label: string
+  dso: number | null
+  dio: number | null
+  dpo: number | null
+  ccc: number | null
+  /** Media mobile a 3 mesi del CCC. */
+  cccMedia: number | null
+  ccn: number
+}
+
+/** Vista Tesoreria — AGENTS.md §10.6. */
+export interface TreasuryView extends TreasuryForecast {
+  items: TreasuryItem[]
+  settings: TreasurySettings
+  /** Liquidità a fine mese dai bilanci a consuntivo, per la parte storica del grafico. */
+  consuntivo: { label: string; date: string; liquidita: number }[]
+  aging: { openCents: number; overdueCents: number }
 }

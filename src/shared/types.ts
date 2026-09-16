@@ -223,3 +223,37 @@ export interface ImportDocument extends BaseRecord {
   notes: string | null
   imported_at: string
 }
+
+// --- Tesoreria (Fase 5) ---------------------------------------------------
+
+/** Movimento atteso: scadenza dello scadenziario o previsione manuale (§10.6). */
+export interface TreasuryItem extends BaseRecord {
+  company_uuid: string
+  direction: 'in' | 'out'
+  source: 'scadenziario' | 'manuale' | 'finanziamento'
+  category: string
+  description: string
+  counterparty: string | null
+  document_ref: string | null
+  document_date: string | null
+  payment_terms: 'RD' | 'DF' | 'FM' | null
+  payment_days: number | null
+  payment_method: string | null
+  due_date: string
+  amount_cents: number
+  paid_cents: number
+  paid_date: string | null
+  recurrence: 'none' | 'monthly'
+  recurrence_until: string | null
+  notes: string | null
+}
+
+export type TreasuryItemInput = Partial<
+  Omit<TreasuryItem, keyof BaseRecord | 'company_uuid'>
+>
+
+export interface TreasurySettings {
+  min_liquidity_cents: number | null
+  opening_cash_cents: number | null
+  opening_cash_date: string | null
+}

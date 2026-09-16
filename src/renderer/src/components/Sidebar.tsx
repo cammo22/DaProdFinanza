@@ -14,6 +14,8 @@ export type Vista =
   | 'panoramica'
   | 'conto-economico'
   | 'stato-patrimoniale'
+  | 'capitale-circolante'
+  | 'tesoreria'
   | 'import'
 
 interface Voce {
@@ -51,6 +53,16 @@ const VISTE: Voce[] = [
     icona: icona('M3 9.5 12 4l9 5.5M5 10v9M19 10v9M9 10v9M15 10v9M3 20h18')
   },
   {
+    id: 'capitale-circolante',
+    label: 'Capitale Circolante',
+    icona: icona('M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6M18 3v3.5h-3.5M6 21v-3.5h3.5')
+  },
+  {
+    id: 'tesoreria',
+    label: 'Tesoreria / Cash Flow',
+    icona: icona('M3 7h18v12H3zM3 11h18M7 15h3M16 4H6')
+  },
+  {
     id: 'import',
     label: 'Import dati',
     icona: icona('M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2')
@@ -58,8 +70,6 @@ const VISTE: Voce[] = [
 ]
 
 const IN_ARRIVO: { label: string; fase: string }[] = [
-  { label: 'Capitale Circolante', fase: 'Fase 5' },
-  { label: 'Tesoreria / Cash Flow', fase: 'Fase 5' },
   { label: 'Banche e Finanziamenti', fase: 'Fase 6' },
   { label: 'Analisi & Simulazioni', fase: 'Fase 7' }
 ]

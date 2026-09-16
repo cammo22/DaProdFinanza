@@ -48,3 +48,37 @@ export function tone(value: number | null, soglia: number, higherIsBetter = true
   const buono = higherIsBetter ? value >= soglia : value <= soglia
   return buono ? 'text-positive' : 'text-negative'
 }
+
+/**
+ * Da quello che si scrive in un campo ("1.234,56", "1234.5", "1 200") a
+ * centesimi interi. null se non è un numero.
+ */
+export function parseEuro(text: string): number | null {
+  const pulito = text.replace(/[\s€]/g, '')
+  if (!pulito) return null
+  // All'italiana se la virgola fa da decimale, o se il punto separa le migliaia.
+  const italiano = /,\d{1,2}$/.test(pulito) || /^-?\d{1,3}(\.\d{3})+(,\d*)?$/.test(pulito)
+  const normalizzato = italiano ? pulito.replace(/\./g, '').replace(',', '.') : pulito.replace(/,/g, '')
+  const valore = Number(normalizzato)
+  return Number.isFinite(valore) ? Math.round(valore * 100) : null
+}
+
+/** Centesimi → testo modificabile in un campo, senza separatori di migliaia. */
+export function euroInput(cents: number | null | undefined): string {
+  if (cents === null || cents === undefined) return ''
+  return (cents / 100).toFixed(2).replace('.', ',').replace(/,00$/, '')
+}
+
+/** "2026-09-16" → "16/09/2026". */
+export function dataIt(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const [y, m, d] = iso.slice(0, 10).split('-')
+  return `${d}/${m}/${y}`
+}
+
+/** "2026-09-16" → "16 set". */
+export function dataBreve(iso: string): string {
+  const mesi = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
+  const [, m, d] = iso.slice(0, 10).split('-')
+  return `${Number(d)} ${mesi[Number(m) - 1]}`
+}

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Analysis, SeriesPoint } from '@shared/analysis'
+import type {
+  Analysis,
+  SeriesPoint,
+  TreasuryView as TreasuryPayload,
+  WorkingCapitalView as WorkingCapitalPayload
+} from '@shared/analysis'
 import { DEFAULT_SCHEME, type Scheme } from '@shared/engine'
 import type { Company, FiscalPeriod, Scenario } from '@shared/types'
 import { api } from '../lib/api'
@@ -9,6 +14,8 @@ import { BalanceSheetView } from './business/BalanceSheetView'
 import { ImportPanel, TemplateButton } from './business/ImportPanel'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
+import { TreasuryView } from './business/TreasuryView'
+import { WorkingCapitalView } from './business/WorkingCapitalView'
 
 /**
  * Area di lavoro di una singola azienda — AGENTS.md §10.2-§10.9.
@@ -41,6 +48,8 @@ export function CompanyPage({
   const [scheme, setScheme] = useState<Scheme>(DEFAULT_SCHEME)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [serie, setSerie] = useState<SeriesPoint[]>([])
+  const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(null)
+  const [circolante, setCircolante] = useState<WorkingCapitalPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -97,7 +106,42 @@ export function CompanyPage({
     }
   }, [company.uuid, periodUuid, scenario, scheme])
 
+  // La tesoreria guarda avanti da oggi: non dipende dal periodo scelto.
+  const caricaTesoreria = useCallback(async () => {
+    try {
+      setTesoreria(await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Tesoreria non disponibile.')
+    }
+  }, [company.uuid])
+
+  useEffect(() => {
+    if (vista === 'tesoreria' || vista === 'panoramica') caricaTesoreria()
+  }, [vista, caricaTesoreria])
+
+  useEffect(() => {
+    if (vista !== 'capitale-circolante' || !periodUuid) return
+    let annullato = false
+    api
+      .get<WorkingCapitalPayload>(
+        `/api/companies/${company.uuid}/periods/${periodUuid}/working-capital?scenario=${scenario}`
+      )
+      .then((result) => {
+        if (!annullato) setCircolante(result)
+      })
+      .catch((err) => {
+        if (!annullato) {
+          setError(err instanceof Error ? err.message : 'Capitale circolante non disponibile.')
+        }
+      })
+    return () => {
+      annullato = true
+    }
+  }, [company.uuid, vista, periodUuid, scenario])
+
   const conDati = analysis !== null && analysis.accountCount > 0
+  // Import e tesoreria non dipendono dal periodo scelto.
+  const senzaPeriodo = vista === 'import' || vista === 'tesoreria'
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -111,7 +155,7 @@ export function CompanyPage({
           </p>
         </div>
 
-        {periods.length > 0 && vista !== 'import' && (
+        {periods.length > 0 && !senzaPeriodo && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-ink-400">Periodo</span>
             <Select
@@ -162,7 +206,19 @@ export function CompanyPage({
           <ImportPanel company={company} onImported={caricaPeriodi} />
         )}
 
-        {vista !== 'import' &&
+        {vista === 'tesoreria' &&
+          (tesoreria ? (
+            <TreasuryView
+              vista={tesoreria}
+              companyUuid={company.uuid}
+              canEdit={canImport}
+              onChanged={caricaTesoreria}
+            />
+          ) : (
+            <p className="text-sm text-ink-400">Caricamento…</p>
+          ))}
+
+        {!senzaPeriodo &&
           (loading ? (
             <p className="text-sm text-ink-400">Caricamento…</p>
           ) : !conDati ? (
@@ -194,7 +250,7 @@ export function CompanyPage({
               />
             </Card>
           ) : vista === 'panoramica' ? (
-            <OverviewView analysis={analysis} serie={serie} />
+            <OverviewView analysis={analysis} serie={serie} tesoreria={tesoreria} />
           ) : vista === 'conto-economico' ? (
             <IncomeStatementView
               analysis={analysis}
@@ -202,6 +258,12 @@ export function CompanyPage({
               scheme={scheme}
               onScheme={setScheme}
             />
+          ) : vista === 'capitale-circolante' ? (
+            circolante && circolante.period.uuid === periodUuid ? (
+              <WorkingCapitalView vista={circolante} />
+            ) : (
+              <p className="text-sm text-ink-400">Caricamento…</p>
+            )
           ) : (
             <BalanceSheetView analysis={analysis} />
           ))}

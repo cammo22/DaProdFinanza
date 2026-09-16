@@ -142,13 +142,18 @@ function conImposte(valori: Valori): { valori: Valori; utile: number } {
 function stock(year: number, month: number, utileCumulato: number): Valori {
   const s = STAGIONE[month - 1]
   const mesi = mesiDaInizio(year, month)
+  // Nel 2026 i crediti verso piattaforme e catering crescono più dei ricavi e
+  // il magazzino un po' meno: la vista del capitale circolante ha così
+  // qualcosa da raccontare rispetto all'anno prima.
+  const crediti = year >= 2026 ? 1.45 : 1
+  const scorte = year >= 2026 ? 1.12 : 1
 
   const attivo: Valori = {
     '10.01': 15_000,
     '11.01': 180_000,
     '11.09': 60_000 + 1_800 * mesi,
-    '20.01': 9_000 * (0.85 + 0.15 * s),
-    '21.01': 6_500 * s,
+    '20.01': 9_000 * (0.85 + 0.15 * s) * scorte,
+    '21.01': 6_500 * s * crediti,
     '21.02': 1_500,
     '21.03': 2_000,
     '22.01': 38_000 + 0.55 * utileCumulato

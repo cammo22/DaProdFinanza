@@ -4,6 +4,7 @@ import { createCompany } from '../server/services/companies.service'
 import { insertUser } from '../server/services/auth.service'
 import { DEMO_BUILD } from '../build-flags'
 import { seedDemoFinancials } from './demo-data'
+import { seedDemoTreasury } from './demo-treasury'
 import { getDatabase } from './index'
 
 /**
@@ -48,7 +49,10 @@ export function seedDemoData(): void {
   const row = getDatabase()
     .prepare('SELECT count(*) AS n FROM users WHERE deleted = 0')
     .get() as { n: number }
-  if (row.n > 0) return
+  if (row.n > 0) {
+    aggiornaDemoEsistente()
+    return
+  }
 
   const client = createClient({
     name: 'Gruppo DaProd',
@@ -69,6 +73,8 @@ export function seedDemoData(): void {
 
   // I bilanci: 2025 completo, 2026 fino ad agosto, budget 2026.
   seedDemoFinancials(company.uuid)
+  // Scadenziario e previsioni di cassa, con date relative a oggi.
+  seedDemoTreasury(company.uuid)
 
   insertUser(
     {
@@ -93,4 +99,27 @@ export function seedDemoData(): void {
   )
 
   console.log('[db] seed dimostrativo creato (cammo / Pizzeria DaProd)')
+}
+
+/**
+ * Un database dimostrativo creato da una versione precedente non ha le
+ * tabelle arrivate dopo: le si riempie una volta sola, senza toccare il resto.
+ */
+function aggiornaDemoEsistente(): void {
+  const db = getDatabase()
+  const azienda = db
+    .prepare(`SELECT uuid FROM companies WHERE vat_number = '01234567890' AND deleted = 0`)
+    .get() as { uuid: string } | undefined
+  if (!azienda) return
+
+  const tesoreria = db
+    .prepare(
+      `SELECT (SELECT count(*) FROM treasury_items WHERE company_uuid = ?)
+            + (SELECT count(*) FROM company_treasury_settings WHERE company_uuid = ?) AS n`
+    )
+    .get(azienda.uuid, azienda.uuid) as { n: number }
+  if (tesoreria.n === 0) {
+    seedDemoTreasury(azienda.uuid)
+    console.log('[db] seed dimostrativo: aggiunta la tesoreria della Pizzeria DaProd')
+  }
 }

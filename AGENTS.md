@@ -264,12 +264,12 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **2** | Schema DB completo del motore finanziario (piano dei conti, tag, saldi, periodi) | Schema applicato, migrazioni versionate | ✅ **Fatta** (sessione 1) |
 | **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | 🟡 **Quasi**: motore, indici e import fatti e verificati. Manca il file di un cliente **con i saldi**: quello consegnato è un modello vuoto (vedi `docs/MODELLO_FINANZIARIO.md` §8-bis) |
 | **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ✅ **Fatta** (sessione 1) — menu laterale e grafici compresi |
-| **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ⬜ Prossima |
-| **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ |
+| **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ✅ **Fatta** (sessione 2) |
+| **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ Prossima |
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ |
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
-| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile e portable funzionanti (v0.0.1). Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8 |
+| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Decisione del cliente (2026-09-16): nessuna release fino a codice finito; alla fine una sola release con tre eseguibili — installer, portable, demo** |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
 ### 13-bis. Stato alla fine della sessione 1 (Fasi 0 → 4)
@@ -424,7 +424,53 @@ Tre garanzie, perché una demo con credenziali note non deve mai confondersi con
 
 ⚠️ **Resta aperto, da chiarire col consulente**: ROE e ROI confrontano un flusso (utile, EBIT) con uno stock (patrimonio, capitale investito). §5 non dice di annualizzarli, quindi su un mese valgono circa un dodicesimo del valore annuale. Il bilancio annuale li mostra corretti.
 
-**Da fare in Fase 5**: Capitale Circolante e Tesoreria (§10.5-§10.6). Gli indici del circolante sono già calcolati dal motore; la previsione di cassa richiede scadenziario e previsioni manuali, che sono dati nuovi.
+### 13-ter. Sessione 2 — modello Excel e Fase 5
+
+**Modello Excel scaricabile.** Provando la versione portatile, un'azienda appena creata restava bloccata: l'unica porta d'ingresso dei dati è l'import, che vuole il file del consulente. Ora *Import dati* (e la schermata vuota di un'azienda senza bilancio) offre **Scarica il modello Excel**: stesse intestazioni e sezioni che l'import riconosce, TIPO a tendina, sotto-classificazioni a "X" solo dove la sezione le prevede, un foglio ISTRUZIONI, e i conti già presenti dell'azienda. Un test genera il modello dalle 24 sezioni della migrazione 002, lo compila e lo reimporta senza perdite (`src/main/import/template.test.ts`).
+
+**Fase 5 — Capitale Circolante (§10.5)**
+
+| Pezzo | Dove |
+|---|---|
+| Componenti, variazioni, media mobile, note automatiche | `src/shared/engine/working-capital.ts` |
+| Confronti e storia a 24 mesi | `src/main/server/services/working-capital.service.ts` |
+| Schermata | `src/renderer/src/pages/business/WorkingCapitalView.tsx` |
+
+Le card confrontano con **la fine dell'anno precedente** (dicembre, o il bilancio annuale se dicembre manca), la tabella degli indici con **lo stesso periodo dell'anno prima**: sono i due confronti dei mockup. La media mobile del CCC è a **3 mesi** e si calcola solo su mesi consecutivi.
+
+Le **note automatiche** sono regole, come chiede §6 del modello, con soglie che il modello non fissa (§9): un indice di ciclo si segnala da **5 giorni** di differenza, una componente da **±10%**, i crediti scaduti da oltre 60 giorni quando pesano almeno il **10%** dei crediti aperti. Sono in `SOGLIE_NOTE`, un punto solo. ⚠️ Da validare col consulente. Un aumento di DPO è una nota **neutra**: pagare più tardi aiuta la cassa ma può essere un segnale di tensione.
+
+**Fase 5 — Tesoreria / Cash Flow e Scadenziario (§10.6)**
+
+Migrazione `004_treasury`:
+
+| Tabella | Cosa tiene |
+|---|---|
+| `treasury_items` | Ogni movimento atteso. `source` distingue le fatture dello **scadenziario**, le **previsioni manuali** (anche mensili ricorrenti) e — dalla Fase 6 — le rate dei **finanziamenti**. Documento, condizioni e modalità di pagamento dal DICTIONARY (§8 del modello). Incassi parziali in `paid_cents`: lo stato "Pagata / Non pagata / Pagamento parziale" si ricava, non si memorizza |
+| `company_treasury_settings` | Soglia minima di liquidità e ultimo saldo di banca noto |
+
+`docs/MODELLO_FINANZIARIO.md` **non definisce la previsione di cassa**: le regole di `src/shared/engine/treasury.ts` sono scelte di implementazione, dichiarate nel codice e da validare col consulente.
+
+1. **La previsione è una somma di movimenti datati**, nessuna proiezione statistica: ogni euro si ritrova in una riga.
+2. **Liquidità di partenza** = il più recente fra il saldo inserito a mano e le liquidità immediate dell'ultimo bilancio a consuntivo, più incassi e pagamenti registrati dopo quella data.
+3. **Le scadenze passate e non saldate entrano oggi**, marcate come scadute: un credito scaduto è ancora un incasso atteso. **Le previsioni manuali passate invece si scartano**: erano stime, il consuntivo le ha superate.
+4. **Condizioni di pagamento** (RD, DF, FM — il file non le spiega): RD e DF = data documento + giorni; FM = data documento + giorni, poi a fine mese. È la lettura d'uso comune.
+5. **Orizzonti** 7, 30, 60, 90 giorni e 6 mesi, cumulati da oggi. La **tensione finanziaria** è il primo giorno in cui la liquidità prevista scende sotto la soglia minima (sotto zero, se la soglia non c'è), cercato giorno per giorno: un campionamento settimanale potrebbe saltarlo. È anche l'avviso "Tensione finanziaria tra N giorni" della Panoramica (§10.2), insieme a quello sui pagamenti scaduti.
+
+La **Panoramica** ora mostra liquidità di oggi, cash flow a 30 giorni e il grafico con storico e previsione, soglia minima e marcatore OGGI. "Affidamenti disponibili" resta un trattino fino alla Fase 6.
+
+**Permessi**: l'operatore Azienda vede tesoreria e scadenziario ma non li modifica. È la scelta prudente finché resta aperto §14 punto 4 (autonomia dell'app Azienda), che cambia il modello di sync.
+
+**Dati della demo**: scadenziario e previsioni della Pizzeria DaProd hanno **date relative al giorno del primo avvio** (`src/main/db/demo-treasury.ts`): una previsione guarda avanti da oggi, e una demo aperta fra sei mesi con tutte le scadenze nel passato mostrerebbe solo arretrati. Ci sono di proposito un credito scaduto da oltre 60 giorni, un incasso parziale e un pagamento scaduto. Un database demo creato da una versione precedente riceve la tesoreria al primo avvio, una volta sola. La **rata del mutuo** è per ora una previsione manuale: col modulo Banche diventerà un finanziamento vero.
+
+**Due correzioni emerse lungo la strada**
+
+- **Serie storica**: mescolava mesi e bilancio annuale sullo stesso asse (un punto annuale in mezzo ai mesi vale dodici volte gli altri), e applicava il limite di 24 punti prima di scartare i periodi senza saldi, così i mesi di solo budget rubavano posto alla storia.
+- **Palette**: alcune tonalità usate dall'interfaccia (`ink-500`, `ink-200`, `brand-200`) non erano definite, e i testi secondari uscivano bianchi.
+
+**Verifiche**: 54 test (`npm run test`), fra cui la previsione di cassa calcolata a mano giorno per giorno; `npm run verify:schema` passa da 22 a 35 controlli con i vincoli della 004; percorso completo provato nell'app: incasso parziale che aggiorna liquidità e previsione, fattura "60 giorni fine mese" con scadenza calcolata, aggiornamento di un database demo della 0.0.4.
+
+**Da fare in Fase 6**: Banche e Finanziamenti (§10.7), con le rate che entrano nella previsione come `source = 'finanziamento'`, gli affidamenti disponibili nella Tesoreria e il DSCR finalmente calcolabile.
 
 ---
 

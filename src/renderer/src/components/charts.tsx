@@ -8,12 +8,13 @@ import {
   LineChart,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis
 } from 'recharts'
-import { euro, percent } from '../lib/format'
+import { days, euro, percent } from '../lib/format'
 
 /**
  * I grafici delle schermate di analisi — AGENTS.md §10.2 e §10.3.
@@ -32,7 +33,12 @@ export const COLORI = {
   ebitda: '#a78bfa',
   utile: '#60a5fa',
   liquidita: '#34d399',
-  previsione: '#fbbf24'
+  previsione: '#fbbf24',
+  dso: '#60a5fa',
+  dio: '#fbbf24',
+  dpo: '#f472b6',
+  ccc: '#a78bfa',
+  soglia: '#f87171'
 } as const
 
 /** Palette della composizione costi: tinte distinte, leggibili sul fondo scuro. */
@@ -307,5 +313,207 @@ export function BarraBreakEven({
         </span>
       </p>
     </div>
+  )
+}
+
+function TooltipGiorni({ active, payload, label }: TooltipProps): React.JSX.Element | null {
+  if (!active || !payload?.length) return null
+  return (
+    <Riquadro>
+      <p className="mb-1 font-medium text-ink-100">{label}</p>
+      {payload.map((voce) => (
+        <p key={voce.dataKey} className="flex items-center gap-2 text-ink-300">
+          <span className="h-2 w-2 rounded-full" style={{ background: voce.color }} />
+          {voce.name}
+          <span className="ml-auto tabular-nums text-ink-100">
+            {voce.value === null || voce.value === undefined ? '—' : days(voce.value)}
+          </span>
+        </p>
+      ))}
+    </Riquadro>
+  )
+}
+
+export interface PuntoCiclo {
+  label: string
+  dso: number | null
+  dio: number | null
+  dpo: number | null
+  ccc: number | null
+  cccMedia: number | null
+}
+
+/** DSO, DIO, DPO e CCC sovrapposti — §10.5. */
+export function SerieCiclo({ dati }: { dati: PuntoCiclo[] }): React.JSX.Element {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={dati} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <CartesianGrid stroke={GRIGLIA} strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="label"
+          tick={ASSE}
+          axisLine={false}
+          tickLine={false}
+          tickFormatter={etichettaAsse(dati)}
+        />
+        <YAxis
+          tick={ASSE}
+          axisLine={false}
+          tickLine={false}
+          width={36}
+          allowDecimals={false}
+          domain={[(min: number) => Math.floor(min) - 1, (max: number) => Math.ceil(max) + 1]}
+        />
+        <Tooltip content={<TooltipGiorni />} />
+        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Line name="DSO" dataKey="dso" stroke={COLORI.dso} strokeWidth={2} dot={false} />
+        <Line name="DIO" dataKey="dio" stroke={COLORI.dio} strokeWidth={2} dot={false} />
+        <Line name="DPO" dataKey="dpo" stroke={COLORI.dpo} strokeWidth={2} dot={false} />
+        <Line name="CCC" dataKey="ccc" stroke={COLORI.ccc} strokeWidth={2.5} dot={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+
+/** CCC con media mobile a 3 mesi — §10.5. */
+export function SerieCcc({ dati }: { dati: PuntoCiclo[] }): React.JSX.Element {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={dati} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <CartesianGrid stroke={GRIGLIA} strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="label"
+          tick={ASSE}
+          axisLine={false}
+          tickLine={false}
+          tickFormatter={etichettaAsse(dati)}
+        />
+        <YAxis
+          tick={ASSE}
+          axisLine={false}
+          tickLine={false}
+          width={36}
+          allowDecimals={false}
+          domain={[(min: number) => Math.floor(min) - 1, (max: number) => Math.ceil(max) + 1]}
+        />
+        <Tooltip content={<TooltipGiorni />} />
+        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Line
+          name="CCC"
+          dataKey="ccc"
+          stroke={COLORI.ccc}
+          strokeWidth={2}
+          dot={{ r: 2, fill: COLORI.ccc }}
+        />
+        <Line
+          name="Media mobile 3 mesi"
+          dataKey="cccMedia"
+          stroke="#94a3b8"
+          strokeWidth={1.5}
+          strokeDasharray="5 4"
+          dot={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+
+/** Mini-grafico da tabella: solo la forma dell'andamento. */
+export function Sparkline({
+  valori,
+  colore
+}: {
+  valori: (number | null)[]
+  colore: string
+}): React.JSX.Element {
+  const dati = valori.map((v, i) => ({ i, v }))
+  return (
+    <div className="h-7 w-28">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={dati} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
+          <YAxis hide domain={['dataMin', 'dataMax']} />
+          <Line
+            dataKey="v"
+            stroke={colore}
+            strokeWidth={1.5}
+            dot={false}
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export interface PuntoTesoreria {
+  label: string
+  consuntivo: number | null
+  previsione: number | null
+}
+
+/**
+ * Liquidità: storico a consuntivo e previsione, con la soglia minima e il
+ * marcatore di oggi — §10.2 e §10.6. I due tratti si toccano sul punto "Oggi".
+ */
+export function GraficoTesoreria({
+  dati,
+  soglia,
+  altezza = 240
+}: {
+  dati: PuntoTesoreria[]
+  soglia: number | null
+  altezza?: number
+}): React.JSX.Element {
+  return (
+    <ResponsiveContainer width="100%" height={altezza}>
+      <LineChart data={dati} margin={{ top: 16, right: 12, bottom: 0, left: 0 }}>
+        <CartesianGrid stroke={GRIGLIA} strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="label"
+          tick={ASSE}
+          axisLine={false}
+          tickLine={false}
+          interval="preserveStartEnd"
+          minTickGap={24}
+        />
+        <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
+        <Tooltip content={<TooltipEuro />} />
+        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        {soglia !== null && (
+          <ReferenceLine
+            y={soglia}
+            stroke={COLORI.soglia}
+            strokeDasharray="4 4"
+            label={{
+              value: 'Soglia minima',
+              fill: COLORI.soglia,
+              fontSize: 10,
+              position: 'insideBottomLeft'
+            }}
+          />
+        )}
+        <ReferenceLine
+          x="Oggi"
+          stroke="#e2e8f0"
+          strokeDasharray="2 3"
+          label={{ value: 'OGGI', fill: '#e2e8f0', fontSize: 10, position: 'top' }}
+        />
+        <Line
+          name="Consuntivo"
+          dataKey="consuntivo"
+          stroke={COLORI.liquidita}
+          strokeWidth={2}
+          dot={{ r: 2.5, fill: COLORI.liquidita }}
+        />
+        <Line
+          name="Previsione"
+          dataKey="previsione"
+          stroke={COLORI.previsione}
+          strokeWidth={2}
+          strokeDasharray="6 4"
+          dot={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   )
 }

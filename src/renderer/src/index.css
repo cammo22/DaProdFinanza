@@ -12,13 +12,16 @@
   --color-ink-800: #141b29;
   --color-ink-700: #1d2636;
   --color-ink-600: #2a3548;
+  --color-ink-500: #4b5a70;
   --color-ink-400: #64748b;
   --color-ink-300: #8b99ad;
+  --color-ink-200: #c3cedd;
   --color-ink-100: #e6edf7;
 
   --color-brand-500: #3b82f6;
   --color-brand-400: #60a5fa;
   --color-brand-300: #3ddbff;
+  --color-brand-200: #9ee9ff;
 
   --color-positive: #34d399;
   --color-negative: #f87171;

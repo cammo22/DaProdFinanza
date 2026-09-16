@@ -1,8 +1,15 @@
-import type { Analysis, SeriesPoint } from '@shared/analysis'
+import type { Analysis, SeriesPoint, TreasuryView } from '@shared/analysis'
 import { THRESHOLDS } from '@shared/engine'
-import { days, euro, percent, times, tone } from '../../lib/format'
+import { dataIt, days, euro, percent, times, tone } from '../../lib/format'
 import { Card } from '../../components/ui'
-import { COLORI, SerieABarre, SerieEconomica, SerieLiquidita } from '../../components/charts'
+import {
+  COLORI,
+  GraficoTesoreria,
+  SerieABarre,
+  SerieEconomica,
+  SerieLiquidita
+} from '../../components/charts'
+import { puntiTesoreria } from './TreasuryView'
 
 /**
  * Panoramica — AGENTS.md §10.2.
@@ -24,11 +31,30 @@ interface Avviso {
   dettaglio: string
 }
 
-function avvisi(analysis: Analysis): Avviso[] {
+function avvisi(analysis: Analysis, tesoreria: TreasuryView | null): Avviso[] {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
   const b = analysis.balanceSheet
   const out: Avviso[] = []
+
+  // Gli avvisi di cassa guardano avanti da oggi, non dal periodo scelto.
+  if (tesoreria?.tensione) {
+    const t = tesoreria.tensione
+    out.push({
+      livello: t.days <= 30 ? 'rosso' : 'giallo',
+      titolo: `Tensione finanziaria tra ${t.days} giorni`,
+      dettaglio: `Il ${dataIt(t.date)} la liquidità prevista scende a ${euro(t.liquidita)}${
+        t.soglia > 0 ? `, sotto la soglia minima di ${euro(t.soglia)}` : ''
+      }.`
+    })
+  }
+  if (tesoreria && tesoreria.scaduti.uscite > 0) {
+    out.push({
+      livello: 'giallo',
+      titolo: `Pagamenti scaduti per ${euro(tesoreria.scaduti.uscite)}`,
+      dettaglio: 'Nello scadenziario ci sono uscite già passate e non registrate come pagate.'
+    })
+  }
 
   if (a.utile < 0) {
     out.push({
@@ -118,15 +144,18 @@ function Kpi({
 
 export function OverviewView({
   analysis,
-  serie
+  serie,
+  tesoreria
 }: {
   analysis: Analysis
   serie: SeriesPoint[]
+  tesoreria: TreasuryView | null
 }): React.JSX.Element {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
   const b = analysis.balanceSheet
-  const lista = avvisi(analysis)
+  const lista = avvisi(analysis, tesoreria)
+  const trenta = tesoreria?.horizons.find((h) => h.days === 30)
 
   return (
     <div className="flex flex-col gap-5">
@@ -190,7 +219,17 @@ export function OverviewView({
 
         <Card title="KPI finanziari">
           <div className="py-1">
-            <Kpi label="Liquidità immediate" value={euro(b.liquiditaImmediate)} />
+            <Kpi label="Liquidità a fine periodo" value={euro(b.liquiditaImmediate)} />
+            {tesoreria && trenta && (
+              <>
+                <Kpi label="Liquidità oggi" value={euro(tesoreria.liquiditaOggi)} />
+                <Kpi
+                  label="Cash flow prossimi 30 giorni"
+                  value={euro(trenta.cashFlow)}
+                  colore={trenta.cashFlow < 0 ? 'text-negative' : 'text-positive'}
+                />
+              </>
+            )}
             <Kpi label="Capitale circolante netto" value={euro(b.capitaleCircolanteNetto)} />
             <Kpi
               label="Ciclo del circolante"
@@ -233,12 +272,17 @@ export function OverviewView({
               <SerieABarre dati={serie} chiave="utile" nome="Utile netto" colore={COLORI.utile} />
             </div>
           </Card>
-          <Card title="Liquidità">
+          <Card title={tesoreria ? 'Liquidità — storico e previsione' : 'Liquidità'}>
             <div className="px-3 py-4">
-              <SerieLiquidita dati={serie} />
-              <p className="px-2 pt-2 text-xs text-ink-500">
-                La previsione a 30/60/90 giorni arriva con la Tesoreria (Fase 5).
-              </p>
+              {tesoreria ? (
+                <GraficoTesoreria
+                  dati={puntiTesoreria(tesoreria)}
+                  soglia={tesoreria.sogliaMinima}
+                  altezza={200}
+                />
+              ) : (
+                <SerieLiquidita dati={serie} />
+              )}
             </div>
           </Card>
         </div>
