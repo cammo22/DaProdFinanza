@@ -523,3 +523,75 @@ export function GraficoTesoreria({
     </ResponsiveContainer>
   )
 }
+
+export interface VoceConfronto {
+  nome: string
+  attuale: number
+  simulato: number
+}
+
+/** Conto economico attuale e simulato, affiancati — §10.8. */
+export function ConfrontoBarre({ dati }: { dati: VoceConfronto[] }): React.JSX.Element {
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={dati} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barGap={2}>
+        <CartesianGrid stroke={GRIGLIA} strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="nome" tick={ASSE} axisLine={false} tickLine={false} interval={0} />
+        <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
+        <Tooltip content={<TooltipEuro />} cursor={{ fill: '#1d2636', opacity: 0.4 }} />
+        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} />
+        <ReferenceLine y={0} stroke="#334155" />
+        <Bar name="Attuale" dataKey="attuale" fill="#64748b" radius={[3, 3, 0, 0]} />
+        <Bar name="Scenario" dataKey="simulato" fill={COLORI.utile} radius={[3, 3, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+export interface PuntoCassaSimulata {
+  label: string
+  attuale: number
+  simulato: number
+}
+
+/** Liquidità mese per mese, attuale e simulata, con la soglia minima — §10.8. */
+export function ConfrontoCassa({
+  dati,
+  soglia
+}: {
+  dati: PuntoCassaSimulata[]
+  soglia: number | null
+}): React.JSX.Element {
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <LineChart data={dati} margin={{ top: 16, right: 12, bottom: 0, left: 0 }}>
+        <CartesianGrid stroke={GRIGLIA} strokeDasharray="3 3" vertical={false} />
+        <XAxis dataKey="label" tick={ASSE} axisLine={false} tickLine={false} />
+        <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
+        <Tooltip content={<TooltipEuro />} />
+        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        {soglia !== null && (
+          <ReferenceLine
+            y={soglia}
+            stroke={COLORI.soglia}
+            strokeDasharray="4 4"
+            label={{
+              value: 'Soglia minima',
+              fill: COLORI.soglia,
+              fontSize: 10,
+              position: 'insideBottomLeft'
+            }}
+          />
+        )}
+        <Line name="Attuale" dataKey="attuale" stroke="#94a3b8" strokeWidth={2} dot={false} />
+        <Line
+          name="Scenario"
+          dataKey="simulato"
+          stroke={COLORI.previsione}
+          strokeWidth={2.5}
+          dot={{ r: 2, fill: COLORI.previsione }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}

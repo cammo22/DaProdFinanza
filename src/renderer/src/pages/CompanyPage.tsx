@@ -6,13 +6,14 @@ import type {
   TreasuryView as TreasuryPayload,
   WorkingCapitalView as WorkingCapitalPayload
 } from '@shared/analysis'
-import { DEFAULT_SCHEME, type Scheme } from '@shared/engine'
-import type { Company, FiscalPeriod, Scenario } from '@shared/types'
+import { DEFAULT_SCHEME, type Scheme, type SimulationBase } from '@shared/engine'
+import type { Company, FiscalPeriod, Scenario, SimulationScenario } from '@shared/types'
 import { api } from '../lib/api'
 import type { Vista } from '../components/Sidebar'
 import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
 import { BalanceSheetView } from './business/BalanceSheetView'
 import { BanksView } from './business/BanksView'
+import { SimulationView } from './business/SimulationView'
 import { ImportPanel, TemplateButton } from './business/ImportPanel'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
@@ -53,6 +54,12 @@ export function CompanyPage({
   const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(null)
   const [circolante, setCircolante] = useState<WorkingCapitalPayload | null>(null)
   const [banche, setBanche] = useState<BankingPayload | null>(null)
+  const [simBase, setSimBase] = useState<{
+    key: string
+    base: SimulationBase | null
+    error: string | null
+  } | null>(null)
+  const [scenari, setScenari] = useState<SimulationScenario[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -119,7 +126,8 @@ export function CompanyPage({
   }, [company.uuid])
 
   useEffect(() => {
-    if (vista === 'tesoreria' || vista === 'panoramica') caricaTesoreria()
+    // Anche le simulazioni la usano, per la soglia minima di liquidità.
+    if (vista === 'tesoreria' || vista === 'panoramica' || vista === 'simulazioni') caricaTesoreria()
   }, [vista, caricaTesoreria])
 
   const caricaBanche = useCallback(async () => {
@@ -133,6 +141,41 @@ export function CompanyPage({
   useEffect(() => {
     if (vista === 'banche') caricaBanche()
   }, [vista, caricaBanche])
+
+  const caricaScenari = useCallback(async () => {
+    try {
+      setScenari(await api.get<SimulationScenario[]>(`/api/companies/${company.uuid}/simulations`))
+    } catch {
+      setScenari([])
+    }
+  }, [company.uuid])
+
+  // La base della simulazione dipende dal periodo e dallo scenario scelti.
+  useEffect(() => {
+    if (vista !== 'simulazioni' || !periodUuid) return
+    const key = `${periodUuid}|${scenario}`
+    let annullato = false
+    caricaScenari()
+    api
+      .get<SimulationBase>(
+        `/api/companies/${company.uuid}/periods/${periodUuid}/simulation-base?scenario=${scenario}`
+      )
+      .then((base) => {
+        if (!annullato) setSimBase({ key, base, error: null })
+      })
+      .catch((err) => {
+        if (!annullato) {
+          setSimBase({
+            key,
+            base: null,
+            error: err instanceof Error ? err.message : 'Base della simulazione non disponibile.'
+          })
+        }
+      })
+    return () => {
+      annullato = true
+    }
+  }, [company.uuid, vista, periodUuid, scenario, caricaScenari])
 
   useEffect(() => {
     if (vista !== 'capitale-circolante' || !periodUuid) return
@@ -285,6 +328,27 @@ export function CompanyPage({
               scheme={scheme}
               onScheme={setScheme}
             />
+          ) : vista === 'simulazioni' ? (
+            !simBase || simBase.key !== `${periodUuid}|${scenario}` ? (
+              <p className="text-sm text-ink-400">Caricamento…</p>
+            ) : simBase.base ? (
+              <SimulationView
+                key={simBase.key}
+                base={simBase.base}
+                companyUuid={company.uuid}
+                periodUuid={periodUuid}
+                scenario={scenario}
+                scenari={scenari}
+                soglia={tesoreria?.sogliaMinima ?? null}
+                canEdit={canImport}
+                onScenariChanged={caricaScenari}
+                onVaiTesoreria={() => onVista('tesoreria')}
+              />
+            ) : (
+              <Card>
+                <EmptyState title="Simulazione non disponibile" description={simBase.error ?? ''} />
+              </Card>
+            )
           ) : vista === 'capitale-circolante' ? (
             circolante && circolante.period.uuid === periodUuid ? (
               <WorkingCapitalView vista={circolante} />

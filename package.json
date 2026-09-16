@@ -1,6 +1,6 @@
 {
   "name": "daprodfinanza",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Gestionale desktop di controllo di gestione per consulenti finanziari aziendali",
   "main": "./out/main/index.js",
   "author": "DaProdProduzioni",

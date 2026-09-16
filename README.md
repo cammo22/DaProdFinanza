@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%206%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%207%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -172,8 +172,11 @@ riclassificato con tutti gli indici, e lo mostra in cinque schermate: panoramica
 avvisi automatici, conto economico, stato patrimoniale, capitale circolante con le sue
 note automatiche, e tesoreria con scadenziario e previsione di cassa a sei mesi.
 C'è anche la parte bancaria: fidi, mutui e leasing con il loro piano di ammortamento,
-le rate che entrano da sole nella previsione di cassa. Mancano le simulazioni e il
-collegamento fra i due programmi.
+le rate che entrano da sole nella previsione di cassa. E ci sono le **simulazioni**:
+si muovono le leve (ricavi, costi, dipendenti, giorni di incasso, un investimento, un
+finanziamento) e si vede subito l'effetto su utile, cassa e debito, scenario salvabile
+ed esportabile in Excel. Tutte e sette le viste esistono; manca il collegamento fra i
+due programmi.
 
 | | Fase | Stato |
 |---|---|---|
@@ -184,8 +187,8 @@ collegamento fra i due programmi.
 | 4 | Le prime tre schermate di analisi | ✅ Fatta |
 | 5 | Capitale circolante, tesoreria, scadenziario | ✅ Fatta |
 | 6 | Banche e finanziamenti | ✅ Fatta |
-| 7 | Analisi e simulazioni | ⬜ Prossima |
-| 8-9 | Collegamento fra i due programmi | ⬜ |
+| 7 | Analisi e simulazioni | ✅ Fatta |
+| 8-9 | Collegamento fra i due programmi, import Excel più tollerante | ⬜ Prossima |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
 La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in

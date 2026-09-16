@@ -266,8 +266,8 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ✅ **Fatta** (sessione 1) — menu laterale e grafici compresi |
 | **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ✅ **Fatta** (sessione 2) |
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ✅ **Fatta** (sessione 2) |
-| **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ Prossima |
-| **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
+| **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ✅ **Fatta** (sessione 2) |
+| **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ Prossima |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Regola del cliente (2026-09-16): una release a ogni aggiornamento importante, sempre con i tre eseguibili — installer, portable e demo** (`npm run dist` e `npm run dist:demo`). La prima così è la v0.0.5, con le Fasi 5 e 6 |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
@@ -515,6 +515,39 @@ Verificato con i numeri da manuale: 12.000 € al 6% in 12 rate mensili danno la
 ⚠️ **Nota per chi sviluppa da Claude desktop su Windows**: l'app è un pacchetto MSIX, e i processi che lancia vedono `%APPDATA%` *virtualizzata* (`%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Roaming`) sovrapposta a quella vera. Una cartella "DaProdFinanza Demo" può quindi esistere due volte, con chiavi diverse, e rinominarla da lì non fa quello che sembra. Per le prove da zero si usa `--user-data-dir`, mai rinominare le cartelle dati.
 
 Corretta anche la grammatica delle note automatiche ("Magazzino in calo…: libera liquidità").
+
+**Fase 7 — Analisi & Simulazioni (§10.8)**
+
+| Pezzo | Dove |
+|---|---|
+| Motore dello scenario e dettaglio impatti | `src/shared/engine/simulation.ts` |
+| Base (12 mesi, patrimonio, liquidità, finanziamenti), scenari, esportazione Excel | `src/main/server/services/simulation.service.ts` |
+| Schermata | `src/renderer/src/pages/business/SimulationView.tsx` |
+| Scenari salvati | migrazione `006_simulation_scenarios` |
+
+**Il calcolo gira nella schermata.** Il server prepara la base; lo scenario lo calcola lo stesso motore condiviso direttamente nel renderer, così ogni leva mossa aggiorna i risultati all'istante. L'esportazione Excel usa lo stesso motore sul server: schermata e file non possono divergere.
+
+**Uno scenario salvato è solo l'elenco delle variazioni**, in JSON. I risultati si ricalcolano sempre sulla base corrente: uno scenario di marzo riaperto a settembre ragiona sui numeri di settembre. Salvare è del Consulente; simulare ed esportare anche dell'operatore Azienda, perché non cambia nessun dato.
+
+**La base** sono i 12 mesi che terminano col periodo scelto (tutti obbligatori: altrimenti la schermata dice quali mancano) oppure un bilancio annuale. Un mese solo porterebbe dentro la sua stagionalità.
+
+**Il confronto è fra due proiezioni fatte allo stesso modo**: la situazione attuale è lo stesso calcolo con le leve a zero, sui 12 mesi da oggi.
+
+Il modello del consulente non tratta le simulazioni: le regole sono scelte dichiarate nel codice, da validare con lui.
+
+1. **I costi variabili seguono i ricavi** (materie prime e produzione); "prezzo merci" e "costi di produzione" sono variazioni di prezzo sopra l'effetto volume. Rimanenze ferme.
+2. **"Altri costi fissi"** = commerciali + generali. Il personale ha la sua leva (dipendenti × costo annuo), gli ammortamenti seguono gli investimenti.
+3. **Imposte** all'aliquota effettiva della base; 24% (IRES) se la base non ha utile.
+4. **Circolante**: i crediti seguono i ricavi, magazzino e fornitori gli **acquisti**. Il magazzino non segue il costo del venduto perché nel modello questo comprende personale diretto e ammortamenti, e un forno nuovo farebbe crescere le scorte. Un obiettivo di giorni sposta la voce in proporzione. La variazione assorbe (o libera) cassa nei primi tre mesi.
+5. **Cash flow annuo** = EBITDA − imposte − variazione del circolante − investimenti + nuovi finanziamenti − rate dei 12 mesi (esistenti e nuove). Straordinari esclusi.
+6. **Investimento** pagato subito e ammortizzato a quote costanti; **finanziamento** incassato subito, francese, prima rata dopo un mese.
+7. **PFN fra 12 mesi** = debiti finanziari di oggi − capitale rimborsato + nuovo debito residuo − liquidità finale.
+
+Otto indicatori a confronto (ricavi, margine lordo, EBITDA, utile, break-even, cash flow, liquidità e PFN fra 12 mesi), grafico a barre del conto economico, liquidità mese per mese con la soglia minima, dettaglio degli impatti con la nota che dice da dove arriva ogni differenza, riepilogo di investimento e finanziamento, **Esporta scenario** in Excel e **Vai alla Tesoreria**.
+
+**Verifiche**: 80 test (11 sulle simulazioni: +10% di ricavi calcolato a mano, dipendenti, investimento con lo scudo fiscale dell'ammortamento, finanziamento con la PFN che torna al centesimo, giorni obiettivo, leve fuori scala); `npm run verify:schema` a 51 controlli; nell'app: leve mosse, scenario salvato e riaperto, esportazione Excel riletta, base rifiutata con i mesi mancanti elencati.
+
+**Il menu non ha più voci "in arrivo"**: tutte le sette viste di §10 esistono.
 
 ---
 

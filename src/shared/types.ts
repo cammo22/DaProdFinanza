@@ -296,3 +296,13 @@ export interface Loan extends BaseRecord {
   balloon_cents: number
   notes: string | null
 }
+
+// --- Simulazioni (Fase 7) -------------------------------------------------
+
+export interface SimulationScenario extends BaseRecord {
+  company_uuid: string
+  name: string
+  /** JSON di `SimulationParams`: i risultati si ricalcolano sempre. */
+  params: string
+  notes: string | null
+}
