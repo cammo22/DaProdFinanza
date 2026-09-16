@@ -291,5 +291,6 @@ Nel foglio `PIANO DEI CONTI` ogni sezione dichiara a quali aggregati contribuisc
 
 - Aliquote fiscali per forma giuridica/regione (per la pianificazione fiscale, `AGENTS.md` §11.6).
 - Soglie di alert per la Panoramica (es. a che punto "Margine operativo -22%" diventa un alert rosso) — negli screenshot i valori sono plausibili ma le soglie esatte non sono documentate nel file Excel.
-- Schema esatto delle "note automatiche" nel tab Capitale Circolante (§6) — dedotto dagli screenshot, non specificato nel file.
+- Schema esatto delle "note automatiche" nel tab Capitale Circolante (§6) — dedotto dagli screenshot, non specificato nel file. *Implementate con soglie ipotizzate (5 giorni sugli indici di ciclo, ±10% sulle componenti, 10% di crediti scaduti oltre 60 giorni): vedi `AGENTS.md` §13-ter.*
+- Regole della previsione di cassa (tab Tesoreria): il file non la tratta. L'app somma movimenti datati — scadenze aperte, previsioni manuali, rate — partendo dall'ultimo saldo noto; le scadenze passate e aperte entrano oggi. Anche il significato delle condizioni di pagamento RD/DF/FM (§8) è una lettura d'uso comune da confermare. Dettaglio in `AGENTS.md` §13-ter.
 - Formato del file XML di fatture elettroniche da importare (vedi `AGENTS.md` §11.2 e §14).

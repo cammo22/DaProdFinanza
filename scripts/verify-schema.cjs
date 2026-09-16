@@ -151,6 +151,68 @@ app.whenReady().then(() => {
     check('stesso conto, periodo e scenario', () => insertBalance(randomUUID(), accountUuid, monthUuid, 'actual', 999), 'rifiutato')
     check('scenario inventato', () => insertBalance(randomUUID(), accountUuid, yearUuid, 'consuntivo', 100), 'rifiutato')
     check('saldo su un conto inesistente', () => insertBalance(randomUUID(), randomUUID(), monthUuid, 'actual', 100), 'rifiutato')
+
+    const insertItem = (fields) => {
+      const row = {
+        direction: 'in',
+        source: 'scadenziario',
+        due_date: `${ANNO}-01-31`,
+        amount_cents: 10000,
+        paid_cents: 0,
+        paid_date: null,
+        recurrence: 'none',
+        payment_terms: null,
+        ...fields
+      }
+      db.prepare(
+        `INSERT INTO treasury_items (uuid, company_uuid, direction, source, category, description,
+                                     payment_terms, due_date, amount_cents, paid_cents, paid_date,
+                                     recurrence, created_at, updated_at, synced, deleted)
+         VALUES (?, ?, ?, ?, 'Clienti', 'prova', ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`
+      ).run(
+        randomUUID(), company.uuid, row.direction, row.source, row.payment_terms, row.due_date,
+        row.amount_cents, row.paid_cents, row.paid_date, row.recurrence, now, now
+      )
+    }
+
+    console.log('\n Tesoreria e scadenziario')
+    check('fattura da incassare', () => insertItem({}), 'accettato')
+    check('incasso parziale con data', () => insertItem({ paid_cents: 4000, paid_date: `${ANNO}-02-01` }), 'accettato')
+    check('previsione manuale ricorrente', () => insertItem({ source: 'manuale', direction: 'out', recurrence: 'monthly' }), 'accettato')
+    check('importo zero', () => insertItem({ amount_cents: 0 }), 'rifiutato')
+    check('incassato più del totale', () => insertItem({ paid_cents: 20000, paid_date: `${ANNO}-02-01` }), 'rifiutato')
+    check('data di incasso senza importo incassato', () => insertItem({ paid_date: `${ANNO}-02-01` }), 'rifiutato')
+    check('fattura dello scadenziario ricorrente', () => insertItem({ recurrence: 'monthly' }), 'rifiutato')
+    check('verso inventato', () => insertItem({ direction: 'entrata' }), 'rifiutato')
+    check('condizione di pagamento fuori dizionario', () => insertItem({ payment_terms: 'XX' }), 'rifiutato')
+
+    // Un'azienda temporanea, perché quella esistente può avere già le sue
+    // impostazioni e l'indice univoco le proteggerebbe.
+    const clientUuid = randomUUID()
+    const tempCompany = randomUUID()
+    db.prepare(
+      `INSERT INTO clients (uuid, code, name, archived, created_at, updated_at, synced, deleted)
+       VALUES (?, ?, 'Cliente di prova', 0, ?, ?, 0, 0)`
+    ).run(clientUuid, codice('CLI'), now, now)
+    db.prepare(
+      `INSERT INTO companies (uuid, client_uuid, code, name, archived, created_at, updated_at, synced, deleted)
+       VALUES (?, ?, ?, 'Azienda di prova', 0, ?, ?, 0, 0)`
+    ).run(tempCompany, clientUuid, codice('AZ'), now, now)
+
+    const insertSettings = (cash, date, min = 100) =>
+      db
+        .prepare(
+          `INSERT INTO company_treasury_settings (uuid, company_uuid, min_liquidity_cents,
+                                                  opening_cash_cents, opening_cash_date,
+                                                  created_at, updated_at, synced, deleted)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)`
+        )
+        .run(randomUUID(), tempCompany, min, cash, date, now, now)
+
+    check('saldo di cassa senza data', () => insertSettings(5000, null), 'rifiutato')
+    check('soglia minima negativa', () => insertSettings(null, null, -1), 'rifiutato')
+    check('impostazioni valide', () => insertSettings(5000, `${ANNO}-01-01`), 'accettato')
+    check('seconde impostazioni per la stessa azienda', () => insertSettings(null, null), 'rifiutato')
   } finally {
     db.exec('ROLLBACK')
     db.close()

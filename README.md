@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%204%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%205%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -140,15 +140,33 @@ nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 - **Banche e Finanziamenti** — fidi, mutui e leasing, e quanto pesano sulla cassa futura
 - **Analisi & Simulazioni** — "cosa succede se": assumo, investo, alzo i prezzi
 
+## Come entrano i dati
+
+Due strade, che si usano insieme.
+
+**Il bilancio, da Excel.** Dentro un'azienda, alla voce *Import dati*, c'è il pulsante
+**Scarica il modello Excel**: un file con tutte le sezioni già pronte, e i conti
+dell'azienda se ce ne sono già. Si scrive il saldo di ogni conto, si ricarica il file,
+si sceglie a quale mese e a quale scenario appartiene (consuntivo, budget, forecast).
+Prima di scrivere qualsiasi cosa, il programma mostra un riepilogo di quello che ha
+letto. Il consulente che ha già il suo file può caricare direttamente quello.
+
+**Le scadenze e le previsioni, a mano.** Nella *Tesoreria* si inseriscono le fatture da
+incassare e da pagare, con le condizioni di pagamento (*30 giorni fine mese* e simili:
+la scadenza si calcola da sola), e le voci che si ripetono — stipendi, affitto, incassi
+di cassa. Quando una fattura viene pagata, anche solo in parte, lo si registra con un
+clic, e la liquidità di oggi si aggiorna.
+
 ---
 
 ## A che punto siamo
 
 Il programma si avvia, riconosce chi entra, gestisce l'anagrafica dei clienti e delle
 loro aziende, importa il piano dei conti da Excel e ne calcola il bilancio
-riclassificato con tutti gli indici — e adesso lo **mostra**: panoramica con avvisi
-automatici, conto economico riclassificato e stato patrimoniale con tutti gli indici.
-Quello che manca è la parte di cassa: previsione, scadenziario, banche, simulazioni.
+riclassificato con tutti gli indici, e lo mostra in cinque schermate: panoramica con
+avvisi automatici, conto economico, stato patrimoniale, capitale circolante con le sue
+note automatiche, e tesoreria con scadenziario e previsione di cassa a sei mesi.
+Mancano banche e finanziamenti, le simulazioni e il collegamento fra i due programmi.
 
 | | Fase | Stato |
 |---|---|---|
@@ -157,9 +175,11 @@ Quello che manca è la parte di cassa: previsione, scadenziario, banche, simulaz
 | 2 | Struttura dati del motore di calcolo | ✅ Fatta |
 | 3 | Riclassificazione, indici, import Excel | 🟡 Quasi — serve un file cliente **con i saldi** per la verifica finale |
 | 4 | Le prime tre schermate di analisi | ✅ Fatta |
-| 5-7 | Cassa, banche, simulazioni | ⬜ Prossima |
+| 5 | Capitale circolante, tesoreria, scadenziario | ✅ Fatta |
+| 6 | Banche e finanziamenti | ⬜ Prossima |
+| 7 | Analisi e simulazioni | ⬜ |
 | 8-9 | Collegamento fra i due programmi | ⬜ |
-| 10 | Installatori | 🟡 Già disponibili, da rifinire |
+| 10 | I tre eseguibili finali: installer, portable, demo | 🟡 Già provati, si pubblicano a codice finito |
 
 La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
 [`AGENTS.md` §13](./AGENTS.md).
@@ -168,7 +188,8 @@ La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
 
 Il modo più rapido per vederlo all'opera è la **versione demo**:
 `DaProdFinanza-Demo-x.y.z-portable.exe`. Si lancia senza installare niente e parte
-già con una pizzeria di esempio e due anni di bilanci caricati. Si entra come
+già con una pizzeria di esempio, due anni di bilanci, lo scadenziario e le previsioni
+di cassa. Si entra come
 consulente con **`cammo` / `1234`**, oppure come azienda con **`Pizzeria DaProd` /
 `1234`**. I suoi dati restano in una cartella a parte e non si mescolano mai con
 quelli di un'installazione vera.

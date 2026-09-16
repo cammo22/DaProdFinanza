@@ -44,7 +44,7 @@ export function listPeriods(companyUuid: string): FiscalPeriod[] {
   }))
 }
 
-function getPeriod(companyUuid: string, periodUuid: string): FiscalPeriod {
+export function getPeriod(companyUuid: string, periodUuid: string): FiscalPeriod {
   const period = getDatabase()
     .prepare('SELECT * FROM fiscal_periods WHERE uuid = ? AND company_uuid = ? AND deleted = 0')
     .get(periodUuid, companyUuid) as FiscalPeriod | undefined
@@ -78,20 +78,30 @@ export function engineAccounts(
  */
 export function series(
   companyUuid: string,
-  options: { scenario?: Scenario; limit?: number } = {}
+  options: { scenario?: Scenario; limit?: number; until?: FiscalPeriod } = {}
 ): SeriesPoint[] {
   getCompany(companyUuid)
   const scenario = options.scenario ?? 'actual'
   const limit = options.limit ?? 24
 
-  const periods = listPeriods(companyUuid)
-    .filter((p) => p.period_type === 'month')
-    .concat(listPeriods(companyUuid).filter((p) => p.period_type === 'year'))
+  // Mesi e anni non si mescolano sullo stesso asse: un punto annuale in mezzo
+  // ai mesi varrebbe dodici volte gli altri. Gli anni si usano solo se non c'è
+  // nessun mese. Il limite si applica dopo aver scartato i periodi senza saldi
+  // per lo scenario, altrimenti i mesi di solo budget rubano posto alla storia.
+  const tutti = listPeriods(companyUuid).filter((p) => p.scenarios?.includes(scenario))
+  const mesi = tutti.filter((p) => p.period_type === 'month')
+  const until = options.until
+  const scelti = (mesi.length > 0 ? mesi : tutti.filter((p) => p.period_type === 'year'))
+    .filter(
+      (p) =>
+        !until ||
+        p.year * 100 + (p.month ?? 12) <= until.year * 100 + (until.month ?? 12)
+    )
     .slice(0, limit)
     // Dal più vecchio al più recente: è l'ordine in cui si legge un grafico.
     .sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0))
 
-  return periods
+  return scelti
     .map((period) => {
       const accounts = engineAccounts(companyUuid, period.uuid, scenario)
       if (accounts.length === 0) return null
@@ -194,7 +204,7 @@ function aggregatesOf(companyUuid: string, periodUuid: string, scenario: Scenari
   return accounts.length === 0 ? null : incomeStatement(accounts, DEFAULT_SCHEME).aggregates
 }
 
-function findPeriod(
+export function findPeriod(
   periods: FiscalPeriod[],
   year: number,
   month: number | null

@@ -49,3 +49,43 @@ export const BUSINESS_TYPES = [
   'Altro'
 ] as const
 export type BusinessType = (typeof BUSINESS_TYPES)[number]
+
+/** Modalità di pagamento — MODELLO_FINANZIARIO.md §8 (foglio DICTIONARY). */
+export const PAYMENT_METHODS = [
+  'Assegno',
+  'Bonifico',
+  'Carta di credito',
+  'Compensazione',
+  'Contanti',
+  'F24',
+  'MAV',
+  'Pagamento da definire',
+  'RI.BA.',
+  'Rid Bancario',
+  'Bollettino postale',
+  'Rimessa diretta'
+] as const
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
+
+/**
+ * Categorie di entrata e uscita della tesoreria — AGENTS.md §10.6. Non sono nel
+ * file del consulente: ricalcano le righe della "Previsione di Tesoreria" dei
+ * mockup. Sono suggerimenti, non un vincolo: una riga può averne un'altra.
+ */
+export const TREASURY_CATEGORIES_IN = [
+  'Clienti',
+  'Corrispettivi',
+  'Finanziamenti ricevuti',
+  'Rimborsi fiscali',
+  'Altre entrate'
+] as const
+
+export const TREASURY_CATEGORIES_OUT = [
+  'Fornitori',
+  'Personale',
+  'Imposte e contributi',
+  'Affitti e locazioni',
+  'Utenze',
+  'Rate finanziamenti',
+  'Altre uscite'
+] as const
