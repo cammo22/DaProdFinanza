@@ -25,6 +25,73 @@ interface Preview {
   alreadyImported: { filename: string; imported_at: string } | null
 }
 
+/**
+ * Scarica il modello Excel da compilare. Se l'azienda ha già conti, il modello
+ * li contiene: resta solo da scrivere i valori.
+ */
+export function TemplateButton({
+  company,
+  variant = 'ghost'
+}: {
+  company: Company
+  variant?: 'primary' | 'ghost'
+}): React.JSX.Element {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const scarica = async (): Promise<void> => {
+    const nome = `Piano dei conti - ${company.name.replace(/[\\/:*?"<>|]/g, '')}.xlsx`
+    const path = await window.daprod.saveExcelFile(nome)
+    if (!path) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      const result = await api.post<{ path: string; accounts: number }>(
+        `/api/companies/${company.uuid}/import/chart-of-accounts/template`,
+        { filePath: path }
+      )
+      setMsg({
+        ok: true,
+        text:
+          result.accounts > 0
+            ? `Modello salvato con i ${result.accounts} conti già presenti.`
+            : 'Modello salvato: aggiungi i conti nelle righe vuote di ogni sezione.'
+      })
+      await window.daprod.openExcelFile(result.path)
+    } catch (err) {
+      setMsg({ ok: false, text: err instanceof Error ? err.message : 'Salvataggio non riuscito.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <Button variant={variant} onClick={scarica} disabled={busy}>
+        {busy ? 'Preparazione…' : 'Scarica il modello Excel'}
+      </Button>
+      {msg && (
+        <span className={`text-xs ${msg.ok ? 'text-positive' : 'text-negative'}`}>{msg.text}</span>
+      )}
+    </div>
+  )
+}
+
+const PASSI = [
+  {
+    titolo: 'Scarica il modello',
+    testo: "Un file Excel con tutte le sezioni del bilancio già pronte, e i conti che l'azienda ha già."
+  },
+  {
+    titolo: 'Compilalo',
+    testo: 'Un conto per riga, il saldo nella colonna VALORE T. Il foglio ISTRUZIONI spiega il resto.'
+  },
+  {
+    titolo: 'Importalo',
+    testo: 'Scegli il file, controlla il riepilogo e indica mese, anno e scenario. Nulla è scritto prima.'
+  }
+]
+
 const MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
@@ -116,6 +183,25 @@ export function ImportPanel({
     <div className="flex flex-col gap-5">
       {error && <Alert>{error}</Alert>}
       {esito && <Alert tone="success">{esito}</Alert>}
+
+      <Card title="Come si caricano i dati">
+        <ol className="grid grid-cols-3 gap-px bg-ink-700">
+          {PASSI.map((passo, i) => (
+            <li key={passo.titolo} className="bg-ink-850 px-5 py-4">
+              <p className="flex items-center gap-2 text-sm font-medium text-ink-100">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500/20 text-xs text-brand-300">
+                  {i + 1}
+                </span>
+                {passo.titolo}
+              </p>
+              <p className="mt-1.5 text-xs leading-relaxed text-ink-400">{passo.testo}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="border-t border-ink-700 px-5 py-4">
+          <TemplateButton company={company} />
+        </div>
+      </Card>
 
       <Card title="Import del piano dei conti">
         <div className="flex items-center gap-4 px-5 py-4">

@@ -73,6 +73,22 @@ function registerIpc(): void {
     })
     return result.canceled ? null : (result.filePaths[0] ?? null)
   })
+
+  // "Salva con nome" per il modello Excel da compilare.
+  ipcMain.handle('dialog:save-excel', async (_event, suggestedName: string) => {
+    const result = await dialog.showSaveDialog({
+      title: 'Salva il modello Excel',
+      defaultPath: join(app.getPath('documents'), suggestedName),
+      filters: [{ name: 'Cartella di lavoro Excel', extensions: ['xlsx'] }]
+    })
+    return result.canceled ? null : (result.filePath ?? null)
+  })
+
+  // Apre un file appena creato con il programma predefinito (Excel).
+  ipcMain.handle('shell:open-file', async (_event, path: string) => {
+    if (typeof path !== 'string' || !path.toLowerCase().endsWith('.xlsx')) return
+    await shell.openPath(path)
+  })
 }
 
 app.whenReady().then(async () => {

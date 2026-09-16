@@ -6,7 +6,7 @@ import { api } from '../lib/api'
 import type { Vista } from '../components/Sidebar'
 import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
 import { BalanceSheetView } from './business/BalanceSheetView'
-import { ImportPanel } from './business/ImportPanel'
+import { ImportPanel, TemplateButton } from './business/ImportPanel'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 
@@ -174,7 +174,7 @@ export function CompanyPage({
                 description={
                   periods.length === 0
                     ? canImport
-                      ? "Questa azienda esiste in anagrafica ma non ha ancora un bilancio. Importa il piano dei conti e le analisi compaiono da sole."
+                      ? "Questa azienda non ha ancora un bilancio. Scarica il modello Excel, compilalo con i saldi e importalo: le analisi compaiono da sole."
                       : 'Il consulente non ha ancora caricato un bilancio per questa azienda.'
                     : `Il periodo selezionato non ha saldi per lo scenario "${
                         SCENARI.find((s) => s.id === scenario)?.label
@@ -183,9 +183,12 @@ export function CompanyPage({
                 action={
                   periods.length === 0 &&
                   canImport && (
-                    <Button variant="primary" onClick={() => onVista('import')}>
-                      Vai all&apos;import
-                    </Button>
+                    <div className="flex items-start gap-3">
+                      <TemplateButton company={company} />
+                      <Button variant="primary" onClick={() => onVista('import')}>
+                        Importa un file
+                      </Button>
+                    </div>
                   )
                 }
               />
