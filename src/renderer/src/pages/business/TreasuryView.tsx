@@ -145,7 +145,15 @@ export function TreasuryView({
             soglia !== null && (trenta?.liquiditaFinale ?? 0) < soglia ? 'text-negative' : 'text-ink-100'
           }
         />
-        <Kpi label="Affidamenti disponibili" valore="—" nota="Arrivano col modulo Banche" />
+        <Kpi
+          label="Affidamenti disponibili"
+          valore={euro(vista.affidamenti.disponibile)}
+          nota={
+            vista.affidamenti.accordato > 0
+              ? `Su ${euro(vista.affidamenti.accordato)} accordati`
+              : 'Nessuna linea di credito registrata'
+          }
+        />
       </div>
 
       {vista.tensione && (
@@ -258,8 +266,8 @@ export function TreasuryView({
             <p className="border-t border-ink-700 px-5 py-2.5 text-xs text-ink-500">
               Si parte da {vista.opening.label}
               {vista.opening.date < vista.today ? ', più incassi e pagamenti registrati dopo quella data' : ''}.
-              Entrano le scadenze aperte e le previsioni manuali; le rate dei finanziamenti arriveranno col
-              modulo Banche.
+              Entrano le scadenze aperte, le previsioni manuali e le rate dei finanziamenti del modulo
+              Banche. Gli affidamenti disponibili non sono contati come liquidità.
             </p>
           </Card>
 

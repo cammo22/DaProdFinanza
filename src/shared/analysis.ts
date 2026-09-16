@@ -1,5 +1,8 @@
 import type {
   BalanceSheet,
+  CreditSummary,
+  Installment,
+  LoanStatus,
   IncomeAggregates,
   IncomeStatement,
   Ratios,
@@ -8,7 +11,15 @@ import type {
   WorkingCapitalNote,
   WorkingCapitalSnapshot
 } from './engine'
-import type { FiscalPeriod, Scenario, TreasuryItem, TreasurySettings } from './types'
+import type {
+  Bank,
+  CreditLine,
+  FiscalPeriod,
+  Loan,
+  Scenario,
+  TreasuryItem,
+  TreasurySettings
+} from './types'
 
 /**
  * Il risultato completo dell'analisi di un periodo: è il payload che il
@@ -101,4 +112,33 @@ export interface TreasuryView extends TreasuryForecast {
   /** Liquidità a fine mese dai bilanci a consuntivo, per la parte storica del grafico. */
   consuntivo: { label: string; date: string; liquidita: number }[]
   aging: { openCents: number; overdueCents: number }
+  /** Affidamenti delle linee di credito, per la card "Affidamenti disponibili". */
+  affidamenti: CreditSummary
+}
+
+/** Vista Banche e Finanziamenti — AGENTS.md §10.7. */
+export interface BankingView {
+  today: string
+  banks: Bank[]
+  lines: CreditLine[]
+  loans: (Loan & { status: LoanStatus; schedule: Installment[] })[]
+  /** Solo le linee di credito: accordato, utilizzato, disponibile. */
+  affidamenti: CreditSummary
+  /** Somma delle rate ricondotte al mese. */
+  rataMensile: number
+  debitoResiduo: number
+  /** Rate dei prossimi 12 mesi, da oggi. */
+  rate12Mesi: number
+  /** Una riga per istituto: le linee più il debito residuo dei finanziamenti. */
+  perBanca: {
+    bank_uuid: string
+    name: string
+    accordato: number
+    utilizzato: number
+    disponibile: number
+    /** Utilizzo delle sole linee a revoca; null se l'istituto non ne ha. */
+    utilizzoPercent: number | null
+  }[]
+  /** Utilizzo per tipologia, per la ciambella. */
+  perTipologia: { kind: string; label: string; utilizzato: number }[]
 }

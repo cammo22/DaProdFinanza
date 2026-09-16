@@ -200,7 +200,13 @@ export interface FettaCosto {
 }
 
 /** Composizione dei costi — §10.3. Basta un solo periodo. */
-export function CompositionePie({ fette }: { fette: FettaCosto[] }): React.JSX.Element {
+export function CompositionePie({
+  fette,
+  etichetta = 'Totale costi'
+}: {
+  fette: FettaCosto[]
+  etichetta?: string
+}): React.JSX.Element {
   const totale = fette.reduce((somma, f) => somma + f.valore, 0)
 
   return (
@@ -225,7 +231,7 @@ export function CompositionePie({ fette }: { fette: FettaCosto[] }): React.JSX.E
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xs text-ink-400">Totale costi</span>
+          <span className="text-xs text-ink-400">{etichetta}</span>
           <span className="text-sm font-semibold text-ink-100">{euro(totale)}</span>
         </div>
       </div>

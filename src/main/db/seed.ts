@@ -4,6 +4,7 @@ import { createCompany } from '../server/services/companies.service'
 import { insertUser } from '../server/services/auth.service'
 import { DEMO_BUILD } from '../build-flags'
 import { seedDemoFinancials } from './demo-data'
+import { seedDemoBanks } from './demo-banks'
 import { seedDemoTreasury } from './demo-treasury'
 import { getDatabase } from './index'
 
@@ -75,6 +76,8 @@ export function seedDemoData(): void {
   seedDemoFinancials(company.uuid)
   // Scadenziario e previsioni di cassa, con date relative a oggi.
   seedDemoTreasury(company.uuid)
+  // Istituti, linee di credito e finanziamenti.
+  seedDemoBanks(company.uuid)
 
   insertUser(
     {
@@ -121,5 +124,20 @@ function aggiornaDemoEsistente(): void {
   if (tesoreria.n === 0) {
     seedDemoTreasury(azienda.uuid)
     console.log('[db] seed dimostrativo: aggiunta la tesoreria della Pizzeria DaProd')
+  }
+
+  const banche = db
+    .prepare('SELECT count(*) AS n FROM banks WHERE company_uuid = ?')
+    .get(azienda.uuid) as { n: number }
+  if (banche.n === 0) {
+    // Fino alla Fase 5 la rata del mutuo era una previsione manuale: ora la
+    // genera il piano di ammortamento, e tenerle entrambe la conterebbe due volte.
+    db.prepare(
+      `UPDATE treasury_items SET deleted = 1, updated_at = ?, synced = 0
+        WHERE company_uuid = ? AND source = 'manuale' AND deleted = 0
+          AND description = 'Rata mutuo ristrutturazione'`
+    ).run(new Date().toISOString(), azienda.uuid)
+    seedDemoBanks(azienda.uuid)
+    console.log('[db] seed dimostrativo: aggiunti banche e finanziamenti della Pizzeria DaProd')
   }
 }

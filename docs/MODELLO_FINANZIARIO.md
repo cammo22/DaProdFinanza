@@ -279,7 +279,7 @@ L'implementazione usa `Gross Profit = (Ricavi Operativi + Rimanenze Finali) − 
 - **Acquisti**, che serve al DPO (§6): nel file esiste la colonna ma nessuna sezione la marca. L'implementazione usa `Costi Materie Prime + Costi Produzione`.
 - **Debiti finanziari**, che servono a PFN e Debt/Equity (§5): non esiste un tag che li distingua. L'implementazione li ricava per differenza, togliendo dai debiti totali le voci che finanziarie non sono (fornitori, enti previdenziali, TFR). Un tag esplicito sarebbe più solido.
 
-Il **DSCR** resta non calcolabile finché non esiste il modulo Banche (`AGENTS.md` §10.7): richiede le rate attese nei 12 mesi successivi. L'app mostra un trattino, non uno zero.
+Il **DSCR** richiede le rate attese nei 12 mesi successivi: dalla Fase 6 le calcola il modulo Banche dai piani di ammortamento, a partire dalla fine del periodo analizzato (`AGENTS.md` §13-ter). Senza finanziamenti registrati l'app mostra un trattino, non uno zero.
 
 ### d) Il file contiene più informazione di questo documento
 

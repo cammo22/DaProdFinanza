@@ -167,7 +167,16 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
             <Indice label="PFN" value={euro(r.posizioneFinanziariaNetta)} nota="Debiti finanziari meno liquidità" />
             <Indice label="PFN / EBITDA" value={times(r.pfnSuEbitda)} nota="Sull'EBITDA degli ultimi 12 mesi" />
             <Indice label="Debt / Equity" value={times(r.debtEquity)} />
-            <Indice label="DSCR" value={times(r.dscr)} nota="Arriva con il modulo Banche" />
+            <Indice
+              label="DSCR"
+              value={times(r.dscr)}
+              nota={
+                r.dscr === null
+                  ? 'Serve almeno un finanziamento nel modulo Banche'
+                  : 'EBITDA 12 mesi ÷ rate dei 12 mesi successivi · ok da 1,25x'
+              }
+              colore={tone(r.dscr, THRESHOLDS.dscr.min)}
+            />
           </div>
         </Card>
       </div>

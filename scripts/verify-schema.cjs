@@ -213,6 +213,62 @@ app.whenReady().then(() => {
     check('soglia minima negativa', () => insertSettings(null, null, -1), 'rifiutato')
     check('impostazioni valide', () => insertSettings(5000, `${ANNO}-01-01`), 'accettato')
     check('seconde impostazioni per la stessa azienda', () => insertSettings(null, null), 'rifiutato')
+
+    console.log('\n Banche e finanziamenti')
+    const bankUuid = randomUUID()
+    const insertBank = (uuid, name) =>
+      db
+        .prepare(
+          `INSERT INTO banks (uuid, company_uuid, name, created_at, updated_at, synced, deleted)
+           VALUES (?, ?, ?, ?, ?, 0, 0)`
+        )
+        .run(uuid, tempCompany, name, now, now)
+    check('istituto', () => insertBank(bankUuid, 'Banca di prova'), 'accettato')
+    check('stesso istituto con le maiuscole diverse', () => insertBank(randomUUID(), 'BANCA DI PROVA'), 'rifiutato')
+
+    const insertLine = (kind, granted, used, bank = bankUuid) =>
+      db
+        .prepare(
+          `INSERT INTO credit_lines (uuid, company_uuid, bank_uuid, kind, label, granted_cents, used_cents,
+                                     created_at, updated_at, synced, deleted)
+           VALUES (?, ?, ?, ?, 'linea', ?, ?, ?, ?, 0, 0)`
+        )
+        .run(randomUUID(), tempCompany, bank, kind, granted, used, now, now)
+    check('fido di cassa', () => insertLine('fido_cassa', 3000000, 500000), 'accettato')
+    check('sconfinamento (utilizzato oltre l’accordato)', () => insertLine('carta', 100000, 150000), 'accettato')
+    check('tipo di linea inventato', () => insertLine('mutuo', 100000, 0), 'rifiutato')
+    check('linea su un istituto inesistente', () => insertLine('fido_cassa', 100000, 0, randomUUID()), 'rifiutato')
+
+    const insertLoan = (fields) => {
+      const row = {
+        kind: 'mutuo',
+        principal: 10000000,
+        rate: 4.2,
+        installments: 96,
+        frequency: 'monthly',
+        grace: 0,
+        amortization: 'francese',
+        balloon: 0,
+        ...fields
+      }
+      db.prepare(
+        `INSERT INTO loans (uuid, company_uuid, bank_uuid, kind, label, principal_cents,
+                            annual_rate_percent, first_due_date, installments, frequency,
+                            grace_installments, amortization, balloon_cents,
+                            created_at, updated_at, synced, deleted)
+         VALUES (?, ?, ?, ?, 'prestito', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`
+      ).run(
+        randomUUID(), tempCompany, bankUuid, row.kind, row.principal, row.rate, `${ANNO}-01-31`,
+        row.installments, row.frequency, row.grace, row.amortization, row.balloon, now, now
+      )
+    }
+    check('mutuo', () => insertLoan({}), 'accettato')
+    check('leasing con riscatto', () => insertLoan({ kind: 'leasing', balloon: 1000000 }), 'accettato')
+    check('preammortamento lungo quanto tutto il piano', () => insertLoan({ grace: 96 }), 'rifiutato')
+    check('riscatto pari al capitale', () => insertLoan({ balloon: 10000000 }), 'rifiutato')
+    check('periodicità inventata', () => insertLoan({ frequency: 'weekly' }), 'rifiutato')
+    check('tasso negativo', () => insertLoan({ rate: -1 }), 'rifiutato')
+    check('ammortamento inventato', () => insertLoan({ amortization: 'tedesco' }), 'rifiutato')
   } finally {
     db.exec('ROLLBACK')
     db.close()

@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%205%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%206%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -157,6 +157,11 @@ la scadenza si calcola da sola), e le voci che si ripetono — stipendi, affitto
 di cassa. Quando una fattura viene pagata, anche solo in parte, lo si registra con un
 clic, e la liquidità di oggi si aggiorna.
 
+**Banche e finanziamenti, a mano.** Per ogni istituto si registrano i fidi (quanto è
+accordato, quanto è usato) e i finanziamenti: importo, tasso, numero di rate. Il piano
+di ammortamento si calcola da solo, e le rate finiscono nella previsione di cassa senza
+doverle scrivere una per una.
+
 ---
 
 ## A che punto siamo
@@ -166,7 +171,9 @@ loro aziende, importa il piano dei conti da Excel e ne calcola il bilancio
 riclassificato con tutti gli indici, e lo mostra in cinque schermate: panoramica con
 avvisi automatici, conto economico, stato patrimoniale, capitale circolante con le sue
 note automatiche, e tesoreria con scadenziario e previsione di cassa a sei mesi.
-Mancano banche e finanziamenti, le simulazioni e il collegamento fra i due programmi.
+C'è anche la parte bancaria: fidi, mutui e leasing con il loro piano di ammortamento,
+le rate che entrano da sole nella previsione di cassa. Mancano le simulazioni e il
+collegamento fra i due programmi.
 
 | | Fase | Stato |
 |---|---|---|
@@ -176,8 +183,8 @@ Mancano banche e finanziamenti, le simulazioni e il collegamento fra i due progr
 | 3 | Riclassificazione, indici, import Excel | 🟡 Quasi — serve un file cliente **con i saldi** per la verifica finale |
 | 4 | Le prime tre schermate di analisi | ✅ Fatta |
 | 5 | Capitale circolante, tesoreria, scadenziario | ✅ Fatta |
-| 6 | Banche e finanziamenti | ⬜ Prossima |
-| 7 | Analisi e simulazioni | ⬜ |
+| 6 | Banche e finanziamenti | ✅ Fatta |
+| 7 | Analisi e simulazioni | ⬜ Prossima |
 | 8-9 | Collegamento fra i due programmi | ⬜ |
 | 10 | I tre eseguibili finali: installer, portable, demo | 🟡 Già provati, si pubblicano a codice finito |
 
@@ -188,8 +195,8 @@ La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
 
 Il modo più rapido per vederlo all'opera è la **versione demo**:
 `DaProdFinanza-Demo-x.y.z-portable.exe`. Si lancia senza installare niente e parte
-già con una pizzeria di esempio, due anni di bilanci, lo scadenziario e le previsioni
-di cassa. Si entra come
+già con una pizzeria di esempio, due anni di bilanci, lo scadenziario, le previsioni
+di cassa, le banche e i finanziamenti. Si entra come
 consulente con **`cammo` / `1234`**, oppure come azienda con **`Pizzeria DaProd` /
 `1234`**. I suoi dati restano in una cartella a parte e non si mescolano mai con
 quelli di un'installazione vera.

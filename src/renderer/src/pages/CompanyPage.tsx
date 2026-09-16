@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type {
   Analysis,
+  BankingView as BankingPayload,
   SeriesPoint,
   TreasuryView as TreasuryPayload,
   WorkingCapitalView as WorkingCapitalPayload
@@ -11,6 +12,7 @@ import { api } from '../lib/api'
 import type { Vista } from '../components/Sidebar'
 import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
 import { BalanceSheetView } from './business/BalanceSheetView'
+import { BanksView } from './business/BanksView'
 import { ImportPanel, TemplateButton } from './business/ImportPanel'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
@@ -50,6 +52,7 @@ export function CompanyPage({
   const [serie, setSerie] = useState<SeriesPoint[]>([])
   const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(null)
   const [circolante, setCircolante] = useState<WorkingCapitalPayload | null>(null)
+  const [banche, setBanche] = useState<BankingPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -119,6 +122,18 @@ export function CompanyPage({
     if (vista === 'tesoreria' || vista === 'panoramica') caricaTesoreria()
   }, [vista, caricaTesoreria])
 
+  const caricaBanche = useCallback(async () => {
+    try {
+      setBanche(await api.get<BankingPayload>(`/api/companies/${company.uuid}/banking`))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Banche non disponibili.')
+    }
+  }, [company.uuid])
+
+  useEffect(() => {
+    if (vista === 'banche') caricaBanche()
+  }, [vista, caricaBanche])
+
   useEffect(() => {
     if (vista !== 'capitale-circolante' || !periodUuid) return
     let annullato = false
@@ -140,8 +155,8 @@ export function CompanyPage({
   }, [company.uuid, vista, periodUuid, scenario])
 
   const conDati = analysis !== null && analysis.accountCount > 0
-  // Import e tesoreria non dipendono dal periodo scelto.
-  const senzaPeriodo = vista === 'import' || vista === 'tesoreria'
+  // Import, tesoreria e banche non dipendono dal periodo scelto.
+  const senzaPeriodo = vista === 'import' || vista === 'tesoreria' || vista === 'banche'
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -213,6 +228,18 @@ export function CompanyPage({
               companyUuid={company.uuid}
               canEdit={canImport}
               onChanged={caricaTesoreria}
+            />
+          ) : (
+            <p className="text-sm text-ink-400">Caricamento…</p>
+          ))}
+
+        {vista === 'banche' &&
+          (banche ? (
+            <BanksView
+              vista={banche}
+              companyUuid={company.uuid}
+              canEdit={canImport}
+              onChanged={caricaBanche}
             />
           ) : (
             <p className="text-sm text-ink-400">Caricamento…</p>

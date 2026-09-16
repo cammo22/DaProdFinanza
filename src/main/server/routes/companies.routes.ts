@@ -9,6 +9,7 @@ import {
 } from '../services/companies.service'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { analysisRouter } from './analysis.routes'
+import { banksRouter } from './banks.routes'
 import { treasuryRouter } from './treasury.routes'
 
 /** Anagrafica Aziende — AGENTS.md §10.1. */
@@ -19,6 +20,7 @@ companiesRouter.use(requireAuth)
 // Periodi, analisi e import vivono sotto la singola azienda.
 companiesRouter.use('/:uuid', analysisRouter)
 companiesRouter.use('/:uuid', treasuryRouter)
+companiesRouter.use('/:uuid', banksRouter)
 
 function uuidParam(req: Request): string {
   const value = req.params['uuid']
