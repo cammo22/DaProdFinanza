@@ -217,3 +217,28 @@ describe('capitale circolante', () => {
     ])
   })
 })
+
+describe('note del circolante: grammatica', () => {
+  it('il verbo si accorda con la voce', () => {
+    const base: WorkingCapitalSnapshot = {
+      creditiCommerciali: 100_00,
+      magazzino: 100_00,
+      altriCrediti: 0,
+      debitiFornitori: 0,
+      altriDebitiCorrenti: 0,
+      capitaleCircolanteNetto: 200_00,
+      dso: null,
+      dio: null,
+      dpo: null,
+      ccc: null
+    }
+    const testi = workingCapitalNotes({
+      current: { ...base, creditiCommerciali: 150_00, magazzino: 50_00 },
+      previousYear: base
+    }).map((n) => n.text)
+    expect(testi).toEqual([
+      "Crediti commerciali in aumento del 50% sullo stesso periodo dell'anno scorso: assorbono più liquidità.",
+      "Magazzino in calo del 50% sullo stesso periodo dell'anno scorso: libera liquidità."
+    ])
+  })
+})

@@ -269,7 +269,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ Prossima |
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
-| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Decisione del cliente (2026-09-16): nessuna release fino a codice finito; alla fine una sola release con tre eseguibili — installer, portable, demo** |
+| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Regola del cliente (2026-09-16): una release a ogni aggiornamento importante, sempre con i tre eseguibili — installer, portable e demo** (`npm run dist` e `npm run dist:demo`). La prima così è la v0.0.5, con le Fasi 5 e 6 |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
 ### 13-bis. Stato alla fine della sessione 1 (Fasi 0 → 4)
@@ -505,6 +505,16 @@ Verificato con i numeri da manuale: 12.000 € al 6% in 12 rate mensili danno la
 **Verifiche**: 68 test (14 sul motore dei finanziamenti); `npm run verify:schema` a 48 controlli; nell'app: finanziamento creato e modificato dal modulo con la rata ricalcolata (leasing 24.000 € al 6,1% con riscatto 2.400 € → 520,47 €), rate dentro la previsione di cassa, DSCR sullo stato patrimoniale, aggiornamento di un database demo della Fase 5.
 
 **Da fare in Fase 7**: Analisi & Simulazioni (§10.8), che ora ha tutti i motori sotto: conto economico, circolante, tesoreria e finanziamenti.
+
+**Versione 0.0.5 — Fasi 5 e 6 pubblicate** con i tre eseguibili. Collaudo fatto sugli eseguibili, non sul codice:
+
+- **Demo da zero**: `DaProdFinanza-Demo-0.0.5-portable.exe --user-data-dir=<cartella temporanea>`. Il flag di build della demo ora cede a uno `--user-data-dir` esplicito (switch standard di Chromium), così un primo avvio si prova senza toccare la demo già presente. Verificati 25 periodi, 23 scadenze, 3 istituti, 4 linee, 3 finanziamenti, DSCR, note del circolante.
+- **Demo aggiornata**: una demo della 0.0.4 riceve migrazioni 004-005, tesoreria e banche al primo avvio, con i bilanci invariati.
+- **Portable normale da zero**: parte dal primo avvio, nessun dato di esempio, nessuna striscia demo; un'azienda senza bilancio ha tesoreria e banche vuote ma funzionanti.
+
+⚠️ **Nota per chi sviluppa da Claude desktop su Windows**: l'app è un pacchetto MSIX, e i processi che lancia vedono `%APPDATA%` *virtualizzata* (`%LOCALAPPDATA%\Packages\Claude_…\LocalCache\Roaming`) sovrapposta a quella vera. Una cartella "DaProdFinanza Demo" può quindi esistere due volte, con chiavi diverse, e rinominarla da lì non fa quello che sembra. Per le prove da zero si usa `--user-data-dir`, mai rinominare le cartelle dati.
+
+Corretta anche la grammatica delle note automatiche ("Magazzino in calo…: libera liquidità").
 
 ---
 

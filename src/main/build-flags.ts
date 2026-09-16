@@ -16,7 +16,11 @@ export const DEMO_BUILD: boolean = __DEMO_BUILD__
  *
  * Questo modulo è il primo import di `index.ts`, così la cartella è già
  * spostata prima che chiunque legga `userData`.
+ *
+ * Un `--user-data-dir` esplicito vince: è lo switch standard di Chromium, e
+ * serve a provare un primo avvio da zero in una cartella usa e getta senza
+ * toccare la demo già presente.
  */
-if (DEMO_BUILD) {
+if (DEMO_BUILD && !app.commandLine.hasSwitch('user-data-dir')) {
   app.setPath('userData', join(app.getPath('appData'), 'DaProdFinanza Demo'))
 }
