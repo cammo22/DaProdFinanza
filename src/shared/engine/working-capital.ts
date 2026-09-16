@@ -163,28 +163,32 @@ export function workingCapitalNotes(input: NoteInput): WorkingCapitalNote[] {
       nome: string
       /** Un aumento è un assorbimento di cassa (attivo) o una fonte (passivo). */
       attivo: boolean
+      /** Per accordare il verbo della nota. */
+      plurale: boolean
     }[] = [
-      { key: 'creditiCommerciali', nome: 'Crediti commerciali', attivo: true },
-      { key: 'magazzino', nome: 'Magazzino', attivo: true },
-      { key: 'altriCrediti', nome: 'Altri crediti', attivo: true },
-      { key: 'debitiFornitori', nome: 'Debiti verso fornitori', attivo: false },
-      { key: 'altriDebitiCorrenti', nome: 'Altri debiti correnti', attivo: false }
+      { key: 'creditiCommerciali', nome: 'Crediti commerciali', attivo: true, plurale: true },
+      { key: 'magazzino', nome: 'Magazzino', attivo: true, plurale: false },
+      { key: 'altriCrediti', nome: 'Altri crediti', attivo: true, plurale: true },
+      { key: 'debitiFornitori', nome: 'Debiti verso fornitori', attivo: false, plurale: true },
+      { key: 'altriDebitiCorrenti', nome: 'Altri debiti correnti', attivo: false, plurale: true }
     ]
     for (const c of componenti) {
       const pct = deltaPercent(current[c.key], previousYear[c.key])
       if (pct === null || Math.abs(pct) < s.percento) continue
       const su = pct > 0
+      const verbo = (plurale: string, singolare: string): string =>
+        c.plurale ? plurale : singolare
       notes.push({
         subject: c.key,
         tone: 'neutral',
         text: `${c.nome} ${su ? 'in aumento' : 'in calo'} del ${Math.round(Math.abs(pct))}% sullo stesso periodo dell'anno scorso${
           c.attivo
             ? su
-              ? ': assorbono più liquidità.'
-              : ': liberano liquidità.'
+              ? `: ${verbo('assorbono', 'assorbe')} più liquidità.`
+              : `: ${verbo('liberano', 'libera')} liquidità.`
             : su
-              ? ': finanziano una parte maggiore del circolante.'
-              : ': finanziano una parte minore del circolante.'
+              ? `: ${verbo('finanziano', 'finanzia')} una parte maggiore del circolante.`
+              : `: ${verbo('finanziano', 'finanzia')} una parte minore del circolante.`
         }`
       })
     }

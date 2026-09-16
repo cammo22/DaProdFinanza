@@ -186,7 +186,7 @@ collegamento fra i due programmi.
 | 6 | Banche e finanziamenti | ✅ Fatta |
 | 7 | Analisi e simulazioni | ⬜ Prossima |
 | 8-9 | Collegamento fra i due programmi | ⬜ |
-| 10 | I tre eseguibili finali: installer, portable, demo | 🟡 Già provati, si pubblicano a codice finito |
+| 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
 La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
 [`AGENTS.md` §13](./AGENTS.md).
@@ -201,9 +201,14 @@ consulente con **`cammo` / `1234`**, oppure come azienda con **`Pizzeria DaProd`
 `1234`**. I suoi dati restano in una cartella a parte e non si mescolano mai con
 quelli di un'installazione vera.
 
-Per usarlo davvero, sempre dalla pagina **[Releases](https://github.com/cammo22/DaProdFinanza/releases)**:
-`DaProdFinanza-Setup-x.y.z.exe` per installarlo, oppure la versione *portable* che si
-lancia e basta. Windows a 64 bit.
+Ogni versione sulla pagina **[Releases](https://github.com/cammo22/DaProdFinanza/releases)**
+ha tre file, tutti per Windows a 64 bit:
+
+| File | A cosa serve |
+|---|---|
+| `DaProdFinanza-Demo-x.y.z-portable.exe` | Provarlo con i dati di esempio |
+| `DaProdFinanza-Setup-x.y.z.exe` | Installarlo per usarlo davvero |
+| `DaProdFinanza-x.y.z-portable.exe` | Usarlo davvero senza installare niente |
 
 Non sono ancora firmati con un certificato, quindi al primo avvio Windows mostra un
 avviso: *Ulteriori informazioni → Esegui comunque*. Poi il programma chiede di creare
