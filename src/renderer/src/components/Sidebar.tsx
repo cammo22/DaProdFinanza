@@ -16,6 +16,7 @@ export type Vista =
   | 'stato-patrimoniale'
   | 'capitale-circolante'
   | 'tesoreria'
+  | 'banche'
   | 'import'
 
 interface Voce {
@@ -63,6 +64,11 @@ const VISTE: Voce[] = [
     icona: icona('M3 7h18v12H3zM3 11h18M7 15h3M16 4H6')
   },
   {
+    id: 'banche',
+    label: 'Banche e Finanziamenti',
+    icona: icona('M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3z')
+  },
+  {
     id: 'import',
     label: 'Import dati',
     icona: icona('M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2')
@@ -70,7 +76,6 @@ const VISTE: Voce[] = [
 ]
 
 const IN_ARRIVO: { label: string; fase: string }[] = [
-  { label: 'Banche e Finanziamenti', fase: 'Fase 6' },
   { label: 'Analisi & Simulazioni', fase: 'Fase 7' }
 ]
 

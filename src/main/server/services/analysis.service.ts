@@ -13,6 +13,7 @@ import type { Analysis, IncomeComparison, SeriesPoint } from '@shared/analysis'
 import type { FiscalPeriod, Scenario } from '@shared/types'
 import { getDatabase } from '../../db'
 import { HttpError } from '../http-error'
+import { debtServiceFor } from './banks.service'
 import { getCompany } from './companies.service'
 
 /**
@@ -42,6 +43,13 @@ export function listPeriods(companyUuid: string): FiscalPeriod[] {
     ...riga,
     scenarios: riga.scenarios ? (riga.scenarios.split(',') as Scenario[]) : []
   }))
+}
+
+/** Ultimo giorno di un periodo contabile, `YYYY-MM-DD`. */
+export function periodEnd(year: number, month: number | null): string {
+  const m = month ?? 12
+  const d = month === null ? 31 : periodDays(year, month)
+  return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
 export function getPeriod(companyUuid: string, periodUuid: string): FiscalPeriod {
@@ -152,7 +160,7 @@ function ebitdaUltimi12Mesi(
 export function analyse(
   companyUuid: string,
   periodUuid: string,
-  options: { scenario?: Scenario; scheme?: Scheme; debtServiceCents?: number | null } = {}
+  options: { scenario?: Scenario; scheme?: Scheme } = {}
 ): Analysis {
   getCompany(companyUuid)
   const period = getPeriod(companyUuid, periodUuid)
@@ -180,7 +188,10 @@ export function analyse(
       income: statement.aggregates,
       balance,
       days: periodDays(period.year, period.month),
-      debtServiceCents: options.debtServiceCents ?? null,
+      // §5: le rate attese nei 12 mesi successivi — alla fine del periodo
+      // analizzato, così il DSCR di un periodo non cambia col giorno in cui
+      // lo si guarda.
+      debtServiceCents: debtServiceFor(companyUuid, periodEnd(period.year, period.month)),
       ebitdaLtmCents: ebitdaUltimi12Mesi(companyUuid, period, scenario)
     }),
     comparison: comparison(companyUuid, period, scenario, statement.aggregates)

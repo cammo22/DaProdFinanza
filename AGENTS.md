@@ -265,8 +265,8 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **3** | Motore di riclassificazione + indici (da `docs/MODELLO_FINANZIARIO.md`), **import Excel §11.1** | Import di un vero file cliente → Conto Economico riclassificato corretto | 🟡 **Quasi**: motore, indici e import fatti e verificati. Manca il file di un cliente **con i saldi**: quello consegnato è un modello vuoto (vedi `docs/MODELLO_FINANZIARIO.md` §8-bis) |
 | **4** | UI Business: Panoramica + Conto Economico + Stato Patrimoniale (§10.2-10.4) | Le 3 schermate con dati reali importati | ✅ **Fatta** (sessione 1) — menu laterale e grafici compresi |
 | **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ✅ **Fatta** (sessione 2) |
-| **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ⬜ Prossima |
-| **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ |
+| **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ✅ **Fatta** (sessione 2) |
+| **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ⬜ Prossima |
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Decisione del cliente (2026-09-16): nessuna release fino a codice finito; alla fine una sola release con tre eseguibili — installer, portable, demo** |
@@ -470,7 +470,41 @@ La **Panoramica** ora mostra liquidità di oggi, cash flow a 30 giorni e il graf
 
 **Verifiche**: 54 test (`npm run test`), fra cui la previsione di cassa calcolata a mano giorno per giorno; `npm run verify:schema` passa da 22 a 35 controlli con i vincoli della 004; percorso completo provato nell'app: incasso parziale che aggiorna liquidità e previsione, fattura "60 giorni fine mese" con scadenza calcolata, aggiornamento di un database demo della 0.0.4.
 
-**Da fare in Fase 6**: Banche e Finanziamenti (§10.7), con le rate che entrano nella previsione come `source = 'finanziamento'`, gli affidamenti disponibili nella Tesoreria e il DSCR finalmente calcolabile.
+**Fase 6 — Banche e Finanziamenti (§10.7)**
+
+Migrazione `005_banks`:
+
+| Tabella | Cosa tiene |
+|---|---|
+| `banks` | Gli istituti dell'azienda, società di leasing comprese. Nome univoco per azienda, senza distinguere le maiuscole |
+| `credit_lines` | Linee a revoca: fido di cassa, anticipo fatture/SBF, carte, altre. Accordato e utilizzato a una data; l'utilizzato può superare l'accordato (uno sconfinamento è un dato, non un errore) |
+| `loans` | Mutui, finanziamenti e leasing: **i parametri del piano, non le rate** |
+
+**Le rate non si copiano da nessuna parte.** Il piano di ammortamento si ricalcola sempre dagli stessi parametri (`src/shared/engine/loans.ts`) e le rate entrano nella previsione di cassa come movimenti `source = 'finanziamento'` generati al volo. Una sola fonte: modificare un mutuo aggiorna subito la tesoreria, senza righe orfane. Per lo stesso motivo la demo non ha più la "rata del mutuo" come previsione manuale: un database demo della Fase 5 la perde al primo avvio, altrimenti la rata si conterebbe due volte.
+
+Il modello del consulente non tratta i piani di ammortamento: la matematica è quella standard, con queste scelte dichiarate.
+
+1. **Francese** (rata costante) o **italiano** (quota capitale costante), con **preammortamento** di soli interessi.
+2. **Tasso nominale annuo** diviso per il numero di rate dell'anno, come nei piani bancari italiani.
+3. **Leasing**: rata costante con **riscatto** pagato una rata dopo l'ultima; il valore attuale di rate e riscatto dà il capitale. Un maxi-canone iniziale si registra come movimento a parte.
+4. **Arrotondamento al centesimo** rata per rata; l'ultima assorbe i residui e chiude il debito esattamente (a zero, o al riscatto).
+5. **Le rate già scadute si considerano pagate**: in Italia sono quasi sempre addebitate in automatico. Il debito residuo è quello dopo l'ultima rata scaduta.
+
+Verificato con i numeri da manuale: 12.000 € al 6% in 12 rate mensili danno la rata francese di 1.032,80 €.
+
+**DSCR finalmente calcolato** (§5): EBITDA degli ultimi 12 mesi ÷ rate dei 12 mesi successivi alla **fine del periodo analizzato**, riscatti compresi. Legarlo alla fine del periodo e non a oggi rende il valore di un periodo stabile, qualunque giorno lo si guardi. Senza finanziamenti resta un trattino.
+
+**Situazione per istituto**: per i finanziamenti accordato e utilizzato coincidono col debito residuo, come nella Centrale Rischi. **Disponibile e percentuale di utilizzo guardano solo le linee a revoca**: un finanziamento è utilizzato al 100% per definizione, e una società di leasing sarebbe sempre "in allarme". Il disponibile si somma linea per linea: lo sconfinamento di una carta non toglie disponibilità al fido di un'altra linea.
+
+**Collegamenti con le altre viste**: la Tesoreria mostra gli affidamenti disponibili (senza contarli come liquidità) e le rate nella categoria "Rate finanziamenti"; la Panoramica avvisa quando gli affidamenti sono utilizzati **dall'80%** in su (rosso dal 95%) — l'avviso "Affidamenti utilizzati oltre soglia" dei mockup, con una soglia che il modello non fissa; lo Stato Patrimoniale mostra il DSCR con la soglia di 1,25x.
+
+**Il modulo di inserimento mostra la rata mentre lo si compila**, calcolata dallo stesso motore del server: è il modo più rapido per accorgersi di un tasso o di un numero di rate sbagliato. Ogni finanziamento ha il suo piano completo consultabile.
+
+**Dati della demo**: tre istituti, quattro linee (una quasi esaurita, da rinegoziare), un mutuo francese, un leasing col riscatto e un finanziamento trimestrale all'italiana ancora in preammortamento, tutti con date relative al primo avvio.
+
+**Verifiche**: 68 test (14 sul motore dei finanziamenti); `npm run verify:schema` a 48 controlli; nell'app: finanziamento creato e modificato dal modulo con la rata ricalcolata (leasing 24.000 € al 6,1% con riscatto 2.400 € → 520,47 €), rate dentro la previsione di cassa, DSCR sullo stato patrimoniale, aggiornamento di un database demo della Fase 5.
+
+**Da fare in Fase 7**: Analisi & Simulazioni (§10.8), che ora ha tutti i motori sotto: conto economico, circolante, tesoreria e finanziamenti.
 
 ---
 

@@ -2,7 +2,6 @@ import {
   balanceSheet,
   dueDate,
   forecast,
-  periodDays,
   receivablesAging,
   type OpeningCash,
   type PaymentTerms
@@ -12,7 +11,8 @@ import type { TreasuryItem, TreasuryItemInput, TreasurySettings } from '@shared/
 import { getDatabase } from '../../db'
 import { newUuid, nowIso } from '../../lib/ids'
 import { HttpError } from '../http-error'
-import { engineAccounts, listPeriods, series } from './analysis.service'
+import { engineAccounts, listPeriods, periodEnd, series } from './analysis.service'
+import { creditLinesSummary, loanTreasuryItemsFor } from './banks.service'
 import { getCompany } from './companies.service'
 
 /**
@@ -78,7 +78,12 @@ function getItem(companyUuid: string, uuid: string): TreasuryItem {
 }
 
 /** Valida e completa una riga: da un input parziale a una riga coerente. */
-function normalize(input: TreasuryItemInput, base?: TreasuryItem): Omit<TreasuryItem, 'uuid' | 'company_uuid' | 'created_at' | 'updated_at' | 'synced' | 'deleted'> {
+type ItemRow = Omit<
+  TreasuryItem,
+  'uuid' | 'company_uuid' | 'created_at' | 'updated_at' | 'synced' | 'deleted'
+>
+
+function normalize(input: TreasuryItemInput, base?: TreasuryItem): ItemRow {
   const merged = { ...base, ...input }
 
   const direction = merged.direction
@@ -288,13 +293,6 @@ export function updateSettings(companyUuid: string, input: Partial<TreasurySetti
 
 // --- previsione ----------------------------------------------------------------
 
-/** Ultimo giorno di un periodo contabile. */
-function periodEnd(year: number, month: number | null): string {
-  const m = month ?? 12
-  const d = month === null ? 31 : periodDays(year, month)
-  return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-}
-
 /**
  * Il saldo di partenza: il più recente fra quello inserito a mano e le
  * liquidità immediate dell'ultimo bilancio a consuntivo. Se non c'è né l'uno né
@@ -338,9 +336,11 @@ export function treasuryView(companyUuid: string, today = todayLocal()): Treasur
   const items = listItems(companyUuid)
   const settings = getSettings(companyUuid)
   const opening = openingCash(companyUuid, today)
+  // Le rate dei finanziamenti entrano nella previsione senza essere copiate
+  // nello scadenziario: il piano di ammortamento resta l'unica fonte (§10.7).
   const result = forecast({
     opening,
-    items,
+    items: [...items, ...loanTreasuryItemsFor(companyUuid, today)],
     today,
     minLiquidityCents: settings.min_liquidity_cents
   })
@@ -358,7 +358,8 @@ export function treasuryView(companyUuid: string, today = todayLocal()): Treasur
     items,
     settings,
     consuntivo,
-    aging: receivablesAging(items, today)
+    aging: receivablesAging(items, today),
+    affidamenti: creditLinesSummary(companyUuid)
   }
 }
 

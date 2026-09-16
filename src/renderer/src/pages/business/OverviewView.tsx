@@ -1,5 +1,5 @@
 import type { Analysis, SeriesPoint, TreasuryView } from '@shared/analysis'
-import { THRESHOLDS } from '@shared/engine'
+import { SOGLIA_UTILIZZO_AFFIDAMENTI, THRESHOLDS } from '@shared/engine'
 import { dataIt, days, euro, percent, times, tone } from '../../lib/format'
 import { Card } from '../../components/ui'
 import {
@@ -46,6 +46,16 @@ function avvisi(analysis: Analysis, tesoreria: TreasuryView | null): Avviso[] {
       dettaglio: `Il ${dataIt(t.date)} la liquidità prevista scende a ${euro(t.liquidita)}${
         t.soglia > 0 ? `, sotto la soglia minima di ${euro(t.soglia)}` : ''
       }.`
+    })
+  }
+  const utilizzo = tesoreria?.affidamenti.utilizzoPercent ?? null
+  if (utilizzo !== null && utilizzo >= SOGLIA_UTILIZZO_AFFIDAMENTI) {
+    out.push({
+      livello: utilizzo >= 95 ? 'rosso' : 'giallo',
+      titolo: `Affidamenti utilizzati al ${percent(utilizzo, 0)}`,
+      dettaglio: `Restano disponibili ${euro(tesoreria!.affidamenti.disponibile)} su ${euro(
+        tesoreria!.affidamenti.accordato
+      )} accordati.`
     })
   }
   if (tesoreria && tesoreria.scaduti.uscite > 0) {
@@ -228,6 +238,13 @@ export function OverviewView({
                   value={euro(trenta.cashFlow)}
                   colore={trenta.cashFlow < 0 ? 'text-negative' : 'text-positive'}
                 />
+                {tesoreria.affidamenti.accordato > 0 && (
+                  <Kpi
+                    label="Affidamenti disponibili"
+                    value={euro(tesoreria.affidamenti.disponibile)}
+                    hint={`su ${euro(tesoreria.affidamenti.accordato)}`}
+                  />
+                )}
               </>
             )}
             <Kpi label="Capitale circolante netto" value={euro(b.capitaleCircolanteNetto)} />

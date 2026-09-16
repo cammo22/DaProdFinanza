@@ -257,3 +257,42 @@ export interface TreasurySettings {
   opening_cash_cents: number | null
   opening_cash_date: string | null
 }
+
+// --- Banche e finanziamenti (Fase 6) --------------------------------------
+
+export interface Bank extends BaseRecord {
+  company_uuid: string
+  name: string
+  branch: string | null
+  contact: string | null
+  notes: string | null
+}
+
+export interface CreditLine extends BaseRecord {
+  company_uuid: string
+  bank_uuid: string
+  kind: 'fido_cassa' | 'anticipo_fatture' | 'carta' | 'altro'
+  label: string
+  granted_cents: number
+  used_cents: number
+  used_as_of: string | null
+  annual_rate_percent: number | null
+  expiry_date: string | null
+  notes: string | null
+}
+
+export interface Loan extends BaseRecord {
+  company_uuid: string
+  bank_uuid: string
+  kind: 'mutuo' | 'finanziamento' | 'leasing'
+  label: string
+  principal_cents: number
+  annual_rate_percent: number
+  first_due_date: string
+  installments: number
+  frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  grace_installments: number
+  amortization: 'francese' | 'italiano'
+  balloon_cents: number
+  notes: string | null
+}

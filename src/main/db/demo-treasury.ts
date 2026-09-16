@@ -10,7 +10,8 @@ import { createItem, openingCash, todayLocal, updateSettings } from '../server/s
  * aperta fra sei mesi con tutte le scadenze nel passato mostrerebbe solo
  * arretrati. Ci sono di proposito un credito scaduto da oltre 60 giorni, un
  * incasso parziale e un pagamento scaduto: sono i casi che la vista deve saper
- * raccontare.
+ * raccontare. Le rate dei finanziamenti non stanno qui: le genera il piano di
+ * ammortamento (vedi demo-banks.ts).
  */
 
 const euro = (value: number): number => Math.round(value * 100)
@@ -135,10 +136,6 @@ export function seedDemoTreasury(companyUuid: string, today = todayLocal()): voi
       direction: 'out', category: 'Fornitori',
       description: 'Altri acquisti di ingredienti non ancora fatturati (stima)',
       due_date: giornoDelMese(today, 28), amount_cents: euro(14_000), recurrence: 'monthly'
-    },
-    {
-      direction: 'out', category: 'Rate finanziamenti', description: 'Rata mutuo ristrutturazione',
-      due_date: giornoDelMese(today, 28), amount_cents: euro(1_850), recurrence: 'monthly'
     },
     // Una tantum.
     {
