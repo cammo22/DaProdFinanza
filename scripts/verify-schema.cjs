@@ -269,6 +269,19 @@ app.whenReady().then(() => {
     check('periodicità inventata', () => insertLoan({ frequency: 'weekly' }), 'rifiutato')
     check('tasso negativo', () => insertLoan({ rate: -1 }), 'rifiutato')
     check('ammortamento inventato', () => insertLoan({ amortization: 'tedesco' }), 'rifiutato')
+
+    console.log('\n Scenari di simulazione')
+    const insertScenario = (name, params) =>
+      db
+        .prepare(
+          `INSERT INTO simulation_scenarios (uuid, company_uuid, name, params,
+                                             created_at, updated_at, synced, deleted)
+           VALUES (?, ?, ?, ?, ?, ?, 0, 0)`
+        )
+        .run(randomUUID(), tempCompany, name, params, now, now)
+    check('scenario', () => insertScenario('Espansione', '{"ricaviPercent":10}'), 'accettato')
+    check('stesso nome con le maiuscole diverse', () => insertScenario('ESPANSIONE', '{}'), 'rifiutato')
+    check('parametri che non sono JSON', () => insertScenario('Rotto', 'ricavi +10'), 'rifiutato')
   } finally {
     db.exec('ROLLBACK')
     db.close()

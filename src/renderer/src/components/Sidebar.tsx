@@ -17,6 +17,7 @@ export type Vista =
   | 'capitale-circolante'
   | 'tesoreria'
   | 'banche'
+  | 'simulazioni'
   | 'import'
 
 interface Voce {
@@ -69,6 +70,11 @@ const VISTE: Voce[] = [
     icona: icona('M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3z')
   },
   {
+    id: 'simulazioni',
+    label: 'Analisi & Simulazioni',
+    icona: icona('M4 18l5-6 4 3 7-9M15 6h5v5')
+  },
+  {
     id: 'import',
     label: 'Import dati',
     icona: icona('M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2')
@@ -76,7 +82,6 @@ const VISTE: Voce[] = [
 ]
 
 const IN_ARRIVO: { label: string; fase: string }[] = [
-  { label: 'Analisi & Simulazioni', fase: 'Fase 7' }
 ]
 
 function Bottone({
@@ -160,11 +165,13 @@ export function Sidebar({
               />
             ))}
 
-            <div className="mt-4 px-3 pb-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-                In arrivo
-              </p>
-            </div>
+            {IN_ARRIVO.length > 0 && (
+              <div className="mt-4 px-3 pb-1">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+                  In arrivo
+                </p>
+              </div>
+            )}
             {IN_ARRIVO.map((voce) => (
               <span
                 key={voce.label}
