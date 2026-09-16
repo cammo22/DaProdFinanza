@@ -97,6 +97,29 @@ const DETAIL_TAG_BY_HEADER: Record<string, string> = {
   'debiti verso enti previdenziali': 'Debiti v/Enti Previdenziali'
 }
 
+/**
+ * Intestazione con cui il modello scaricabile scrive ogni sotto-classificazione.
+ * Ognuna deve essere una chiave di DETAIL_TAG_BY_HEADER, una volta normalizzata:
+ * il modello si deve rileggere senza perdite (lo verifica un test).
+ */
+export const DETAIL_TAG_TEMPLATE_HEADERS: Record<string, string> = {
+  'Crediti Commerciali': 'Crediti Commerciali',
+  'Crediti Diversi': 'Crediti Diversi',
+  'Erario c/IVA': 'Erario c/IVA',
+  'Utile a nuovo': 'Utile a nuovo',
+  Utile: 'Utile',
+  'Fondo TFR': 'Fondo TFR',
+  'Debiti Diversi': 'Debiti Diversi',
+  'Debiti v/Fornitori (costi variabili)': 'Debiti verso Fornitori costi variabili',
+  'Debiti v/Fornitori (costi fissi)': 'Debiti verso Fornitori costi fissi',
+  'Debiti v/Enti Previdenziali': 'Debiti v/Enti Previdenziali'
+}
+
+/** Riconosce una sotto-classificazione dall'intestazione di colonna. */
+export function detailTagFromHeader(header: string): string | null {
+  return DETAIL_TAG_BY_HEADER[norm(header)] ?? null
+}
+
 /** Intestazioni delle colonne che servono, con le varianti già incontrate. */
 const COLUMN_ALIASES: Record<string, string[]> = {
   type: ['tipo'],

@@ -24,7 +24,7 @@ import type { Database } from 'better-sqlite3-multiple-ciphers'
 /** §1 — i cinque TIPI di conto. */
 const ACCOUNT_TYPES = ["RICAVO", "COSTO", "ATTIVITA'", "ATTIVITA' NEGATIVO", "PASSIVITA'"]
 
-interface SectionSeed {
+export interface SectionSeed {
   code: string
   label: string
   /** Prospetto di destinazione: conto economico o stato patrimoniale. */
@@ -48,7 +48,7 @@ interface SectionSeed {
   detail_tags: string[]
 }
 
-const SECTIONS: SectionSeed[] = [
+export const SECTIONS: SectionSeed[] = [
   // --- §2.1 Ricavi ---------------------------------------------------------
   {
     code: 'ricavi_operativi',

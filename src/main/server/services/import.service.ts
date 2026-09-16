@@ -1,12 +1,14 @@
-import { copyFile } from 'node:fs/promises'
+import { copyFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { AccountType } from '@shared/types'
 import { getDatabase } from '../../db'
 import { newUuid, nowIso } from '../../lib/ids'
 import { companyFolder } from '../../lib/paths'
 import { readPreview, type ImportPreview } from '../../import/chart-of-accounts'
+import { buildTemplate, type TemplateAccount } from '../../import/template'
 import { HttpError } from '../http-error'
 import { getCompany } from './companies.service'
+import { listSections } from './reference.service'
 
 /**
  * Import del piano dei conti: anteprima, poi scrittura — AGENTS.md §11.1.
@@ -276,4 +278,27 @@ export async function applyChartOfAccounts(
   })
 
   return run()
+}
+
+/**
+ * Modello Excel da compilare, con il piano dei conti già presente
+ * dell'azienda. È la porta d'ingresso per chi non ha il file del consulente.
+ */
+export async function writeChartOfAccountsTemplate(
+  companyUuid: string,
+  filePath: string
+): Promise<{ path: string; accounts: number }> {
+  const company = getCompany(companyUuid)
+  const accounts = getDatabase()
+    .prepare(
+      `SELECT code, name, section_code, account_type, detail_tag, direct_cost_pct
+         FROM accounts
+        WHERE company_uuid = ? AND deleted = 0
+        ORDER BY code`
+    )
+    .all(companyUuid) as TemplateAccount[]
+
+  const buffer = await buildTemplate(listSections(), accounts, { companyName: company.name })
+  await writeFile(filePath, buffer)
+  return { path: filePath, accounts: accounts.length }
 }

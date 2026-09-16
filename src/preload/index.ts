@@ -21,7 +21,14 @@ const api = {
   openDataFolder: (): Promise<void> => ipcRenderer.invoke('shell:open-data-folder'),
 
   /** Apre il dialogo di sistema per scegliere il file da importare. */
-  pickExcelFile: (): Promise<string | null> => ipcRenderer.invoke('dialog:pick-excel')
+  pickExcelFile: (): Promise<string | null> => ipcRenderer.invoke('dialog:pick-excel'),
+
+  /** Dialogo "Salva con nome" per un file Excel. */
+  saveExcelFile: (suggestedName: string): Promise<string | null> =>
+    ipcRenderer.invoke('dialog:save-excel', suggestedName),
+
+  /** Apre un file .xlsx con il programma predefinito. */
+  openExcelFile: (path: string): Promise<void> => ipcRenderer.invoke('shell:open-file', path)
 }
 
 export type DaProdApi = typeof api

@@ -2,7 +2,11 @@ import { Router, type Request } from 'express'
 import type { Scheme } from '@shared/engine'
 import type { Scenario } from '@shared/types'
 import { analyse, listPeriods, series } from '../services/analysis.service'
-import { applyChartOfAccounts, previewChartOfAccounts } from '../services/import.service'
+import {
+  applyChartOfAccounts,
+  previewChartOfAccounts,
+  writeChartOfAccountsTemplate
+} from '../services/import.service'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { HttpError } from '../http-error'
 
@@ -70,4 +74,11 @@ analysisRouter.post('/import/chart-of-accounts', requireRole('consultant'), asyn
       overwrite: overwrite === true
     })
   )
+})
+
+/** Modello Excel da compilare, salvato dove il consulente ha scelto. */
+analysisRouter.post('/import/chart-of-accounts/template', requireRole('consultant'), async (req, res) => {
+  const { filePath } = req.body ?? {}
+  if (!filePath) throw new HttpError(400, 'Manca il percorso dove salvare il modello.')
+  res.status(201).json(await writeChartOfAccountsTemplate(param(req, 'uuid'), filePath))
 })
