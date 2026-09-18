@@ -21,3 +21,21 @@ win:
 
 portable:
   artifactName: DaProdFinanza-Demo-${version}-portable.${ext}
+
+# --- Mac: solo la demo, come DMG ------------------------------------------------
+# Si costruisce su un Mac vero, dalla procedura .github/workflows/mac-demo.yml:
+# il modulo nativo del database va compilato per macOS, e da Windows non si può.
+# Niente certificato Apple: firma "ad-hoc" (obbligatoria sui Mac con chip Apple)
+# e nessuna notarizzazione, quindi al primo avvio macOS chiede conferma.
+mac:
+  icon: build/icon.png
+  category: public.app-category.finance
+  target:
+    - target: dmg
+  identity: '-'
+  hardenedRuntime: false
+  gatekeeperAssess: false
+
+dmg:
+  artifactName: DaProdFinanza-Demo-${version}-mac-${arch}.${ext}
+  title: DaProdFinanza Demo ${version}

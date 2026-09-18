@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Disposizione } from '../../components/Disposizione'
+import { Griglia, Pannelli } from '../../components/Pannelli'
 import { StrisciaIndicatori } from '../../components/widgets'
 import type { BankingView } from '@shared/analysis'
 import {
@@ -157,7 +157,7 @@ export function BanksView({
   }
 
   return (
-    <Disposizione vista="banche">
+    <Pannelli vista="banche">
       {/* Letture in più, in stile cruscotto. */}
       {(() => {
         const originario = vista.loans.reduce((s, l) => s + l.principal_cents, 0)
@@ -224,7 +224,7 @@ export function BanksView({
         <Kpi label="Istituti di credito" valore={String(vista.banks.length)} />
       </div>
 
-      <Disposizione vista="banche-riquadri-1" maniglia="sopra" className="grid grid-cols-3 gap-5">
+      <Griglia colonne={3}>
         <Card
           title="Situazione bancaria"
           className="col-span-2"
@@ -293,7 +293,7 @@ export function BanksView({
             )}
           </div>
         </Card>
-      </Disposizione>
+      </Griglia>
 
       <div className="flex items-center gap-1 border-b border-ink-700">
         {schede.map((s) => (
@@ -454,7 +454,7 @@ export function BanksView({
         <LoanModal companyUuid={companyUuid} banks={vista.banks} loan={modulo.loan} onClose={() => setModulo(null)} onSaved={salvato} />
       )}
       {modulo?.tipo === 'piano' && <PianoModal loan={modulo.loan} today={vista.today} onClose={() => setModulo(null)} />}
-    </Disposizione>
+    </Pannelli>
   )
 }
 

@@ -8,8 +8,9 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/versione-1.0.0-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.1.0-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
+![demo mac](https://img.shields.io/badge/demo-macOS-3ddbff)
 [![release](https://img.shields.io/github/v/release/cammo22/DaProdFinanza?label=scarica&color=5cff9d)](https://github.com/cammo22/DaProdFinanza/releases/latest)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -147,10 +148,15 @@ In più, su ogni schermata:
 - **Cruscotto a widget** in cima alla Panoramica: indicatori con le barre di
   avanzamento, scadenze in arrivo, dove vanno i ricavi, salute dell'azienda. Si
   sceglie quali widget vedere e si può attivare l'aggiornamento automatico.
-- **Riquadri spostabili**: ogni riquadro ha una maniglia a pallini; lo si trascina
-  dove si vuole (la pagina scorre da sola vicino ai bordi), oppure si clicca la
-  maniglia e si sceglie *In cima / Su / Giù / In fondo*. La schermata si riapre sempre
-  così.
+- **Pannelli liberi**: ogni riquadro è un pannello indipendente. Si sposta dalla
+  maniglia a pallini, si ridimensiona trascinando i bordi (che si illuminano), e gli
+  altri si incastrano da soli senza lasciare buchi. Ogni schermata si riapre come la
+  si è lasciata, con una disposizione per ogni tipo di schermo (1080p, 2K, 5K). Dal
+  menu *Pannelli* si ripristina la disposizione o si bloccano i pannelli.
+- **Zoom regolabile**: parte adatto allo schermo e si cambia dalla barra in basso o con
+  Ctrl + / Ctrl − / Ctrl 0.
+- **Scenari pronti** in Analisi & Simulazioni: 14 ipotesi con un clic — positive,
+  negative, imprevisti — più due scenari estremi segnati "solo per test".
 - **Report PDF** del periodo scelto: copertina, sintesi con i punti di attenzione,
   conto economico, stato patrimoniale e indici, circolante, tesoreria, banche.
 - **Aggiornamenti con un clic**: il programma controlla da solo se su GitHub c'è una
@@ -213,8 +219,8 @@ i due programmi.
 | 6 | Banche e finanziamenti | ✅ Fatta |
 | 7 | Analisi e simulazioni | ✅ Fatta |
 | 1.0 | Aggiornamenti automatici, dati nel programma, report PDF, cruscotto, riquadri spostabili | ✅ Versione 1.0.0 |
-| — | Schermate a pannelli liberi e ridimensionabili (1080p, 2K, 5K) | ⬜ Prossima |
-| 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ |
+| 1.1 | Pannelli liberi e ridimensionabili, zoom, scenari pronti, demo per Mac | ✅ Versione 1.1.0 |
+| 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ Prossima |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
 La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
@@ -238,6 +244,14 @@ ha tre file, tutti per Windows a 64 bit:
 | `DaProdFinanza-Demo-x.y.z-portable.exe` | Provarlo con i dati di esempio |
 | `DaProdFinanza-Setup-x.y.z.exe` | Installarlo per usarlo davvero |
 | `DaProdFinanza-x.y.z-portable.exe` | Usarlo davvero senza installare niente |
+| `DaProdFinanza-Demo-x.y.z-mac-arm64.dmg` | La demo su un Mac con chip Apple (M1 e successivi) |
+| `DaProdFinanza-Demo-x.y.z-mac-x64.dmg` | La demo su un Mac con processore Intel |
+
+**Sul Mac c'è solo la demo.** Si apre il DMG e si trascina il programma in
+Applicazioni (o lo si avvia direttamente dal DMG). Non è firmato da Apple: al primo
+avvio macOS lo blocca; si apre *Impostazioni di Sistema → Privacy e sicurezza* e si
+sceglie *Apri comunque* (oppure clic destro sul programma → *Apri*). Per aggiornarla,
+il pulsante *Aggiornamenti* apre la pagina da cui scaricare il DMG nuovo.
 
 Dalla 1.0.0 non serve più scaricarli a mano: il pulsante **Aggiornamenti** (in basso
 a destra, e nella schermata d'ingresso) trova la versione nuova e si aggiorna da solo,

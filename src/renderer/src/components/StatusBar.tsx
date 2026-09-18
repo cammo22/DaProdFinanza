@@ -3,6 +3,7 @@ import type { HealthState } from '@shared/types'
 import { api } from '../lib/api'
 import { Button } from './ui'
 import { UpdateDialog, useUpdates } from './UpdateDialog'
+import { applicaZoom, useZoom, ZOOM_MAX, ZOOM_MIN, ZOOM_PASSO } from '../lib/zoom'
 
 /**
  * Status bar sempre visibile in basso — AGENTS.md §7.
@@ -77,6 +78,7 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
 
       <span className="ml-auto flex items-center gap-3">
         {message && <span className="text-ink-300">{message}</span>}
+        <ZoomControl />
         <Button onClick={onBackup} disabled={busy} className="px-3 py-1 text-xs">
           Backup
         </Button>
@@ -99,5 +101,32 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
       </span>
       {showUpdates && updates && <UpdateDialog state={updates} onClose={() => setShowUpdates(false)} />}
     </footer>
+  )
+}
+
+/** Zoom dell'interfaccia: − percentuale +, e "Automatico" per tornare a quello adatto allo schermo. */
+function ZoomControl(): React.JSX.Element {
+  const { zoom, automatico } = useZoom()
+  const pct = Math.round(zoom * 100)
+  const bottone =
+    'h-6 w-6 rounded-md border border-ink-700 bg-ink-800 text-ink-200 hover:border-brand-400/70 hover:bg-brand-500/20 disabled:opacity-40'
+  return (
+    <span className="flex items-center gap-1.5" title="Zoom dell'interfaccia (Ctrl + / Ctrl − / Ctrl 0)">
+      <span className="text-ink-400">Zoom</span>
+      <button type="button" className={bottone} disabled={zoom <= ZOOM_MIN + 0.001} onClick={() => applicaZoom(zoom - ZOOM_PASSO)} aria-label="Riduci">
+        −
+      </button>
+      <button
+        type="button"
+        onClick={() => applicaZoom(null)}
+        className={`w-14 rounded-md px-1 py-0.5 text-center font-mono ${automatico ? 'text-brand-300' : 'text-ink-200 hover:text-brand-300'}`}
+        title={automatico ? 'Adatto allo schermo' : 'Clic: torna allo zoom adatto allo schermo'}
+      >
+        {pct}%{automatico ? ' A' : ''}
+      </button>
+      <button type="button" className={bottone} disabled={zoom >= ZOOM_MAX - 0.001} onClick={() => applicaZoom(zoom + ZOOM_PASSO)} aria-label="Ingrandisci">
+        +
+      </button>
+    </span>
   )
 }

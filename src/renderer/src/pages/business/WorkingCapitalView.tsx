@@ -1,5 +1,5 @@
 import type { WorkingCapitalView as Vista } from '@shared/analysis'
-import { Disposizione } from '../../components/Disposizione'
+import { Griglia, Pannelli } from '../../components/Pannelli'
 import { StrisciaIndicatori } from '../../components/widgets'
 import {
   delta,
@@ -135,7 +135,7 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
     notes.find((n) => n.subject === key)
 
   return (
-    <Disposizione vista="capitale-circolante">
+    <Pannelli vista="capitale-circolante">
       {/* Letture in più, in stile cruscotto. */}
       <StrisciaIndicatori
         indicatori={[
@@ -271,7 +271,7 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
       </Card>
 
       {series.length > 1 ? (
-        <Disposizione vista="capitale-circolante-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
+        <Griglia colonne={2}>
           <Card title={`Ciclo di cassa — ultimi ${series.length} mesi`}>
             <div className="px-3 py-4">
               <SerieCcc dati={series} />
@@ -282,7 +282,7 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
               <SerieCiclo dati={ultimi12} />
             </div>
           </Card>
-        </Disposizione>
+        </Griglia>
       ) : (
         <Card>
           <p className="px-5 py-4 text-sm text-ink-400">
@@ -368,6 +368,6 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
           </tbody>
         </table>
       </Card>
-    </Disposizione>
+    </Pannelli>
   )
 }

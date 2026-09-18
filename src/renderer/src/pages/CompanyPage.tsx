@@ -15,6 +15,7 @@ import { BalanceSheetView } from './business/BalanceSheetView'
 import { BanksView } from './business/BanksView'
 import { SimulationView } from './business/SimulationView'
 import { DataView } from './business/DataView'
+import { MenuPannelli } from '../components/Pannelli'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 import { TreasuryView } from './business/TreasuryView'
@@ -240,6 +241,7 @@ export function CompanyPage({
           </p>
         </div>
 
+        {vista !== 'dati' && <MenuPannelli vista={vista} />}
         {periods.length > 0 && !senzaPeriodo && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-ink-400">Periodo</span>

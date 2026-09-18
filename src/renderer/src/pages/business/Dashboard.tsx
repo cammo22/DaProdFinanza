@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Analysis, TreasuryView } from '@shared/analysis'
 import { THRESHOLDS } from '@shared/engine'
 import type { Company } from '@shared/types'
 import { dataIt, days, euro, percent, times } from '../../lib/format'
 import type { Vista } from '../../components/Sidebar'
 import { Barra, Segmenti } from '../../components/widgets'
-import { Disposizione } from '../../components/Disposizione'
+import { Griglia } from '../../components/Pannelli'
 
 /**
  * Cruscotto in cima alla Panoramica: a colpo d'occhio, a widget.
@@ -136,7 +136,11 @@ function Tile({
 
 // --- cruscotto ------------------------------------------------------------------
 
-export function Dashboard({
+/**
+ * Il cruscotto come pezzi separati: l'intestazione (sopra i pannelli) e i
+ * widget, che diventano pannelli indipendenti della Panoramica.
+ */
+export function useCruscotto({
   company,
   analysis,
   tesoreria,
@@ -148,7 +152,7 @@ export function Dashboard({
   tesoreria: TreasuryView | null
   onVista: (vista: Vista) => void
   onRefresh: () => void
-}): React.JSX.Element {
+}): { intestazione: ReactNode; pannelli: ReactNode[] } {
   const [pref, setPref] = useState(leggiPreferenze)
   const [gestisci, setGestisci] = useState(false)
   const [aggiornato, setAggiornato] = useState(() => new Date())
@@ -216,8 +220,9 @@ export function Dashboard({
 
   const nascosti = WIDGETS.filter((w) => !visibile(w.id))
 
-  return (
-    <div className="flex flex-col gap-4">
+  return {
+    intestazione: (
+      <div className="flex flex-col gap-2">
       {/* Intestazione del cruscotto: percorso, titolo, comandi. */}
       <div className="flex flex-wrap items-end gap-3">
         <div>
@@ -284,9 +289,19 @@ export function Dashboard({
           </div>
         </div>
       </div>
-
-      {visibile('indicatori') && (
-        <section className="relative grid grid-cols-2 divide-ink-700 rounded-xl border border-ink-700 bg-ink-850 lg:grid-cols-4 lg:divide-x">
+      {nascosti.length > 0 && (
+        <p className="text-[11px] text-ink-500">
+          {nascosti.length === 1 ? '1 widget nascosto' : `${nascosti.length} widget nascosti`} ·{' '}
+          <button type="button" className="text-brand-300 hover:underline" onClick={() => cambia({ ...pref, nascosti: [] })}>
+            mostrali tutti
+          </button>
+        </p>
+      )}
+      </div>
+    ),
+    pannelli: [
+      visibile('indicatori') ? (
+        <section key="indicatori" className="relative grid grid-cols-2 divide-ink-700 rounded-xl border border-ink-700 bg-ink-850 lg:grid-cols-4 lg:divide-x">
           <div className="absolute right-3 top-3">
             <Menu onNascondi={() => nascondi('indicatori')} />
           </div>
@@ -347,9 +362,8 @@ export function Dashboard({
             />
           </Tile>
         </section>
-      )}
-
-      <Disposizione vista="cruscotto" maniglia="sopra" className="grid gap-4 lg:grid-cols-2">
+      ) : null,
+      <Griglia key="widget" colonne={2}>
         {visibile('scadenze') && (
           <Widget
             titolo="Scadenze in arrivo"
@@ -449,18 +463,9 @@ export function Dashboard({
             </p>
           </Widget>
         )}
-      </Disposizione>
-
-      {nascosti.length > 0 && (
-        <p className="text-[11px] text-ink-500">
-          {nascosti.length === 1 ? '1 widget nascosto' : `${nascosti.length} widget nascosti`} ·{' '}
-          <button type="button" className="text-brand-300 hover:underline" onClick={() => cambia({ ...pref, nascosti: [] })}>
-            mostrali tutti
-          </button>
-        </p>
-      )}
-    </div>
-  )
+      </Griglia>
+    ]
+  }
 }
 
 function addGiorni(iso: string, n: number): string {

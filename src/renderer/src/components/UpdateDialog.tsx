@@ -22,6 +22,7 @@ const KIND_LABELS: Record<UpdateKind, string> = {
   installer: 'versione installata',
   portable: 'versione portatile',
   demo: 'versione dimostrativa',
+  mac: 'versione dimostrativa per Mac',
   dev: 'versione di sviluppo'
 }
 
@@ -31,6 +32,7 @@ const HOW_IT_WORKS: Record<UpdateKind, string> = {
   portable:
     'Il nuovo file viene salvato accanto a quello attuale e parte al suo posto; il file vecchio viene tolto.',
   demo: 'Il nuovo file viene salvato accanto a quello attuale e parte al suo posto; i dati di esempio restano.',
+  mac: 'Si apre la pagina di download: scarica il DMG nuovo, aprilo e trascina il programma al posto di quello vecchio. I dati di esempio restano.',
   dev: 'In sviluppo si può solo controllare: l’aggiornamento vale per le versioni pubblicate.'
 }
 
@@ -74,7 +76,7 @@ export function UpdateDialog({
               </div>
             )}
             <p className="text-xs text-ink-400">
-              {HOW_IT_WORKS[state.kind]} Prima viene fatto un backup del database.
+              {HOW_IT_WORKS[state.kind]}{state.kind === 'mac' ? '' : ' Prima viene fatto un backup del database.'}
             </p>
           </>
         )}
@@ -110,7 +112,7 @@ export function UpdateDialog({
         )}
         {status === 'available' && state.kind !== 'dev' && (
           <Button variant="primary" onClick={() => window.daprod.updates.download()}>
-            Scarica la versione {state.latest}
+            {state.kind === 'mac' ? 'Apri la pagina di download' : `Scarica la versione ${state.latest}`}
           </Button>
         )}
         {status === 'ready' && (

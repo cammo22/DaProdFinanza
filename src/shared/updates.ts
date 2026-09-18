@@ -9,7 +9,8 @@
 export const UPDATE_REPO = { owner: 'cammo22', repo: 'DaProdFinanza' } as const
 
 /** Come è stata distribuita la copia in esecuzione. */
-export type UpdateKind = 'installer' | 'portable' | 'demo' | 'dev'
+/** 'mac': la demo per Mac, che si aggiorna scaricando il DMG dalla pagina della release. */
+export type UpdateKind = 'installer' | 'portable' | 'demo' | 'mac' | 'dev'
 
 export type UpdateStatus =
   | 'idle'
@@ -45,6 +46,8 @@ export function assetPattern(kind: UpdateKind): RegExp | null {
       return /^DaProdFinanza-(\d+\.\d+\.\d+)-portable\.exe$/
     case 'demo':
       return /^DaProdFinanza-Demo-(\d+\.\d+\.\d+)-portable\.exe$/
+    case 'mac':
+      return /^DaProdFinanza-Demo-(\d+\.\d+\.\d+)-mac-(?:arm64|x64)\.dmg$/
     case 'dev':
       return null
   }
@@ -60,6 +63,8 @@ export interface ReleaseAsset {
 
 export interface Release {
   tag_name: string
+  /** Pagina della release su GitHub. */
+  html_url?: string
   body?: string | null
   published_at?: string | null
   draft?: boolean
