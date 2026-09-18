@@ -1,4 +1,5 @@
 import type { Analysis } from '@shared/analysis'
+import { Disposizione } from '../../components/Disposizione'
 import { StrisciaIndicatori } from '../../components/widgets'
 import { THRESHOLDS } from '@shared/engine'
 import { days, euro, percent, share, times, tone } from '../../lib/format'
@@ -76,7 +77,7 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
   const r = analysis.ratios
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="stato-patrimoniale">
       {/* Letture in più, in stile cruscotto: come è finanziata l'azienda. */}
       <StrisciaIndicatori
         indicatori={[
@@ -128,7 +129,7 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
         </Alert>
       )}
 
-      <div className="grid grid-cols-2 gap-5">
+      <Disposizione vista="stato-patrimoniale-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
         <Card title="Attivo">
           <table className="w-full text-sm">
             <tbody>
@@ -171,9 +172,9 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
             </table>
           </div>
         </Card>
-      </div>
+      </Disposizione>
 
-      <div className="grid grid-cols-3 gap-5">
+      <Disposizione vista="stato-patrimoniale-riquadri-2" maniglia="sopra" className="grid grid-cols-3 gap-5">
         <Card title="Redditività">
           <div className="py-1">
             <Indice label="ROE" value={percent(r.roe)} nota="Utile sul capitale proprio" />
@@ -224,7 +225,7 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
             />
           </div>
         </Card>
-      </div>
-    </div>
+      </Disposizione>
+    </Disposizione>
   )
 }

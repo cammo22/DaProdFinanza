@@ -5,6 +5,7 @@ import type { Company } from '@shared/types'
 import { dataIt, days, euro, percent, times } from '../../lib/format'
 import type { Vista } from '../../components/Sidebar'
 import { Barra, Segmenti } from '../../components/widgets'
+import { Disposizione } from '../../components/Disposizione'
 
 /**
  * Cruscotto in cima alla Panoramica: a colpo d'occhio, a widget.
@@ -348,7 +349,7 @@ export function Dashboard({
         </section>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <Disposizione vista="cruscotto" maniglia="sopra" className="grid gap-4 lg:grid-cols-2">
         {visibile('scadenze') && (
           <Widget
             titolo="Scadenze in arrivo"
@@ -448,7 +449,7 @@ export function Dashboard({
             </p>
           </Widget>
         )}
-      </div>
+      </Disposizione>
 
       {nascosti.length > 0 && (
         <p className="text-[11px] text-ink-500">

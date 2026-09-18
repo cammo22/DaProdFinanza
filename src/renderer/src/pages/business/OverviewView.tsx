@@ -1,4 +1,5 @@
 import type { Analysis, SeriesPoint, TreasuryView } from '@shared/analysis'
+import { Disposizione } from '../../components/Disposizione'
 import { SOGLIA_UTILIZZO_AFFIDAMENTI, THRESHOLDS } from '@shared/engine'
 import { dataIt, days, euro, percent, times, tone } from '../../lib/format'
 import { Card } from '../../components/ui'
@@ -177,7 +178,7 @@ export function OverviewView({
   const trenta = tesoreria?.horizons.find((h) => h.days === 30)
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="panoramica">
       <Dashboard
         company={company}
         analysis={analysis}
@@ -217,7 +218,7 @@ export function OverviewView({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-5">
+      <Disposizione vista="panoramica-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
         <Card title="KPI economici">
           <div className="py-1">
             <Kpi label="Ricavi del periodo" value={euro(a.ricaviNetti)} />
@@ -287,10 +288,10 @@ export function OverviewView({
             />
           </div>
         </Card>
-      </div>
+      </Disposizione>
 
       {serie.length > 1 ? (
-        <div className="grid grid-cols-2 gap-5">
+        <Disposizione vista="panoramica-riquadri-2" maniglia="sopra" className="grid grid-cols-2 gap-5">
           <Card title="Ricavi e costi nel tempo">
             <div className="px-3 py-4">
               <SerieEconomica dati={serie} />
@@ -319,7 +320,7 @@ export function OverviewView({
               )}
             </div>
           </Card>
-        </div>
+        </Disposizione>
       ) : (
         <Card title="Andamento nel tempo">
           <p className="px-5 py-6 text-sm text-ink-400">
@@ -329,6 +330,6 @@ export function OverviewView({
           </p>
         </Card>
       )}
-    </div>
+    </Disposizione>
   )
 }

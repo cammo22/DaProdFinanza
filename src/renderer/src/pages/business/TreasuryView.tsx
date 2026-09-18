@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Disposizione } from '../../components/Disposizione'
 import { StrisciaIndicatori } from '../../components/widgets'
 import type { TreasuryView as Vista } from '@shared/analysis'
 import { daysBetween, residual } from '@shared/engine'
@@ -122,7 +123,7 @@ export function TreasuryView({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="tesoreria">
       {/* Letture in più, in stile cruscotto. */}
       {(() => {
         const novanta = vista.horizons.find((h) => h.days === 90)
@@ -423,7 +424,7 @@ export function TreasuryView({
       {modulo?.tipo === 'impostazioni' && (
         <SettingsModal companyUuid={companyUuid} settings={vista.settings} onClose={chiudi} onSaved={salvato} />
       )}
-    </div>
+    </Disposizione>
   )
 }
 
