@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Disposizione } from '../../components/Disposizione'
+import { Pannelli } from '../../components/Pannelli'
 import {
   impactRows,
   PARAMETRI_ZERO,
@@ -550,7 +550,8 @@ export function SimulationView({
       </div>
 
       {/* --- risultati ------------------------------------------------------- */}
-      <Disposizione vista="simulazioni" className="flex min-w-0 flex-col gap-5">
+      <div className="min-w-0">
+        <Pannelli vista="simulazioni">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-ink-400">
             Base: <span className="text-ink-200">{base.label}</span> · proiezione sui 12 mesi da oggi
@@ -657,7 +658,8 @@ export function SimulationView({
           cash flow è EBITDA meno imposte, variazione del circolante, investimenti e rate, più i nuovi
           finanziamenti.
         </p>
-      </Disposizione>
+        </Pannelli>
+      </div>
     </div>
   )
 }

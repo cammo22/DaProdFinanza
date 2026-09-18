@@ -1,5 +1,5 @@
 import type { Analysis, SeriesPoint, TreasuryView } from '@shared/analysis'
-import { Disposizione } from '../../components/Disposizione'
+import { Griglia, Pannelli } from '../../components/Pannelli'
 import { SOGLIA_UTILIZZO_AFFIDAMENTI, THRESHOLDS } from '@shared/engine'
 import { dataIt, days, euro, percent, times, tone } from '../../lib/format'
 import { Card } from '../../components/ui'
@@ -11,7 +11,7 @@ import {
   SerieLiquidita
 } from '../../components/charts'
 import { puntiTesoreria } from './TreasuryView'
-import { Dashboard } from './Dashboard'
+import { useCruscotto } from './Dashboard'
 import type { Company } from '@shared/types'
 import type { Vista } from '../../components/Sidebar'
 
@@ -177,15 +177,13 @@ export function OverviewView({
   const lista = avvisi(analysis, tesoreria)
   const trenta = tesoreria?.horizons.find((h) => h.days === 30)
 
+  const cruscotto = useCruscotto({ company, analysis, tesoreria, onVista, onRefresh })
+
   return (
-    <Disposizione vista="panoramica">
-      <Dashboard
-        company={company}
-        analysis={analysis}
-        tesoreria={tesoreria}
-        onVista={onVista}
-        onRefresh={onRefresh}
-      />
+    <div className="flex flex-col gap-5">
+    {cruscotto.intestazione}
+    <Pannelli vista="panoramica">
+      {cruscotto.pannelli}
 
       {lista.length > 0 ? (
         <div className="grid grid-cols-2 gap-4">
@@ -218,7 +216,7 @@ export function OverviewView({
         </div>
       )}
 
-      <Disposizione vista="panoramica-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
+      <Griglia colonne={2}>
         <Card title="KPI economici">
           <div className="py-1">
             <Kpi label="Ricavi del periodo" value={euro(a.ricaviNetti)} />
@@ -288,10 +286,10 @@ export function OverviewView({
             />
           </div>
         </Card>
-      </Disposizione>
+      </Griglia>
 
       {serie.length > 1 ? (
-        <Disposizione vista="panoramica-riquadri-2" maniglia="sopra" className="grid grid-cols-2 gap-5">
+        <Griglia colonne={2}>
           <Card title="Ricavi e costi nel tempo">
             <div className="px-3 py-4">
               <SerieEconomica dati={serie} />
@@ -320,7 +318,7 @@ export function OverviewView({
               )}
             </div>
           </Card>
-        </Disposizione>
+        </Griglia>
       ) : (
         <Card title="Andamento nel tempo">
           <p className="px-5 py-6 text-sm text-ink-400">
@@ -330,6 +328,7 @@ export function OverviewView({
           </p>
         </Card>
       )}
-    </Disposizione>
+    </Pannelli>
+    </div>
   )
 }

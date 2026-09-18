@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { Disposizione } from '../../components/Disposizione'
+import { Griglia, Pannelli } from '../../components/Pannelli'
 import { StrisciaIndicatori } from '../../components/widgets'
 import type { Analysis, SeriesPoint } from '@shared/analysis'
 import { SCHEME_LABELS, SCHEMES, schemeLines, type Scheme } from '@shared/engine'
@@ -74,7 +74,7 @@ export function IncomeStatementView({
     }))
 
   return (
-    <Disposizione vista="conto-economico">
+    <Pannelli vista="conto-economico">
       {/* Letture in più, in stile cruscotto: peso dei costi, budget, anno prima. */}
       {(() => {
         const budget = analysis.comparison.columns.find((c) => c.key === 'budget')?.aggregates ?? null
@@ -258,7 +258,7 @@ export function IncomeStatementView({
         )}
       </Card>
 
-      <Disposizione vista="conto-economico-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
+      <Griglia colonne={2}>
         <Card title="Ricavi, costi ed EBITDA nel tempo">
           <div className="px-3 py-4">
             {serie.length > 1 ? (
@@ -281,7 +281,7 @@ export function IncomeStatementView({
             )}
           </div>
         </Card>
-      </Disposizione>
+      </Griglia>
 
       <Card title="Break-even e margine di sicurezza">
         <div className="px-5 py-5">
@@ -316,6 +316,6 @@ export function IncomeStatementView({
           ))}
         </div>
       </Card>
-    </Disposizione>
+    </Pannelli>
   )
 }
