@@ -10,6 +10,9 @@ import {
   SerieLiquidita
 } from '../../components/charts'
 import { puntiTesoreria } from './TreasuryView'
+import { Dashboard } from './Dashboard'
+import type { Company } from '@shared/types'
+import type { Vista } from '../../components/Sidebar'
 
 /**
  * Panoramica — AGENTS.md §10.2.
@@ -153,13 +156,19 @@ function Kpi({
 }
 
 export function OverviewView({
+  company,
   analysis,
   serie,
-  tesoreria
+  tesoreria,
+  onVista,
+  onRefresh
 }: {
+  company: Company
   analysis: Analysis
   serie: SeriesPoint[]
   tesoreria: TreasuryView | null
+  onVista: (vista: Vista) => void
+  onRefresh: () => void
 }): React.JSX.Element {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
@@ -169,6 +178,14 @@ export function OverviewView({
 
   return (
     <div className="flex flex-col gap-5">
+      <Dashboard
+        company={company}
+        analysis={analysis}
+        tesoreria={tesoreria}
+        onVista={onVista}
+        onRefresh={onRefresh}
+      />
+
       {lista.length > 0 ? (
         <div className="grid grid-cols-2 gap-4">
           {lista.map((avviso) => (
@@ -308,7 +325,7 @@ export function OverviewView({
           <p className="px-5 py-6 text-sm text-ink-400">
             I grafici si disegnano da due periodi in su: con uno solo non c&apos;è un andamento da
             mostrare, e una linea piatta sembrerebbe un dato. Importa altri mesi dalla voce{' '}
-            <span className="text-ink-300">Import dati</span> e compariranno qui.
+            <span className="text-ink-300">Dati contabili</span> e compariranno qui.
           </p>
         </Card>
       )}

@@ -1,4 +1,5 @@
 import type { WorkingCapitalView as Vista } from '@shared/analysis'
+import { StrisciaIndicatori } from '../../components/widgets'
 import {
   delta,
   deltaPercent,
@@ -134,6 +135,39 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
 
   return (
     <div className="flex flex-col gap-5">
+      {/* Letture in più, in stile cruscotto. */}
+      <StrisciaIndicatori
+        indicatori={[
+          {
+            label: 'Capitale circolante netto',
+            valore: euro(current.capitaleCircolanteNetto),
+            sotto: previousYear ? `anno prima ${euro(previousYear.snapshot.capitaleCircolanteNetto)}` : undefined
+          },
+          {
+            label: 'Crediti scaduti nello scadenziario',
+            valore: aging.openCents ? percent((aging.overdueCents / aging.openCents) * 100, 0) : '—',
+            quota: aging.openCents ? aging.overdueCents / aging.openCents : null,
+            stile: 'barra',
+            colore: aging.openCents && aging.overdueCents / aging.openCents > 0.1 ? 'bg-negative' : 'bg-positive',
+            sotto: `${euro(aging.overdueCents)} scaduti su ${euro(aging.openCents)} aperti`
+          },
+          {
+            label: 'Giorni di incasso',
+            valore: days(current.dso),
+            quota: current.dso === null ? null : current.dso / 120,
+            colore: 'bg-brand-400',
+            sotto: previousYear ? `anno prima ${days(previousYear.snapshot.dso)}` : undefined
+          },
+          {
+            label: 'Giorni di pagamento',
+            valore: days(current.dpo),
+            quota: current.dpo === null ? null : current.dpo / 120,
+            colore: 'bg-brand-400',
+            sotto: previousYear ? `anno prima ${days(previousYear.snapshot.dpo)}` : undefined
+          }
+        ]}
+      />
+
       <div className="grid grid-cols-4 gap-4">
         {CARD.map((c) => {
           const valore = current[c.key] as number

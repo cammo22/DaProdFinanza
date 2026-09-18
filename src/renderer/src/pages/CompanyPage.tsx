@@ -62,6 +62,8 @@ export function CompanyPage({
   const [scenari, setScenari] = useState<SimulationScenario[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  // Cresce a ogni "Aggiorna" del cruscotto: fa ricaricare l'analisi.
+  const [giro, setGiro] = useState(0)
 
   const caricaPeriodi = useCallback(async () => {
     try {
@@ -114,7 +116,7 @@ export function CompanyPage({
     return () => {
       annullato = true
     }
-  }, [company.uuid, periodUuid, scenario, scheme])
+  }, [company.uuid, periodUuid, scenario, scheme, giro])
 
   // La tesoreria guarda avanti da oggi: non dipende dal periodo scelto.
   const caricaTesoreria = useCallback(async () => {
@@ -276,7 +278,7 @@ export function CompanyPage({
             </Select>
             <Button
               variant="primary"
-              className="px-3 py-1.5 text-xs"
+              className="shrink-0 whitespace-nowrap px-3 py-1.5 text-xs"
               disabled={!conDati || report === 'Preparo il report…'}
               onClick={esportaReport}
               title="Report completo del periodo scelto, da stampare o consegnare al cliente"
@@ -356,7 +358,18 @@ export function CompanyPage({
               />
             </Card>
           ) : vista === 'panoramica' ? (
-            <OverviewView analysis={analysis} serie={serie} tesoreria={tesoreria} />
+            <OverviewView
+              company={company}
+              analysis={analysis}
+              serie={serie}
+              tesoreria={tesoreria}
+              onVista={onVista}
+              onRefresh={() => {
+                setGiro((g) => g + 1)
+                caricaTesoreria()
+                caricaPeriodi()
+              }}
+            />
           ) : vista === 'conto-economico' ? (
             <IncomeStatementView
               analysis={analysis}
