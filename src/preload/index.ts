@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { ReportParams } from '@shared/report'
 import type { UpdateState } from '@shared/updates'
 
 /**
@@ -30,6 +31,15 @@ const api = {
 
   /** Apre un file .xlsx con il programma predefinito. */
   openExcelFile: (path: string): Promise<void> => ipcRenderer.invoke('shell:open-file', path),
+
+  /** Report PDF: chiede dove salvarlo, lo impagina e lo apre. null se annullato. */
+  exportReport: (params: ReportParams): Promise<string | null> =>
+    ipcRenderer.invoke('report:export', params),
+  /** Solo nella finestra nascosta del report: cosa impaginare, e "pronto per la stampa". */
+  report: {
+    params: (): Promise<ReportParams | null> => ipcRenderer.invoke('report:params'),
+    ready: (error?: string): void => ipcRenderer.send('report:ready', error)
+  },
 
   /** Aggiornamenti da GitHub: stato, controllo, download, installazione. */
   updates: {

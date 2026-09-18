@@ -25,13 +25,13 @@ import { puntiTesoreria } from './TreasuryView'
 
 type Livello = 'rosso' | 'giallo'
 
-interface Avviso {
+export interface Avviso {
   livello: Livello
   titolo: string
   dettaglio: string
 }
 
-function avvisi(analysis: Analysis, tesoreria: TreasuryView | null): Avviso[] {
+export function avvisi(analysis: Analysis, tesoreria: TreasuryView | null): Avviso[] {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
   const b = analysis.balanceSheet

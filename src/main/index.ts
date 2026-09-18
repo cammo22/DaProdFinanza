@@ -7,6 +7,7 @@ import { backupDatabase, closeDatabase, openDatabase } from './db'
 import { seedDemoData } from './db/seed'
 import { dataRoot } from './lib/paths'
 import { apiBaseUrl, startServer, stopServer } from './server'
+import { registerReportIpc } from './report'
 import { checkForUpdates, downloadUpdate, initUpdates, installUpdate, updateState } from './updates'
 
 let mainWindow: BrowserWindow | null = null
@@ -96,6 +97,9 @@ function registerIpc(): void {
   ipcMain.handle('update:check', () => checkForUpdates())
   ipcMain.handle('update:download', () => downloadUpdate())
   ipcMain.handle('update:install', () => installUpdate())
+
+  // Report PDF (vedi report.ts).
+  registerReportIpc()
 }
 
 app.whenReady().then(async () => {
