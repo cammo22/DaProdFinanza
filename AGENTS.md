@@ -549,6 +549,76 @@ Otto indicatori a confronto (ricavi, margine lordo, EBITDA, utile, break-even, c
 
 **Il menu non ha più voci "in arrivo"**: tutte le sette viste di §10 esistono.
 
+### Sessione 3 — versione 0.1.0
+
+Richieste dell'utente: tasto di aggiornamento da GitHub, dati inseriti nel programma
+invece che in Excel, report PDF, grafica e idee da Ever Gauzy senza stravolgere il
+concept, riquadri spostabili con la disposizione ricordata. Nulla di quello che
+c'era è stato tolto.
+
+| Pezzo | Dove |
+|---|---|
+| Aggiornamenti (controllo, download verificato, installazione) | `src/main/updates.ts`, `src/shared/updates.ts`, `components/UpdateDialog.tsx` |
+| Piano dei conti e saldi nel programma | `services/ledger.service.ts`, `routes/ledger.routes.ts`, `pages/business/{DataView,BalancesEditor,AccountsEditor}.tsx` |
+| Report PDF | `src/main/report.ts`, `pages/report/ReportPage.tsx` |
+| Cruscotto a widget e strisce di indicatori | `pages/business/Dashboard.tsx`, `components/widgets.tsx` |
+| Riquadri spostabili | `components/Disposizione.tsx` |
+
+**Aggiornamenti.** Un solo meccanismo per le tre copie, senza electron-updater e senza
+file in più da pubblicare: si legge `releases/latest` dall'API di GitHub, si sceglie
+l'eseguibile per nome (installer / portable / demo: la demo non diventa mai la
+versione vera), lo si scarica verificando l'impronta **SHA-256 che GitHub calcola**
+(campo `digest` dell'asset: senza impronta non si scarica), si fa un backup del
+database e si installa. L'installer va in modalità silenziosa di aggiornamento
+(`--updated /S --force-run`, stessa cartella dal registro); il portable salva il nuovo
+file accanto al vecchio, lo avvia (passando l'eventuale `--user-data-dir`) e al primo
+avvio la versione nuova toglie la copia superata. Controllo all'avvio e ogni 6 ore; in
+sviluppo solo a mano. **Conseguenza per le release: i nomi dei tre file non vanno
+cambiati**, e le release devono restare non-prerelease.
+
+**Dati contabili.** L'import Excel resta, ma la strada normale è scrivere nel
+programma. `saveBalances` riceve solo i conti toccati e aggiorna riga per riga (un
+importo `null` toglie il saldo): i saldi non cambiati restano com'erano, con la loro
+origine, e alla sincronizzazione (Fase 8) viaggeranno solo le differenze. Le regole
+sono quelle dell'import: periodo chiuso intoccabile, codice unico, tipo coerente con
+la sezione (nell'attivo si può scegliere `ATTIVITA' NEGATIVO`), dettaglio fra le voci
+della sezione. Un conto con saldi non si elimina, si disattiva. Il *piano di partenza*
+crea un conto per sezione e, nelle sezioni con voci di dettaglio (crediti, debiti,
+utili), un conto per voce con il nome della voce del modello: nessuna classificazione
+inventata.
+
+**Report PDF.** Una pagina React impaginata per A4, aperta in una finestra nascosta
+larga 794 px (`#report` nell'URL, parametri e token passati via IPC, mai nell'URL) e
+stampata con `printToPDF` e i numeri di pagina. Legge le stesse API delle schermate
+con i permessi di chi esporta; le sezioni senza dati non compaiono; grafici a misura
+fissa e senza animazioni. In sviluppo `DAPROD_REPORT_TEST_DIR` salta il dialogo (solo
+con `app.isPackaged === false`).
+
+**Ever Gauzy.** È AGPL-3.0 (e Angular): copiarne codice obbligherebbe a rilasciare
+tutto DaProdFinanza sotto AGPL. Se ne sono prese **solo idee** — striscia di indicatori
+con barre a segmenti, schede scorrevoli, elenchi con barrette di proporzione, "Gestisci
+widget", aggiornamento automatico, menu ⋮ per widget — riscritte da zero.
+
+**Riquadri spostabili.** `Disposizione` avvolge il contenitore di una schermata (e le
+griglie al suo interno): ogni figlio diretto ha una maniglia. Eventi del puntatore,
+non il drag and drop HTML5 (partiva male da un pulsante e perdeva la maniglia uscendo
+dal riquadro): l'ordine cambia mentre si trascina, scambiando solo oltre la metà del
+bersaglio, e vicino ai bordi del contenitore che scorre la pagina scorre da sola. Un
+clic sulla maniglia (movimento sotto i 5 px) apre invece il menu In cima / Su / Giù /
+In fondo: chi fatica a trascinare sposta con precisione. Le chiavi dei blocchi sono quelle che `Children.toArray` assegna per
+posizione nel codice, quindi stabili anche se un blocco condizionale sparisce.
+L'ordine sta in `localStorage` per schermata: è una comodità di chi guarda, non un
+dato da sincronizzare.
+
+**Collegamento Consulente↔Azienda (Fase 8) — decisione presa con l'utente:** niente
+account Tailscale. Si valuta **Tailcat** (Tailscale, BSD-3, agosto 2026): nessun
+account, il consulente mostra un indirizzo-codice che l'azienda inserisce, canale
+WireGuard cifrato, porte TCP inoltrate (`tailcat serve` / `tailcat forward`), chiave
+salvata per un indirizzo stabile e `--allow` per le chiavi client. Limiti da tenere
+presenti: passa dai relay DERP gratuiti di Tailscale (senza garanzie; si può
+installare un relay proprio), progetto giovane senza stabilità di API. Il trasporto
+va isolato dietro un'interfaccia, così da poterlo sostituire.
+
 ---
 
 ## 14. Punti aperti
