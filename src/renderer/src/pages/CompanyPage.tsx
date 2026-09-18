@@ -14,7 +14,7 @@ import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
 import { BalanceSheetView } from './business/BalanceSheetView'
 import { BanksView } from './business/BanksView'
 import { SimulationView } from './business/SimulationView'
-import { ImportPanel, TemplateButton } from './business/ImportPanel'
+import { DataView } from './business/DataView'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 import { TreasuryView } from './business/TreasuryView'
@@ -198,8 +198,8 @@ export function CompanyPage({
   }, [company.uuid, vista, periodUuid, scenario])
 
   const conDati = analysis !== null && analysis.accountCount > 0
-  // Import, tesoreria e banche non dipendono dal periodo scelto.
-  const senzaPeriodo = vista === 'import' || vista === 'tesoreria' || vista === 'banche'
+  // Dati contabili, tesoreria e banche non dipendono dal periodo scelto.
+  const senzaPeriodo = vista === 'dati' || vista === 'tesoreria' || vista === 'banche'
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -260,8 +260,8 @@ export function CompanyPage({
           </div>
         )}
 
-        {vista === 'import' && canImport && (
-          <ImportPanel company={company} onImported={caricaPeriodi} />
+        {vista === 'dati' && canImport && (
+          <DataView company={company} periods={periods} canEdit={canImport} onChanged={caricaPeriodi} />
         )}
 
         {vista === 'tesoreria' &&
@@ -300,7 +300,7 @@ export function CompanyPage({
                 description={
                   periods.length === 0
                     ? canImport
-                      ? "Questa azienda non ha ancora un bilancio. Scarica il modello Excel, compilalo con i saldi e importalo: le analisi compaiono da sole."
+                      ? 'Questa azienda non ha ancora numeri. Crea il piano dei conti e scrivi i saldi in Dati contabili (oppure importa un Excel che hai già): le analisi compaiono da sole.'
                       : 'Il consulente non ha ancora caricato un bilancio per questa azienda.'
                     : `Il periodo selezionato non ha saldi per lo scenario "${
                         SCENARI.find((s) => s.id === scenario)?.label
@@ -309,12 +309,9 @@ export function CompanyPage({
                 action={
                   periods.length === 0 &&
                   canImport && (
-                    <div className="flex items-start gap-3">
-                      <TemplateButton company={company} />
-                      <Button variant="primary" onClick={() => onVista('import')}>
-                        Importa un file
-                      </Button>
-                    </div>
+                    <Button variant="primary" onClick={() => onVista('dati')}>
+                      Inserisci i dati
+                    </Button>
                   )
                 }
               />
