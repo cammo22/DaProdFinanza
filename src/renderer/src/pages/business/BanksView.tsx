@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Disposizione } from '../../components/Disposizione'
+import { StrisciaIndicatori } from '../../components/widgets'
 import type { BankingView } from '@shared/analysis'
 import {
   CREDIT_LINE_LABELS,
@@ -155,7 +157,45 @@ export function BanksView({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="banche">
+      {/* Letture in più, in stile cruscotto. */}
+      {(() => {
+        const originario = vista.loans.reduce((s, l) => s + l.principal_cents, 0)
+        const rimborsato = originario - vista.debitoResiduo
+        return (
+          <StrisciaIndicatori
+            indicatori={[
+              {
+                label: 'Utilizzo degli affidamenti',
+                valore: a.utilizzoPercent === null ? '—' : percent(a.utilizzoPercent, 0),
+                quota: a.utilizzoPercent === null ? null : a.utilizzoPercent / 100,
+                stile: 'barra',
+                soglia: 0.8,
+                colore: (a.utilizzoPercent ?? 0) >= 80 ? 'bg-negative' : 'bg-positive',
+                sotto: `${euro(a.utilizzato)} su ${euro(a.accordato)} · allerta all’80%`
+              },
+              {
+                label: 'Finanziamenti già rimborsati',
+                valore: originario ? percent((rimborsato / originario) * 100, 0) : '—',
+                quota: originario ? rimborsato / originario : null,
+                colore: 'bg-brand-400',
+                sotto: `${euro(rimborsato)} su ${euro(originario)} erogati`
+              },
+              {
+                label: 'Rata media mensile',
+                valore: euro(vista.rataMensile),
+                sotto: `${euro(vista.rate12Mesi)} nei prossimi 12 mesi`
+              },
+              {
+                label: 'Istituti',
+                valore: String(vista.banks.length),
+                sotto: `${vista.lines.length} linee di credito · ${vista.loans.length} finanziamenti`
+              }
+            ]}
+          />
+        )
+      })()}
+
       {error && <Alert>{error}</Alert>}
 
       <div className="grid grid-cols-6 gap-3">
@@ -184,7 +224,7 @@ export function BanksView({
         <Kpi label="Istituti di credito" valore={String(vista.banks.length)} />
       </div>
 
-      <div className="grid grid-cols-3 gap-5">
+      <Disposizione vista="banche-riquadri-1" maniglia="sopra" className="grid grid-cols-3 gap-5">
         <Card
           title="Situazione bancaria"
           className="col-span-2"
@@ -253,7 +293,7 @@ export function BanksView({
             )}
           </div>
         </Card>
-      </div>
+      </Disposizione>
 
       <div className="flex items-center gap-1 border-b border-ink-700">
         {schede.map((s) => (
@@ -414,7 +454,7 @@ export function BanksView({
         <LoanModal companyUuid={companyUuid} banks={vista.banks} loan={modulo.loan} onClose={() => setModulo(null)} onSaved={salvato} />
       )}
       {modulo?.tipo === 'piano' && <PianoModal loan={modulo.loan} today={vista.today} onClose={() => setModulo(null)} />}
-    </div>
+    </Disposizione>
   )
 }
 

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { Disposizione } from '../../components/Disposizione'
+import { StrisciaIndicatori } from '../../components/widgets'
 import type { TreasuryView as Vista } from '@shared/analysis'
 import { daysBetween, residual } from '@shared/engine'
 import type { TreasuryItem } from '@shared/types'
@@ -121,7 +123,54 @@ export function TreasuryView({
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="tesoreria">
+      {/* Letture in più, in stile cruscotto. */}
+      {(() => {
+        const novanta = vista.horizons.find((h) => h.days === 90)
+        const uscitaGiorno = novanta && novanta.totaleUscite > 0 ? novanta.totaleUscite / 90 : null
+        const autonomia = uscitaGiorno ? Math.floor(vista.liquiditaOggi / uscitaGiorno) : null
+        const incassi = trenta?.totaleEntrate ?? 0
+        const pagamenti = trenta?.totaleUscite ?? 0
+        return (
+          <StrisciaIndicatori
+            indicatori={[
+              {
+                label: 'Autonomia di cassa',
+                valore: autonomia === null ? '—' : `${autonomia} gg`,
+                quota: autonomia === null ? null : autonomia / 180,
+                colore: autonomia !== null && autonomia < 30 ? 'bg-negative' : 'bg-positive',
+                sotto: 'giorni di uscite coperti dalla liquidità di oggi, senza nuovi incassi'
+              },
+              {
+                label: 'Incassi / pagamenti a 30 giorni',
+                valore: pagamenti ? `${(incassi / pagamenti).toFixed(2).replace('.', ',')}x` : '—',
+                quota: incassi + pagamenti ? incassi / (incassi + pagamenti) : null,
+                stile: 'barra',
+                soglia: 0.5,
+                colore: incassi >= pagamenti ? 'bg-positive' : 'bg-warning',
+                sotto: `${euro(incassi)} in entrata · ${euro(pagamenti)} in uscita`
+              },
+              {
+                label: 'Affidamenti disponibili',
+                valore: euro(vista.affidamenti.disponibile),
+                quota: vista.affidamenti.accordato
+                  ? vista.affidamenti.disponibile / vista.affidamenti.accordato
+                  : null,
+                colore: 'bg-brand-400',
+                sotto: vista.affidamenti.accordato
+                  ? `su ${euro(vista.affidamenti.accordato)} accordati`
+                  : 'nessuna linea di credito'
+              },
+              {
+                label: 'Scaduti da sistemare',
+                valore: String(vista.scaduti.righe),
+                sotto: `incassi ${euro(vista.scaduti.entrate)} · pagamenti ${euro(vista.scaduti.uscite)}`
+              }
+            ]}
+          />
+        )
+      })()}
+
       {error && <Alert>{error}</Alert>}
 
       <div className="grid grid-cols-6 gap-3">
@@ -375,7 +424,7 @@ export function TreasuryView({
       {modulo?.tipo === 'impostazioni' && (
         <SettingsModal companyUuid={companyUuid} settings={vista.settings} onClose={chiudi} onSaved={salvato} />
       )}
-    </div>
+    </Disposizione>
   )
 }
 

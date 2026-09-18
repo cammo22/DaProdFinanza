@@ -1,4 +1,5 @@
 import type { Analysis, SeriesPoint, TreasuryView } from '@shared/analysis'
+import { Disposizione } from '../../components/Disposizione'
 import { SOGLIA_UTILIZZO_AFFIDAMENTI, THRESHOLDS } from '@shared/engine'
 import { dataIt, days, euro, percent, times, tone } from '../../lib/format'
 import { Card } from '../../components/ui'
@@ -10,6 +11,9 @@ import {
   SerieLiquidita
 } from '../../components/charts'
 import { puntiTesoreria } from './TreasuryView'
+import { Dashboard } from './Dashboard'
+import type { Company } from '@shared/types'
+import type { Vista } from '../../components/Sidebar'
 
 /**
  * Panoramica — AGENTS.md §10.2.
@@ -25,13 +29,13 @@ import { puntiTesoreria } from './TreasuryView'
 
 type Livello = 'rosso' | 'giallo'
 
-interface Avviso {
+export interface Avviso {
   livello: Livello
   titolo: string
   dettaglio: string
 }
 
-function avvisi(analysis: Analysis, tesoreria: TreasuryView | null): Avviso[] {
+export function avvisi(analysis: Analysis, tesoreria: TreasuryView | null): Avviso[] {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
   const b = analysis.balanceSheet
@@ -153,13 +157,19 @@ function Kpi({
 }
 
 export function OverviewView({
+  company,
   analysis,
   serie,
-  tesoreria
+  tesoreria,
+  onVista,
+  onRefresh
 }: {
+  company: Company
   analysis: Analysis
   serie: SeriesPoint[]
   tesoreria: TreasuryView | null
+  onVista: (vista: Vista) => void
+  onRefresh: () => void
 }): React.JSX.Element {
   const a = analysis.incomeStatement.aggregates
   const r = analysis.ratios
@@ -168,7 +178,15 @@ export function OverviewView({
   const trenta = tesoreria?.horizons.find((h) => h.days === 30)
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="panoramica">
+      <Dashboard
+        company={company}
+        analysis={analysis}
+        tesoreria={tesoreria}
+        onVista={onVista}
+        onRefresh={onRefresh}
+      />
+
       {lista.length > 0 ? (
         <div className="grid grid-cols-2 gap-4">
           {lista.map((avviso) => (
@@ -200,7 +218,7 @@ export function OverviewView({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-5">
+      <Disposizione vista="panoramica-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
         <Card title="KPI economici">
           <div className="py-1">
             <Kpi label="Ricavi del periodo" value={euro(a.ricaviNetti)} />
@@ -270,10 +288,10 @@ export function OverviewView({
             />
           </div>
         </Card>
-      </div>
+      </Disposizione>
 
       {serie.length > 1 ? (
-        <div className="grid grid-cols-2 gap-5">
+        <Disposizione vista="panoramica-riquadri-2" maniglia="sopra" className="grid grid-cols-2 gap-5">
           <Card title="Ricavi e costi nel tempo">
             <div className="px-3 py-4">
               <SerieEconomica dati={serie} />
@@ -302,16 +320,16 @@ export function OverviewView({
               )}
             </div>
           </Card>
-        </div>
+        </Disposizione>
       ) : (
         <Card title="Andamento nel tempo">
           <p className="px-5 py-6 text-sm text-ink-400">
             I grafici si disegnano da due periodi in su: con uno solo non c&apos;è un andamento da
             mostrare, e una linea piatta sembrerebbe un dato. Importa altri mesi dalla voce{' '}
-            <span className="text-ink-300">Import dati</span> e compariranno qui.
+            <span className="text-ink-300">Dati contabili</span> e compariranno qui.
           </p>
         </Card>
       )}
-    </div>
+    </Disposizione>
   )
 }

@@ -176,6 +176,29 @@ export interface Account extends BaseRecord {
   notes: string | null
 }
 
+/** Conto con quanti saldi lo usano: un conto con saldi non si elimina. */
+export interface AccountRow extends Account {
+  balance_count: number
+}
+
+/** Saldi di un periodo e scenario, per la tabella di inserimento. */
+export interface PeriodBalances {
+  year: number
+  month: number | null
+  scenario: Scenario
+  /** null finché il periodo non ha mai avuto un salvataggio. */
+  period: FiscalPeriod | null
+  /** Importo in centesimi per conto (uuid). I conti senza saldo non compaiono. */
+  amounts: Record<string, number>
+}
+
+export interface SaveBalancesResult {
+  period: FiscalPeriod
+  written: number
+  removed: number
+  unchanged: number
+}
+
 /** §2.2 / §7 — % di costo diretto di una sezione per una specifica azienda. */
 export interface CompanySectionSetting extends BaseRecord {
   company_uuid: string

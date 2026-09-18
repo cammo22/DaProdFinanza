@@ -10,6 +10,7 @@ import {
 import { requireAuth, requireRole } from '../middleware/auth'
 import { analysisRouter } from './analysis.routes'
 import { banksRouter } from './banks.routes'
+import { ledgerRouter } from './ledger.routes'
 import { simulationRouter } from './simulation.routes'
 import { treasuryRouter } from './treasury.routes'
 
@@ -23,6 +24,7 @@ companiesRouter.use('/:uuid', analysisRouter)
 companiesRouter.use('/:uuid', treasuryRouter)
 companiesRouter.use('/:uuid', banksRouter)
 companiesRouter.use('/:uuid', simulationRouter)
+companiesRouter.use('/:uuid', ledgerRouter)
 
 function uuidParam(req: Request): string {
   const value = req.params['uuid']

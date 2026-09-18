@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { HealthState } from '@shared/types'
 import { api } from '../lib/api'
 import { Button } from './ui'
+import { UpdateDialog, useUpdates } from './UpdateDialog'
 
 /**
  * Status bar sempre visibile in basso — AGENTS.md §7.
@@ -28,6 +29,10 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
   const [health, setHealth] = useState<HealthState | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const updates = useUpdates()
+  const [showUpdates, setShowUpdates] = useState(false)
+  const nuova =
+    updates && (updates.status === 'available' || updates.status === 'ready' || updates.status === 'downloading')
 
   const refresh = useCallback(async () => {
     try {
@@ -76,14 +81,23 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
           Backup
         </Button>
         <Button
-          variant="primary"
           onClick={refresh}
-          className="px-3 py-1 text-xs"
-          title="Aggiorna stato"
+          className="px-2.5 py-1 text-xs"
+          title="Ricontrolla database e server"
+          aria-label="Ricontrolla database e server"
         >
-          ↻ Aggiorna
+          ↻
+        </Button>
+        <Button
+          variant={nuova ? 'primary' : 'ghost'}
+          onClick={() => setShowUpdates(true)}
+          className="px-3 py-1 text-xs"
+          title="Cerca e installa la nuova versione da GitHub"
+        >
+          {nuova ? `⬆ Nuova versione ${updates?.latest}` : 'Aggiornamenti'}
         </Button>
       </span>
+      {showUpdates && updates && <UpdateDialog state={updates} onClose={() => setShowUpdates(false)} />}
     </footer>
   )
 }

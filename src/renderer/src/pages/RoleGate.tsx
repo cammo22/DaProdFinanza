@@ -1,6 +1,8 @@
 import type { Role } from '@shared/enums'
 import type { DemoCredential } from '@shared/types'
+import { useState } from 'react'
 import { Logo } from '../components/Logo'
+import { UpdateDialog, useUpdates } from '../components/UpdateDialog'
 
 /**
  * Porta d'ingresso dell'app — rende esplicito il modello a due varianti di
@@ -68,6 +70,10 @@ export function RoleGate({
   demo: DemoCredential[] | null
   onPick: (role: Role) => void
 }): React.JSX.Element {
+  const updates = useUpdates()
+  const [showUpdates, setShowUpdates] = useState(false)
+  const nuova = updates && ['available', 'downloading', 'ready'].includes(updates.status)
+
   return (
     <div className="flex h-full flex-col items-center justify-center bg-ink-950 p-8">
       <div className="mb-10 flex flex-col items-center text-center">
@@ -120,7 +126,22 @@ export function RoleGate({
         })}
       </div>
 
-      <p className="mt-10 font-mono text-xs text-ink-600">v{version || '—'}</p>
+      <div className="mt-10 flex items-center gap-3 text-xs">
+        <span className="font-mono text-ink-600">v{version || '—'}</span>
+        {/* Anche prima di entrare: un aggiornamento non deve aspettare il login. */}
+        <button
+          type="button"
+          onClick={() => setShowUpdates(true)}
+          className={
+            nuova
+              ? 'rounded-md border border-brand-500/50 bg-brand-500/10 px-2.5 py-1 font-medium text-brand-300 hover:bg-brand-500/20'
+              : 'text-ink-400 underline-offset-4 hover:text-ink-200 hover:underline'
+          }
+        >
+          {nuova ? `⬆ Nuova versione ${updates?.latest}` : 'Cerca aggiornamenti'}
+        </button>
+      </div>
+      {showUpdates && updates && <UpdateDialog state={updates} onClose={() => setShowUpdates(false)} />}
     </div>
   )
 }

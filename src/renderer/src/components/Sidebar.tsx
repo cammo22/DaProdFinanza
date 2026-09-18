@@ -18,7 +18,7 @@ export type Vista =
   | 'tesoreria'
   | 'banche'
   | 'simulazioni'
-  | 'import'
+  | 'dati'
 
 interface Voce {
   id: Vista
@@ -75,8 +75,8 @@ const VISTE: Voce[] = [
     icona: icona('M4 18l5-6 4 3 7-9M15 6h5v5')
   },
   {
-    id: 'import',
-    label: 'Import dati',
+    id: 'dati',
+    label: 'Dati contabili',
     icona: icona('M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2')
   }
 ]
@@ -156,7 +156,7 @@ export function Sidebar({
               </p>
             </div>
 
-            {VISTE.filter((v) => v.id !== 'import' || mostraImport).map((voce) => (
+            {VISTE.filter((v) => v.id !== 'dati' || mostraImport).map((voce) => (
               <Bottone
                 key={voce.id}
                 voce={voce}

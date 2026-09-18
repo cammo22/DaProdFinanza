@@ -1,4 +1,6 @@
 import type { WorkingCapitalView as Vista } from '@shared/analysis'
+import { Disposizione } from '../../components/Disposizione'
+import { StrisciaIndicatori } from '../../components/widgets'
 import {
   delta,
   deltaPercent,
@@ -133,7 +135,40 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
     notes.find((n) => n.subject === key)
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="capitale-circolante">
+      {/* Letture in più, in stile cruscotto. */}
+      <StrisciaIndicatori
+        indicatori={[
+          {
+            label: 'Capitale circolante netto',
+            valore: euro(current.capitaleCircolanteNetto),
+            sotto: previousYear ? `anno prima ${euro(previousYear.snapshot.capitaleCircolanteNetto)}` : undefined
+          },
+          {
+            label: 'Crediti scaduti nello scadenziario',
+            valore: aging.openCents ? percent((aging.overdueCents / aging.openCents) * 100, 0) : '—',
+            quota: aging.openCents ? aging.overdueCents / aging.openCents : null,
+            stile: 'barra',
+            colore: aging.openCents && aging.overdueCents / aging.openCents > 0.1 ? 'bg-negative' : 'bg-positive',
+            sotto: `${euro(aging.overdueCents)} scaduti su ${euro(aging.openCents)} aperti`
+          },
+          {
+            label: 'Giorni di incasso',
+            valore: days(current.dso),
+            quota: current.dso === null ? null : current.dso / 120,
+            colore: 'bg-brand-400',
+            sotto: previousYear ? `anno prima ${days(previousYear.snapshot.dso)}` : undefined
+          },
+          {
+            label: 'Giorni di pagamento',
+            valore: days(current.dpo),
+            quota: current.dpo === null ? null : current.dpo / 120,
+            colore: 'bg-brand-400',
+            sotto: previousYear ? `anno prima ${days(previousYear.snapshot.dpo)}` : undefined
+          }
+        ]}
+      />
+
       <div className="grid grid-cols-4 gap-4">
         {CARD.map((c) => {
           const valore = current[c.key] as number
@@ -236,7 +271,7 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
       </Card>
 
       {series.length > 1 ? (
-        <div className="grid grid-cols-2 gap-5">
+        <Disposizione vista="capitale-circolante-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
           <Card title={`Ciclo di cassa — ultimi ${series.length} mesi`}>
             <div className="px-3 py-4">
               <SerieCcc dati={series} />
@@ -247,7 +282,7 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
               <SerieCiclo dati={ultimi12} />
             </div>
           </Card>
-        </div>
+        </Disposizione>
       ) : (
         <Card>
           <p className="px-5 py-4 text-sm text-ink-400">
@@ -333,6 +368,6 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
           </tbody>
         </table>
       </Card>
-    </div>
+    </Disposizione>
   )
 }

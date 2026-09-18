@@ -1,4 +1,6 @@
 import type { Analysis } from '@shared/analysis'
+import { Disposizione } from '../../components/Disposizione'
+import { StrisciaIndicatori } from '../../components/widgets'
 import { THRESHOLDS } from '@shared/engine'
 import { days, euro, percent, share, times, tone } from '../../lib/format'
 import { Alert, Card } from '../../components/ui'
@@ -75,7 +77,51 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
   const r = analysis.ratios
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="stato-patrimoniale">
+      {/* Letture in più, in stile cruscotto: come è finanziata l'azienda. */}
+      <StrisciaIndicatori
+        indicatori={[
+          {
+            label: 'Capitale investito',
+            valore: euro(b.capitaleInvestito),
+            quota: b.totaleAttivo ? b.attivoFissoNetto / b.totaleAttivo : null,
+            stile: 'barra',
+            colore: 'bg-brand-500',
+            sotto: `${percent(b.totaleAttivo ? (b.attivoFissoNetto / b.totaleAttivo) * 100 : null, 0)} immobilizzato`
+          },
+          {
+            label: 'Mezzi propri',
+            valore: percent(r.indipendenzaFinanziaria),
+            quota: r.indipendenzaFinanziaria === null ? null : r.indipendenzaFinanziaria / 100,
+            stile: 'barra',
+            soglia: 0.3,
+            colore: (r.indipendenzaFinanziaria ?? 0) >= 30 ? 'bg-positive' : 'bg-warning',
+            sotto: `patrimonio netto ${euro(b.patrimonioNetto)} · riferimento 30%`
+          },
+          {
+            label: 'Immobilizzazioni coperte da fonti stabili',
+            valore:
+              b.attivoFissoNetto > 0
+                ? `${((b.patrimonioNetto + b.debitiMedioLungo) / b.attivoFissoNetto).toFixed(2).replace('.', ',')}x`
+                : '—',
+            quota:
+              b.attivoFissoNetto > 0 ? (b.patrimonioNetto + b.debitiMedioLungo) / b.attivoFissoNetto / 2 : null,
+            stile: 'barra',
+            soglia: 0.5,
+            colore:
+              b.patrimonioNetto + b.debitiMedioLungo >= b.attivoFissoNetto ? 'bg-positive' : 'bg-negative',
+            sotto: '(netto + debiti a lungo) / attivo fisso: sopra 1x è sano'
+          },
+          {
+            label: 'Liquidità sui debiti a breve',
+            valore: b.debitiBreve ? percent((b.liquiditaImmediate / b.debitiBreve) * 100, 0) : '—',
+            quota: b.debitiBreve ? b.liquiditaImmediate / b.debitiBreve : null,
+            colore: b.liquiditaImmediate >= b.debitiBreve ? 'bg-positive' : 'bg-warning',
+            sotto: `cassa e banche ${euro(b.liquiditaImmediate)} · debiti a breve ${euro(b.debitiBreve)}`
+          }
+        ]}
+      />
+
       {b.sbilancio !== 0 && (
         <Alert>
           Attivo e passivo non quadrano: differenza di {euro(b.sbilancio)}. Il bilancio importato è
@@ -83,7 +129,7 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
         </Alert>
       )}
 
-      <div className="grid grid-cols-2 gap-5">
+      <Disposizione vista="stato-patrimoniale-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
         <Card title="Attivo">
           <table className="w-full text-sm">
             <tbody>
@@ -126,9 +172,9 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
             </table>
           </div>
         </Card>
-      </div>
+      </Disposizione>
 
-      <div className="grid grid-cols-3 gap-5">
+      <Disposizione vista="stato-patrimoniale-riquadri-2" maniglia="sopra" className="grid grid-cols-3 gap-5">
         <Card title="Redditività">
           <div className="py-1">
             <Indice label="ROE" value={percent(r.roe)} nota="Utile sul capitale proprio" />
@@ -179,7 +225,7 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
             />
           </div>
         </Card>
-      </div>
-    </div>
+      </Disposizione>
+    </Disposizione>
   )
 }

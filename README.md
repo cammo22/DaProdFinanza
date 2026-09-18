@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%20fase%207%2F10-3ddbff)
+![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%200.1.0%20%C2%B7%20fase%207%2F10-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -106,10 +106,11 @@ da qui.
 
 Prende quel metodo e lo trasforma in un programma.
 
-Il consulente carica il piano dei conti dell'azienda — lo stesso file Excel che usa
-già — e il resto viene da sé: il bilancio riclassificato, gli indici con le loro
-soglie, la previsione di cassa delle prossime settimane, e le simulazioni per vedere
-l'effetto di una decisione prima di prenderla.
+Il consulente scrive i saldi dell'azienda direttamente nel programma (o carica un
+file Excel che ha già) e il resto viene da sé: il bilancio riclassificato, gli indici
+con le loro soglie, la previsione di cassa delle prossime settimane, le simulazioni
+per vedere l'effetto di una decisione prima di prenderla, e un **report PDF** da
+consegnare al cliente.
 
 Tutto senza dipendere da internet, senza un abbonamento a un servizio esterno, e senza
 che i numeri di un'azienda escano dal computer di chi ha il diritto di vederli.
@@ -140,16 +141,36 @@ nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 - **Banche e Finanziamenti** — fidi, mutui e leasing, e quanto pesano sulla cassa futura
 - **Analisi & Simulazioni** — "cosa succede se": assumo, investo, alzo i prezzi
 
+In più, su ogni schermata:
+
+- **Cruscotto a widget** in cima alla Panoramica: indicatori con le barre di
+  avanzamento, scadenze in arrivo, dove vanno i ricavi, salute dell'azienda. Si
+  sceglie quali widget vedere e si può attivare l'aggiornamento automatico.
+- **Riquadri spostabili**: ogni riquadro ha una maniglia a pallini; lo si trascina
+  dove si vuole (la pagina scorre da sola vicino ai bordi), oppure si clicca la
+  maniglia e si sceglie *In cima / Su / Giù / In fondo*. La schermata si riapre sempre
+  così.
+- **Report PDF** del periodo scelto: copertina, sintesi con i punti di attenzione,
+  conto economico, stato patrimoniale e indici, circolante, tesoreria, banche.
+- **Aggiornamenti con un clic**: il programma controlla da solo se su GitHub c'è una
+  versione nuova, la scarica, la verifica e si aggiorna.
+
 ## Come entrano i dati
 
-Due strade, che si usano insieme.
+**Il bilancio, nel programma.** Dentro un'azienda, alla voce *Dati contabili*:
 
-**Il bilancio, da Excel.** Dentro un'azienda, alla voce *Import dati*, c'è il pulsante
-**Scarica il modello Excel**: un file con tutte le sezioni già pronte, e i conti
-dell'azienda se ce ne sono già. Si scrive il saldo di ogni conto, si ricarica il file,
-si sceglie a quale mese e a quale scenario appartiene (consuntivo, budget, forecast).
-Prima di scrivere qualsiasi cosa, il programma mostra un riepilogo di quello che ha
-letto. Il consulente che ha già il suo file può caricare direttamente quello.
+- **Piano dei conti**: si crea con un clic il *piano di partenza* (un conto per ogni
+  sezione del metodo, da rinominare e dettagliare), poi si aggiungono, modificano o
+  disattivano i conti.
+- **Saldi**: si sceglie il mese (o l'anno) e lo scenario — consuntivo, budget,
+  forecast — e si scrivono gli importi conto per conto, come su un foglio, con i
+  totali che si aggiornano mentre si scrive. *Mese successivo* apre il mese nuovo,
+  *Copia dal periodo precedente* riempie i campi vuoti. Un periodo si può chiudere,
+  così nessuno lo modifica più per sbaglio.
+
+**Da Excel, se il file c'è già.** Nella stessa voce, *Importa da Excel* legge il
+piano dei conti del consulente (o il modello scaricabile), mostra un riepilogo di
+quello che ha letto e solo dopo scrive. Da lì in poi tutto si modifica nel programma.
 
 **Le scadenze e le previsioni, a mano.** Nella *Tesoreria* si inseriscono le fatture da
 incassare e da pagare, con le condizioni di pagamento (*30 giorni fine mese* e simili:
@@ -175,8 +196,10 @@ C'è anche la parte bancaria: fidi, mutui e leasing con il loro piano di ammorta
 le rate che entrano da sole nella previsione di cassa. E ci sono le **simulazioni**:
 si muovono le leve (ricavi, costi, dipendenti, giorni di incasso, un investimento, un
 finanziamento) e si vede subito l'effetto su utile, cassa e debito, scenario salvabile
-ed esportabile in Excel. Tutte e sette le viste esistono; manca il collegamento fra i
-due programmi.
+ed esportabile in Excel. Tutte e sette le viste esistono. Dalla versione 0.1.0 i dati si
+inseriscono direttamente nel programma, c'è il report PDF, il cruscotto a widget con i
+riquadri spostabili e l'aggiornamento automatico da GitHub. Manca il collegamento fra
+i due programmi.
 
 | | Fase | Stato |
 |---|---|---|
@@ -212,6 +235,11 @@ ha tre file, tutti per Windows a 64 bit:
 | `DaProdFinanza-Demo-x.y.z-portable.exe` | Provarlo con i dati di esempio |
 | `DaProdFinanza-Setup-x.y.z.exe` | Installarlo per usarlo davvero |
 | `DaProdFinanza-x.y.z-portable.exe` | Usarlo davvero senza installare niente |
+
+Dalla 0.1.0 non serve più scaricarli a mano: il pulsante **Aggiornamenti** (in basso
+a destra, e nella schermata d'ingresso) trova la versione nuova e si aggiorna da solo,
+ognuno con il suo file — l'installato con l'installer, il portatile con il portatile,
+la demo con la demo.
 
 Non sono ancora firmati con un certificato, quindi al primo avvio Windows mostra un
 avviso: *Ulteriori informazioni → Esegui comunque*. Poi il programma chiede di creare

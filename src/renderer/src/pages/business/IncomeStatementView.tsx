@@ -1,4 +1,6 @@
 import { Fragment } from 'react'
+import { Disposizione } from '../../components/Disposizione'
+import { StrisciaIndicatori } from '../../components/widgets'
 import type { Analysis, SeriesPoint } from '@shared/analysis'
 import { SCHEME_LABELS, SCHEMES, schemeLines, type Scheme } from '@shared/engine'
 import { euro, percent, share, tone } from '../../lib/format'
@@ -72,7 +74,55 @@ export function IncomeStatementView({
     }))
 
   return (
-    <div className="flex flex-col gap-5">
+    <Disposizione vista="conto-economico">
+      {/* Letture in più, in stile cruscotto: peso dei costi, budget, anno prima. */}
+      {(() => {
+        const budget = analysis.comparison.columns.find((c) => c.key === 'budget')?.aggregates ?? null
+        const prima = analysis.comparison.columns.find((c) => c.key === 'previousYear')?.aggregates ?? null
+        const crescita =
+          prima && prima.ricaviNetti ? ((a.ricaviNetti - prima.ricaviNetti) / prima.ricaviNetti) * 100 : null
+        const copertura = a.costiFissi ? a.margineContribuzione / a.costiFissi : null
+        return (
+          <StrisciaIndicatori
+            indicatori={[
+              {
+                label: 'Costi variabili sui ricavi',
+                valore: percent(a.ricaviNetti ? (a.costiVariabili / a.ricaviNetti) * 100 : null),
+                quota: a.ricaviNetti ? a.costiVariabili / a.ricaviNetti : null,
+                stile: 'barra',
+                colore: 'bg-warning',
+                sotto: `${euro(a.costiVariabili)} di costi che seguono le vendite`
+              },
+              {
+                label: 'Copertura dei costi fissi',
+                valore: copertura === null ? '—' : `${copertura.toFixed(2).replace('.', ',')}x`,
+                quota: copertura === null ? null : copertura / 2,
+                stile: 'barra',
+                soglia: 0.5,
+                colore: copertura !== null && copertura >= 1 ? 'bg-positive' : 'bg-negative',
+                sotto: 'margine di contribuzione / costi fissi: sopra 1x si guadagna'
+              },
+              {
+                label: 'Ricavi rispetto al budget',
+                valore: budget && budget.ricaviNetti ? percent((a.ricaviNetti / budget.ricaviNetti) * 100, 0) : '—',
+                quota: budget && budget.ricaviNetti ? a.ricaviNetti / budget.ricaviNetti : null,
+                colore: budget && a.ricaviNetti >= budget.ricaviNetti ? 'bg-positive' : 'bg-warning',
+                sotto: budget ? `budget ${euro(budget.ricaviNetti)}` : 'nessun budget per questo periodo'
+              },
+              {
+                label: 'Crescita sull’anno prima',
+                valore: crescita === null ? '—' : `${crescita >= 0 ? '+' : ''}${percent(crescita)}`,
+                quota: crescita === null ? null : 0.5 + crescita / 100,
+                stile: 'barra',
+                soglia: 0.5,
+                colore: crescita !== null && crescita >= 0 ? 'bg-positive' : 'bg-negative',
+                sotto: prima ? `stesso periodo anno prima ${euro(prima.ricaviNetti)}` : 'anno prima non caricato'
+              }
+            ]}
+          />
+        )
+      })()}
+
       <Card title="Indicatori del periodo">
         <div className="grid grid-cols-6 gap-px bg-ink-700">
           <Kpi label="Ricavi totali" value={euro(a.ricaviNetti)} />
@@ -208,7 +258,7 @@ export function IncomeStatementView({
         )}
       </Card>
 
-      <div className="grid grid-cols-2 gap-5">
+      <Disposizione vista="conto-economico-riquadri-1" maniglia="sopra" className="grid grid-cols-2 gap-5">
         <Card title="Ricavi, costi ed EBITDA nel tempo">
           <div className="px-3 py-4">
             {serie.length > 1 ? (
@@ -231,7 +281,7 @@ export function IncomeStatementView({
             )}
           </div>
         </Card>
-      </div>
+      </Disposizione>
 
       <Card title="Break-even e margine di sicurezza">
         <div className="px-5 py-5">
@@ -266,6 +316,6 @@ export function IncomeStatementView({
           ))}
         </div>
       </Card>
-    </div>
+    </Disposizione>
   )
 }

@@ -8,13 +8,13 @@ import type {
 } from '@shared/analysis'
 import { DEFAULT_SCHEME, type Scheme, type SimulationBase } from '@shared/engine'
 import type { Company, FiscalPeriod, Scenario, SimulationScenario } from '@shared/types'
-import { api } from '../lib/api'
+import { api, getToken } from '../lib/api'
 import type { Vista } from '../components/Sidebar'
 import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
 import { BalanceSheetView } from './business/BalanceSheetView'
 import { BanksView } from './business/BanksView'
 import { SimulationView } from './business/SimulationView'
-import { ImportPanel, TemplateButton } from './business/ImportPanel'
+import { DataView } from './business/DataView'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 import { TreasuryView } from './business/TreasuryView'
@@ -62,6 +62,8 @@ export function CompanyPage({
   const [scenari, setScenari] = useState<SimulationScenario[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  // Cresce a ogni "Aggiorna" del cruscotto: fa ricaricare l'analisi.
+  const [giro, setGiro] = useState(0)
 
   const caricaPeriodi = useCallback(async () => {
     try {
@@ -114,7 +116,7 @@ export function CompanyPage({
     return () => {
       annullato = true
     }
-  }, [company.uuid, periodUuid, scenario, scheme])
+  }, [company.uuid, periodUuid, scenario, scheme, giro])
 
   // La tesoreria guarda avanti da oggi: non dipende dal periodo scelto.
   const caricaTesoreria = useCallback(async () => {
@@ -198,8 +200,33 @@ export function CompanyPage({
   }, [company.uuid, vista, periodUuid, scenario])
 
   const conDati = analysis !== null && analysis.accountCount > 0
-  // Import, tesoreria e banche non dipendono dal periodo scelto.
-  const senzaPeriodo = vista === 'import' || vista === 'tesoreria' || vista === 'banche'
+  const [report, setReport] = useState<string | null>(null)
+
+  const esportaReport = async (): Promise<void> => {
+    const period = periods.find((p) => p.uuid === periodUuid)
+    const token = getToken()
+    if (!period || !token) return
+    setReport('Preparo il report…')
+    try {
+      const path = await window.daprod.exportReport({
+        companyUuid: company.uuid,
+        companyName: company.name,
+        companyCode: company.code,
+        periodUuid,
+        periodLabel: `${period.label}${scenario === 'actual' ? '' : ` · ${SCENARI.find((s) => s.id === scenario)?.label}`}`,
+        scenario,
+        scheme,
+        token
+      })
+      setReport(path ? `Report salvato: ${path.split(/[\/]/).pop()}` : null)
+    } catch (err) {
+      setReport(err instanceof Error ? err.message : 'Report non riuscito.')
+    } finally {
+      setTimeout(() => setReport(null), 8000)
+    }
+  }
+  // Dati contabili, tesoreria e banche non dipendono dal periodo scelto.
+  const senzaPeriodo = vista === 'dati' || vista === 'tesoreria' || vista === 'banche'
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -249,19 +276,33 @@ export function CompanyPage({
                 </option>
               ))}
             </Select>
+            <Button
+              variant="primary"
+              className="shrink-0 whitespace-nowrap px-3 py-1.5 text-xs"
+              disabled={!conDati || report === 'Preparo il report…'}
+              onClick={esportaReport}
+              title="Report completo del periodo scelto, da stampare o consegnare al cliente"
+            >
+              Report PDF
+            </Button>
           </div>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto px-8 py-6">
+        {report && (
+          <div className="mb-5">
+            <Alert tone="info">{report}</Alert>
+          </div>
+        )}
         {error && (
           <div className="mb-5">
             <Alert>{error}</Alert>
           </div>
         )}
 
-        {vista === 'import' && canImport && (
-          <ImportPanel company={company} onImported={caricaPeriodi} />
+        {vista === 'dati' && canImport && (
+          <DataView company={company} periods={periods} canEdit={canImport} onChanged={caricaPeriodi} />
         )}
 
         {vista === 'tesoreria' &&
@@ -300,7 +341,7 @@ export function CompanyPage({
                 description={
                   periods.length === 0
                     ? canImport
-                      ? "Questa azienda non ha ancora un bilancio. Scarica il modello Excel, compilalo con i saldi e importalo: le analisi compaiono da sole."
+                      ? 'Questa azienda non ha ancora numeri. Crea il piano dei conti e scrivi i saldi in Dati contabili (oppure importa un Excel che hai già): le analisi compaiono da sole.'
                       : 'Il consulente non ha ancora caricato un bilancio per questa azienda.'
                     : `Il periodo selezionato non ha saldi per lo scenario "${
                         SCENARI.find((s) => s.id === scenario)?.label
@@ -309,18 +350,26 @@ export function CompanyPage({
                 action={
                   periods.length === 0 &&
                   canImport && (
-                    <div className="flex items-start gap-3">
-                      <TemplateButton company={company} />
-                      <Button variant="primary" onClick={() => onVista('import')}>
-                        Importa un file
-                      </Button>
-                    </div>
+                    <Button variant="primary" onClick={() => onVista('dati')}>
+                      Inserisci i dati
+                    </Button>
                   )
                 }
               />
             </Card>
           ) : vista === 'panoramica' ? (
-            <OverviewView analysis={analysis} serie={serie} tesoreria={tesoreria} />
+            <OverviewView
+              company={company}
+              analysis={analysis}
+              serie={serie}
+              tesoreria={tesoreria}
+              onVista={onVista}
+              onRefresh={() => {
+                setGiro((g) => g + 1)
+                caricaTesoreria()
+                caricaPeriodi()
+              }}
+            />
           ) : vista === 'conto-economico' ? (
             <IncomeStatementView
               analysis={analysis}
