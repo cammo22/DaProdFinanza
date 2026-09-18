@@ -186,7 +186,7 @@ export function OverviewView({
       {cruscotto.pannelli}
 
       {lista.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(18rem,1fr))]">
           {lista.map((avviso) => (
             <div
               key={avviso.titolo}

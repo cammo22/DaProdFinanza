@@ -3,7 +3,10 @@ import { Pannelli } from '../../components/Pannelli'
 import {
   impactRows,
   PARAMETRI_ZERO,
+  SCENARI_PRONTI,
   simulate,
+  type ScenarioPronto,
+  type ToniScenario,
   type SimulationBase,
   type SimulationParams,
   type SimulationResult
@@ -258,6 +261,7 @@ export function SimulationView({
   onVaiTesoreria: () => void
 }): React.JSX.Element {
   const [params, setParams] = useState<SimulationParams>(PARAMETRI_ZERO)
+  const [pronto, setPronto] = useState<ScenarioPronto | null>(null)
   const [scelto, setScelto] = useState<string>('')
   const [nome, setNome] = useState('')
   const [messaggio, setMessaggio] = useState<{ ok: boolean; testo: string } | null>(null)
@@ -295,9 +299,19 @@ export function SimulationView({
   ]
 
   const toccato = JSON.stringify(params) !== JSON.stringify(PARAMETRI_ZERO)
+
+  const applicaPronto = (p: ScenarioPronto): void => {
+    const leve = p.leve({ ricavi: attuale.ricavi, dso: attuale.dso, dio: attuale.dio, dpo: attuale.dpo })
+    setParams({ ...PARAMETRI_ZERO, ...leve })
+    setPronto(p)
+    setScelto('')
+    setNome(p.tono === 'estremo' ? '' : p.nome)
+    setMessaggio(null)
+  }
   const corrente = scenari.find((s) => s.uuid === scelto) ?? null
 
   const scegli = (uuid: string): void => {
+    setPronto(null)
     setScelto(uuid)
     setMessaggio(null)
     const s = scenari.find((x) => x.uuid === uuid)
@@ -417,13 +431,18 @@ export function SimulationView({
           </div>
         </Card>
 
+        <ScenariPronti attivo={pronto?.id ?? null} onScegli={applicaPronto} />
+
         <Card
           title="Cosa succede se…"
           actions={
             <button
               type="button"
               disabled={!toccato}
-              onClick={() => setParams(PARAMETRI_ZERO)}
+              onClick={() => {
+                setParams(PARAMETRI_ZERO)
+                setPronto(null)
+              }}
               className="text-xs text-brand-300 hover:text-brand-200 disabled:text-ink-600"
             >
               Ripristina valori attuali
@@ -551,6 +570,23 @@ export function SimulationView({
 
       {/* --- risultati ------------------------------------------------------- */}
       <div className="min-w-0">
+        {pronto?.tono === 'estremo' && (
+          <div className="mb-5 rounded-xl border-2 border-negative/60 bg-negative/10 px-5 py-3">
+            <p className="text-sm font-bold uppercase tracking-wide text-negative">
+              Scenario estremo — solo per test
+            </p>
+            <p className="mt-0.5 text-xs text-ink-200">
+              {pronto.descrizione} I numeri qui sotto servono a collaudare il programma, non a
+              prendere decisioni.
+            </p>
+          </div>
+        )}
+        {pronto && pronto.tono !== 'estremo' && (
+          <p className="mb-3 text-xs text-ink-400">
+            Scenario pronto: <span className="text-ink-200">{pronto.nome}</span> — {pronto.descrizione}{' '}
+            Le leve si possono ritoccare.
+          </p>
+        )}
         <Pannelli vista="simulazioni">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-ink-400">
@@ -661,5 +697,54 @@ export function SimulationView({
         </Pannelli>
       </div>
     </div>
+  )
+}
+
+const TONI: Record<ToniScenario, { titolo: string; classe: string }> = {
+  positivo: { titolo: 'Positivi', classe: 'border-positive/40 text-positive hover:bg-positive/10' },
+  negativo: { titolo: 'Negativi', classe: 'border-warning/40 text-warning hover:bg-warning/10' },
+  imprevisto: { titolo: 'Imprevisti', classe: 'border-brand-400/40 text-brand-300 hover:bg-brand-500/10' },
+  estremo: { titolo: 'Estremi — solo per test', classe: 'border-negative/60 text-negative hover:bg-negative/10' }
+}
+
+/** Scenari pronti: un clic imposta le leve (vedi shared/engine/scenari-pronti.ts). */
+function ScenariPronti({
+  attivo,
+  onScegli
+}: {
+  attivo: string | null
+  onScegli: (p: ScenarioPronto) => void
+}): React.JSX.Element {
+  return (
+    <Card title={`Scenari pronti · ${SCENARI_PRONTI.length}`}>
+      <div className="flex flex-col gap-3 px-5 py-4">
+        {(Object.keys(TONI) as ToniScenario[]).map((tono) => (
+          <div key={tono}>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+              {TONI[tono].titolo}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {SCENARI_PRONTI.filter((p) => p.tono === tono).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  title={p.descrizione}
+                  onClick={() => onScegli(p)}
+                  className={`rounded-md border px-2 py-1 text-left text-[11px] leading-tight transition-colors ${TONI[tono].classe} ${
+                    attivo === p.id ? 'bg-ink-700 ring-1 ring-current' : 'bg-ink-900'
+                  }`}
+                >
+                  {p.nome.replace(' (solo test)', '').replace('ESTREMO — ', '⚠ ')}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <p className="text-[11px] leading-relaxed text-ink-500">
+          Importi in proporzione ai ricavi di questa azienda, giorni a partire da quelli attuali.
+          Ipotesi di lavoro, non previsioni.
+        </p>
+      </div>
+    </Card>
   )
 }

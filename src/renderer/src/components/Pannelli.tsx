@@ -448,7 +448,7 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
               )}
               <div
                 data-pannello={it.i}
-                className={`group/pannello absolute ${
+                className={`group/pannello absolute rounded-xl outline-2 outline-offset-2 outline-transparent transition-[outline-color] has-[[data-bordo]:hover]:outline-brand-400/60 ${
                   attivo ? 'z-40' : 'z-0 hover:z-10 focus-within:z-10'
                 } ${op && !attivo ? 'transition-[left,top,width,height] duration-200 ease-out' : ''}`}
                 style={{
@@ -460,7 +460,11 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
               >
                 <div
                   className={`h-full rounded-xl ${
-                    spostando ? 'opacity-85 shadow-2xl shadow-black/60 ring-2 ring-brand-400' : ''
+                    spostando
+                      ? 'opacity-85 shadow-2xl shadow-black/60 ring-2 ring-brand-400'
+                      : attivo
+                        ? 'ring-2 ring-brand-400 shadow-[0_0_24px] shadow-brand-500/40'
+                        : ''
                   } ${it.auto && !attivo ? '' : 'overflow-y-auto overflow-x-hidden'}`}
                 >
                   <div ref={(el) => misura(it.i, el)} className="[&>*]:min-h-full">
@@ -490,6 +494,7 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
                     {(['e', 'w', 's', 'se', 'sw'] as Bordo[]).map((b) => (
                       <span
                         key={b}
+                        data-bordo
                         aria-hidden="true"
                         title="Trascina per ridimensionare"
                         onPointerDown={(e) => inizia(e, it, 'ridimensiona', b)}
