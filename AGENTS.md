@@ -610,6 +610,56 @@ posizione nel codice, quindi stabili anche se un blocco condizionale sparisce.
 L'ordine sta in `localStorage` per schermata: è una comodità di chi guarda, non un
 dato da sincronizzare.
 
+### Versione 1.1.0 — pannelli liberi, zoom, scenari pronti, demo Mac
+
+| Pezzo | Dove |
+|---|---|
+| Griglia a pannelli (incastro, spostamento, ridimensionamento) | `components/Pannelli.tsx` (sostituisce `Disposizione`) |
+| Zoom | `lib/zoom.ts`, `webFrame` nel preload, controllo in `StatusBar.tsx` |
+| Scenari pronti | `shared/engine/scenari-pronti.ts` (+ test), `SimulationView.tsx` |
+| Demo per Mac | `electron-builder.demo.yml` (sezioni `mac`/`dmg`), `.github/workflows/mac-demo.yml` |
+
+**Pannelli.** Griglia a 12 colonne, righe da 10 px. Un pannello è `{x, y, w, h, auto}`.
+Dopo ogni cambiamento c'è la compattazione verticale ("incastro"): i pannelli salgono
+al primo posto libero; durante un'operazione il pannello mosso è fisso e gli altri si
+adattano. Altezza automatica (misurata con `ResizeObserver`) finché non la si cambia a
+mano; dopo il contenuto scorre dentro. Figli diretti di `<Pannelli>` = pannelli a
+tutta larghezza; `<Griglia colonne={2|3}>` si scioglie in pannelli affiancati (un
+figlio con `col-span-N` resta largo N colonne della griglia). Il cruscotto è diventato
+l'hook `useCruscotto`: intestazione sopra la griglia, widget come pannelli.
+Disposizione in `localStorage` per schermata **e per fascia di larghezza** (stretto
+< 1100 px, standard < 2000, ampio): 1080p, 2K e 5K hanno ognuno la propria. Menu
+*Pannelli* nell'intestazione: ripristina (evento `daprod:ripristina-pannelli`) e
+blocca. Motore scritto da zero, senza librerie: serviva il controllo pieno su
+scorrimento automatico e bordi illuminati.
+
+**Scorrimento automatico.** La prima versione partiva anche con il mouse fermo vicino
+al bordo e superava i 1000 px in mezzo secondo. Ora: solo dopo 12 px di movimento,
+accelerazione quadratica nella fascia di 70 px, massimo 14 px per fotogramma, mai
+durante un ridimensionamento laterale. Le posizioni si ricalcolano a ogni fotogramma
+dal puntatore e dal rettangolo della griglia, quindi lo scorrimento non fa saltare il
+pannello.
+
+**Zoom.** `webFrame.setZoomFactor`, salvato in `localStorage`. Senza scelta:
+`min(1, screen.width / 1920)` arrotondato al 5% — un 1080p al 125% (1536 px logici)
+va all'80%, 2K e 5K Apple (2560 logici) al 100%. In Chromium lo zoom vale per origine,
+quindi anche per la finestra nascosta del report: verificato che il PDF esce identico
+con lo zoom all'80% (`printToPDF` impagina sulla carta, non sulla finestra).
+
+**Scenari pronti.** 14 ipotesi scelte da noi (6 positive, 3 negative, 3 imprevisti, 2
+estreme). Importi in proporzione ai ricavi annui della base, giorni a partire da
+quelli attuali. I due estremi (ricavi +300% / −80%…) servono solo al collaudo: nome
+"ESTREMO … (solo test)" e avviso rosso sopra i risultati. Da validare col consulente
+come le altre regole della simulazione.
+
+**Demo per Mac.** Solo demo, solo DMG, arm64 e x64. Si costruisce sul runner
+`macos-latest` di GitHub (il modulo nativo del database va compilato per macOS),
+automaticamente a ogni release pubblicata o a mano con il tag; i DMG si aggiungono
+alla release. Firma ad-hoc (`identity: '-'`, necessaria sui chip Apple), niente
+notarizzazione: al primo avvio serve *Apri comunque*. Gli aggiornamenti sul Mac
+(`kind: 'mac'`) aprono la pagina della release: senza firma Apple il programma non
+può sostituirsi da solo. **Non è stata provata su un Mac vero**: serve un tester.
+
 **Collegamento Consulente↔Azienda (Fase 8) — decisione presa con l'utente:** niente
 account Tailscale. Si valuta **Tailcat** (Tailscale, BSD-3, agosto 2026): nessun
 account, il consulente mostra un indirizzo-codice che l'azienda inserisce, canale

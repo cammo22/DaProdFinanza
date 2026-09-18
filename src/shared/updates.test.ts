@@ -79,3 +79,12 @@ describe('releaseNotesText', () => {
     expect(text).toBe('Novità\n\n• Report PDF con grafici\nVedi qui.')
   })
 })
+
+describe('pickUpdate per il Mac', () => {
+  it('prende il DMG della demo, non gli exe', () => {
+    const r = release('v1.1.0')
+    r.assets.push({ name: 'DaProdFinanza-Demo-1.1.0-mac-arm64.dmg', size: 10, browser_download_url: 'https://x/dmg', digest: DIGEST })
+    expect(pickUpdate(r, 'mac', '1.0.0')?.asset.name).toBe('DaProdFinanza-Demo-1.1.0-mac-arm64.dmg')
+    expect(pickUpdate(release('v1.1.0'), 'mac', '1.0.0')).toBeNull()
+  })
+})

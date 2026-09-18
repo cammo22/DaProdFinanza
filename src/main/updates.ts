@@ -1,4 +1,4 @@
-import { app, BrowserWindow, net } from 'electron'
+import { app, BrowserWindow, net, shell } from 'electron'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { createWriteStream, existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
@@ -44,10 +44,14 @@ const CLEANUP_FILE = 'aggiornamento-portable.json'
 let state: UpdateState
 let offer: UpdateOffer | null = null
 let downloaded: string | null = null
+/** Pagina dell'ultima release, per chi si aggiorna scaricando a mano (Mac). */
+let paginaRelease: string | null = null
 let busy = false
 
 function detectKind(): UpdateKind {
   if (!app.isPackaged) return 'dev'
+  // Su Mac c'è solo la demo, e senza firma Apple non può sostituirsi da sola.
+  if (process.platform === 'darwin') return 'mac'
   // Lo imposta il lanciatore dei portable di electron-builder.
   if (process.env.PORTABLE_EXECUTABLE_FILE) return DEMO_BUILD ? 'demo' : 'portable'
   return DEMO_BUILD ? 'demo' : 'installer'
@@ -86,6 +90,7 @@ export async function checkForUpdates(): Promise<UpdateState> {
   try {
     const release = await fetchLatestRelease()
     offer = pickUpdate(release, state.kind, state.current)
+    paginaRelease = release.html_url ?? null
     const tag = release.tag_name.replace(/^v/, '')
     update({
       status: offer ? 'available' : 'none',
@@ -129,6 +134,12 @@ export async function downloadUpdate(): Promise<UpdateState> {
   if (busy || !offer) return state
   if (state.kind === 'dev') {
     update({ status: 'error', error: 'In sviluppo non si aggiorna: serve una versione pubblicata.' })
+    return state
+  }
+  if (state.kind === 'mac') {
+    // Si apre la pagina della release: il DMG nuovo si scarica dal browser.
+    const url = paginaRelease ?? `https://github.com/${UPDATE_REPO.owner}/${UPDATE_REPO.repo}/releases/latest`
+    if (url.startsWith('https://github.com/')) await shell.openExternal(url)
     return state
   }
   busy = true
