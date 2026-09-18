@@ -549,7 +549,7 @@ Otto indicatori a confronto (ricavi, margine lordo, EBITDA, utile, break-even, c
 
 **Il menu non ha più voci "in arrivo"**: tutte le sette viste di §10 esistono.
 
-### Sessione 3 — versione 0.1.0
+### Sessione 3 — versione 1.0.0 (pubblicata prima come 0.1.0)
 
 Richieste dell'utente: tasto di aggiornamento da GitHub, dati inseriti nel programma
 invece che in Excel, report PDF, grafica e idee da Ever Gauzy senza stravolgere il

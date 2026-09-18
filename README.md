@@ -8,8 +8,9 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/stato-in%20sviluppo%20%C2%B7%200.1.0%20%C2%B7%20fase%207%2F10-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.0.0-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
+[![release](https://img.shields.io/github/v/release/cammo22/DaProdFinanza?label=scarica&color=5cff9d)](https://github.com/cammo22/DaProdFinanza/releases/latest)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
 </div>
@@ -196,7 +197,7 @@ C'è anche la parte bancaria: fidi, mutui e leasing con il loro piano di ammorta
 le rate che entrano da sole nella previsione di cassa. E ci sono le **simulazioni**:
 si muovono le leve (ricavi, costi, dipendenti, giorni di incasso, un investimento, un
 finanziamento) e si vede subito l'effetto su utile, cassa e debito, scenario salvabile
-ed esportabile in Excel. Tutte e sette le viste esistono. Dalla versione 0.1.0 i dati si
+ed esportabile in Excel. Tutte e sette le viste esistono. Dalla versione 1.0.0 i dati si
 inseriscono direttamente nel programma, c'è il report PDF, il cruscotto a widget con i
 riquadri spostabili e l'aggiornamento automatico da GitHub. Manca il collegamento fra
 i due programmi.
@@ -211,7 +212,9 @@ i due programmi.
 | 5 | Capitale circolante, tesoreria, scadenziario | ✅ Fatta |
 | 6 | Banche e finanziamenti | ✅ Fatta |
 | 7 | Analisi e simulazioni | ✅ Fatta |
-| 8-9 | Collegamento fra i due programmi, import Excel più tollerante | ⬜ Prossima |
+| 1.0 | Aggiornamenti automatici, dati nel programma, report PDF, cruscotto, riquadri spostabili | ✅ Versione 1.0.0 |
+| — | Schermate a pannelli liberi e ridimensionabili (1080p, 2K, 5K) | ⬜ Prossima |
+| 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
 La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
@@ -236,7 +239,7 @@ ha tre file, tutti per Windows a 64 bit:
 | `DaProdFinanza-Setup-x.y.z.exe` | Installarlo per usarlo davvero |
 | `DaProdFinanza-x.y.z-portable.exe` | Usarlo davvero senza installare niente |
 
-Dalla 0.1.0 non serve più scaricarli a mano: il pulsante **Aggiornamenti** (in basso
+Dalla 1.0.0 non serve più scaricarli a mano: il pulsante **Aggiornamenti** (in basso
 a destra, e nella schermata d'ingresso) trova la versione nuova e si aggiorna da solo,
 ognuno con il suo file — l'installato con l'installer, il portatile con il portatile,
 la demo con la demo.
