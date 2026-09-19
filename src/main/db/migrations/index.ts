@@ -5,6 +5,7 @@ import { up as up003 } from './003_import_documents_no_unique_hash'
 import { up as up004 } from './004_treasury'
 import { up as up005 } from './005_banks'
 import { up as up006 } from './006_simulation_scenarios'
+import { up as up007 } from './007_activities'
 
 export interface Migration {
   version: number
@@ -23,7 +24,8 @@ export const MIGRATIONS: Migration[] = [
   { version: 3, name: '003_import_documents_no_unique_hash', up: up003 },
   { version: 4, name: '004_treasury', up: up004 },
   { version: 5, name: '005_banks', up: up005 },
-  { version: 6, name: '006_simulation_scenarios', up: up006 }
+  { version: 6, name: '006_simulation_scenarios', up: up006 },
+  { version: 7, name: '007_activities', up: up007 }
 ]
 
 export function runMigrations(db: Database): number {

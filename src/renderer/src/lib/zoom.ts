@@ -18,6 +18,9 @@ const arrotonda = (z: number): number =>
   Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z / ZOOM_PASSO) * ZOOM_PASSO))
 
 export function zoomAutomatico(): number {
+  // Sul telefono (versione Android) le schermate si ridispongono da sole:
+  // rimpicciolire renderebbe solo il testo illeggibile.
+  if (window.screen.width < 768) return 1
   return arrotonda(Math.min(1, window.screen.width / 1920))
 }
 

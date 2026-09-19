@@ -1,3 +1,4 @@
+import type { TaskPriority, TaskStatus } from './engine/activities'
 import type { BusinessType, LegalForm, Role } from './enums'
 
 /**
@@ -328,4 +329,52 @@ export interface SimulationScenario extends BaseRecord {
   /** JSON di `SimulationParams`: i risultati si ricalcolano sempre. */
   params: string
   notes: string | null
+}
+
+/** Attività del consulente su un'azienda — AGENTS.md §10.11. */
+export interface Task extends BaseRecord {
+  company_uuid: string
+  title: string
+  notes: string | null
+  status: TaskStatus
+  priority: TaskPriority
+  /** `YYYY-MM-DD`. */
+  due_date: string | null
+  estimate_minutes: number | null
+  /** Ordine dentro la colonna della bacheca. */
+  position: number
+  completed_at: string | null
+}
+
+/**
+ * Una voce di tempo: da timer (inizio e fine) o scritta a mano (solo minuti).
+ * Un timer acceso ha `started_at` e `ended_at` nullo; ce n'è al massimo uno.
+ */
+export interface TimeEntry extends BaseRecord {
+  company_uuid: string
+  task_uuid: string | null
+  description: string | null
+  /** Giorno del lavoro, `YYYY-MM-DD` locale. */
+  work_date: string
+  started_at: string | null
+  ended_at: string | null
+  minutes: number | null
+  billable: 0 | 1
+}
+
+/** Il timer acceso, ovunque sia: lo mostra la barra in alto. */
+export interface RunningTimer {
+  entry: TimeEntry
+  company_uuid: string
+  company_name: string
+  task_title: string | null
+}
+
+/** Payload della schermata Attività e Tempi. */
+export interface ActivitiesPayload {
+  tasks: Task[]
+  /** Voci degli ultimi mesi, dalla più recente. */
+  entries: TimeEntry[]
+  hourly_rate_cents: number | null
+  running: RunningTimer | null
 }

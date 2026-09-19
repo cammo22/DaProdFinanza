@@ -19,6 +19,7 @@ export type Vista =
   | 'banche'
   | 'simulazioni'
   | 'dati'
+  | 'attivita'
 
 interface Voce {
   id: Vista
@@ -75,6 +76,11 @@ const VISTE: Voce[] = [
     icona: icona('M4 18l5-6 4 3 7-9M15 6h5v5')
   },
   {
+    id: 'attivita',
+    label: 'Attività e Tempi',
+    icona: icona('M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0')
+  },
+  {
     id: 'dati',
     label: 'Dati contabili',
     icona: icona('M12 4v10m0 0 3.5-3.5M12 14l-3.5-3.5M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2')
@@ -116,7 +122,9 @@ export function Sidebar({
   onAnagrafica,
   mostraAnagrafica,
   mostraImport,
-  version
+  version,
+  aperta = false,
+  onChiudi
 }: {
   company: Company | null
   vista: Vista
@@ -126,69 +134,81 @@ export function Sidebar({
   mostraAnagrafica: boolean
   mostraImport: boolean
   version: string
+  /** Sul telefono il menu è a scomparsa: aperto o chiuso dal tasto ☰. */
+  aperta?: boolean
+  onChiudi?: () => void
 }): React.JSX.Element {
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-ink-700 bg-ink-900">
-      <div className="flex items-center gap-2.5 px-4 py-4">
-        <Logo size={30} />
-        <span className="text-sm font-semibold tracking-tight text-ink-100">
-          DaProd<span className="text-brand-300">Finanza</span>
-        </span>
-      </div>
+    <>
+      {aperta && (
+        <div className="fixed inset-0 z-30 bg-black/60 md:hidden" onClick={onChiudi} aria-hidden="true" />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-ink-700 bg-ink-900 transition-transform md:static md:z-auto md:w-60 md:translate-x-0 ${
+          aperta ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 px-4 py-4">
+          <Logo size={30} />
+          <span className="text-sm font-semibold tracking-tight text-ink-100">
+            DaProd<span className="text-brand-300">Finanza</span>
+          </span>
+        </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
-        {mostraAnagrafica && (
-          <Bottone
-            voce={ANAGRAFICA}
-            attiva={vista === 'anagrafica'}
-            onClick={onAnagrafica}
-          />
-        )}
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
+          {mostraAnagrafica && (
+            <Bottone
+              voce={ANAGRAFICA}
+              attiva={vista === 'anagrafica'}
+              onClick={onAnagrafica}
+            />
+          )}
 
-        {company && (
-          <>
-            <div className="mt-4 px-3 pb-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-                Azienda
-              </p>
-              <p className="mt-0.5 truncate text-xs text-ink-300" title={company.name}>
-                {company.name}
-              </p>
-            </div>
-
-            {VISTE.filter((v) => v.id !== 'dati' || mostraImport).map((voce) => (
-              <Bottone
-                key={voce.id}
-                voce={voce}
-                attiva={vista === voce.id}
-                onClick={() => onVista(voce.id)}
-              />
-            ))}
-
-            {IN_ARRIVO.length > 0 && (
+          {company && (
+            <>
               <div className="mt-4 px-3 pb-1">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-                  In arrivo
+                  Azienda
+                </p>
+                <p className="mt-0.5 truncate text-xs text-ink-300" title={company.name}>
+                  {company.name}
                 </p>
               </div>
-            )}
-            {IN_ARRIVO.map((voce) => (
-              <span
-                key={voce.label}
-                title={voce.fase}
-                className="flex cursor-not-allowed items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-ink-600"
-              >
-                <span className="truncate">{voce.label}</span>
-                <span className="shrink-0 text-[10px] text-ink-700">{voce.fase.slice(5)}</span>
-              </span>
-            ))}
-          </>
-        )}
-      </nav>
 
-      <div className="border-t border-ink-800 px-4 py-3">
-        <span className="font-mono text-[11px] text-ink-600">v{version || '—'}</span>
-      </div>
-    </aside>
+              {VISTE.filter((v) => (v.id !== 'dati' && v.id !== 'attivita') || mostraImport).map((voce) => (
+                <Bottone
+                  key={voce.id}
+                  voce={voce}
+                  attiva={vista === voce.id}
+                  onClick={() => onVista(voce.id)}
+                />
+              ))}
+
+              {IN_ARRIVO.length > 0 && (
+                <div className="mt-4 px-3 pb-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+                    In arrivo
+                  </p>
+                </div>
+              )}
+              {IN_ARRIVO.map((voce) => (
+                <span
+                  key={voce.label}
+                  title={voce.fase}
+                  className="flex cursor-not-allowed items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-ink-600"
+                >
+                  <span className="truncate">{voce.label}</span>
+                  <span className="shrink-0 text-[10px] text-ink-700">{voce.fase.slice(5)}</span>
+                </span>
+              ))}
+            </>
+          )}
+        </nav>
+
+        <div className="border-t border-ink-800 px-4 py-3">
+          <span className="font-mono text-[11px] text-ink-600">v{version || '—'}</span>
+        </div>
+      </aside>
+    </>
   )
 }

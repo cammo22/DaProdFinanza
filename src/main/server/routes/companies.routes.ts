@@ -8,6 +8,7 @@ import {
   setCompanyArchived
 } from '../services/companies.service'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { activitiesRouter } from './activities.routes'
 import { analysisRouter } from './analysis.routes'
 import { banksRouter } from './banks.routes'
 import { ledgerRouter } from './ledger.routes'
@@ -25,6 +26,7 @@ companiesRouter.use('/:uuid', treasuryRouter)
 companiesRouter.use('/:uuid', banksRouter)
 companiesRouter.use('/:uuid', simulationRouter)
 companiesRouter.use('/:uuid', ledgerRouter)
+companiesRouter.use('/:uuid', activitiesRouter)
 
 function uuidParam(req: Request): string {
   const value = req.params['uuid']

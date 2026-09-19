@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* Le classi si cercano qui anche quando la build parte da un'altra cartella (versione Android). */
+@source '.';
 
 /*
  * Palette ripresa dai mockup analizzati (AGENTS.md §0): fondo blu notte,

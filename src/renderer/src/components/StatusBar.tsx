@@ -66,14 +66,16 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
   const serverTone: Tone = health?.server === 'ok' ? 'ok' : 'off'
 
   return (
-    <footer className="flex items-center gap-5 border-t border-ink-700 bg-ink-900 px-5 py-2 text-xs">
+    <footer className="flex items-center gap-3 overflow-x-auto border-t border-ink-700 bg-ink-900 px-3 py-2 text-xs md:gap-5 md:px-5">
       <span className="font-mono text-ink-400">v{version || '—'}</span>
       <Indicator tone={dbTone} label="Database" />
-      <Indicator tone={serverTone} label="Server" />
-      {/* Fase 8: qui comparirà "via Tailscale" o "via fallback" (§7). */}
-      <Indicator tone="off" label="Tailscale" />
-      <span className="text-ink-400">
-        Ultima sync: {health?.last_sync ?? 'mai sincronizzato'}
+      <span className="hidden md:contents">
+        <Indicator tone={serverTone} label="Server" />
+        {/* Fase 8: qui comparirà "via Tailscale" o "via fallback" (§7). */}
+        <Indicator tone="off" label="Tailscale" />
+        <span className="text-ink-400">
+          Ultima sync: {health?.last_sync ?? 'mai sincronizzato'}
+        </span>
       </span>
 
       <span className="ml-auto flex items-center gap-3">

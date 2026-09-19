@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DaProdFinanza Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0f18" />
+    <style>
+      /* Barre di sistema del telefono (ora, batteria, gesti): il contenuto resta
+         nell'area sicura. Dove Android non disegna sotto le barre valgono 0. */
+      body {
+        box-sizing: border-box;
+        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+          env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+      }
+      @media (max-width: 767px) {
+        aside {
+          padding-top: env(safe-area-inset-top, 0px);
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
