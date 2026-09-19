@@ -5,6 +5,7 @@ import { api } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
 import { Sidebar, type Vista } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
+import { TimerBar } from './components/TimerBar'
 import { Alert, Button } from './components/ui'
 import { LoginScreen, SetupScreen } from './pages/AuthScreen'
 import { CompanyPage } from './pages/CompanyPage'
@@ -24,6 +25,8 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   const [company, setCompany] = useState<Company | null>(null)
   const [vista, setVista] = useState<Vista>(consulente ? 'anagrafica' : 'panoramica')
   const [error, setError] = useState<string | null>(null)
+  // Menu laterale sul telefono (sul computer è sempre aperto).
+  const [menu, setMenu] = useState(false)
 
   // L'operatore Azienda entra direttamente nella propria azienda (§4).
   useEffect(() => {
@@ -39,29 +42,55 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
     setVista('panoramica')
   }
 
+  // Dal timer in alto: le attività dell'azienda su cui sta contando.
+  const apriAttivita = (uuid: string): void => {
+    api
+      .get<Company>(`/api/companies/${uuid}`)
+      .then((scelta) => {
+        setCompany(scelta)
+        setVista('attivita')
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Azienda non disponibile.'))
+  }
+
   return (
     <div className="flex h-full flex-col bg-ink-950">
       <div className="flex min-h-0 flex-1">
         <Sidebar
           company={company}
           vista={vista}
-          onVista={setVista}
+          onVista={(v) => {
+            setVista(v)
+            setMenu(false)
+          }}
           onAnagrafica={() => {
             setCompany(null)
             setVista('anagrafica')
+            setMenu(false)
           }}
           mostraAnagrafica={consulente}
           mostraImport={consulente}
           version={version}
+          aperta={menu}
+          onChiudi={() => setMenu(false)}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center gap-4 border-b border-ink-700 bg-ink-900 px-6 py-2.5">
+          <header className="flex items-center gap-2 border-b border-ink-700 bg-ink-900 px-3 py-2.5 md:gap-4 md:px-6">
+            <button
+              type="button"
+              onClick={() => setMenu(true)}
+              className="rounded-md px-2 py-0.5 text-lg leading-none text-ink-300 hover:bg-ink-800 md:hidden"
+              aria-label="Apri il menu"
+            >
+              ☰
+            </button>
             <span className="rounded-md border border-brand-500/40 bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-300">
               {user ? ROLE_LABELS[user.role] : ''}
             </span>
-            <div className="ml-auto flex items-center gap-4">
-              <span className="text-xs text-ink-300">{user?.full_name}</span>
+            <div className="ml-auto flex min-w-0 items-center gap-2 md:gap-4">
+              {consulente && <TimerBar onApri={apriAttivita} />}
+              <span className="hidden text-xs text-ink-300 sm:inline">{user?.full_name}</span>
               <Button className="px-3 py-1 text-xs" onClick={onLogout}>
                 Esci
               </Button>

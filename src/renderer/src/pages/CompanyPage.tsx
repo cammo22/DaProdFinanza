@@ -11,6 +11,7 @@ import type { Company, FiscalPeriod, Scenario, SimulationScenario } from '@share
 import { api, getToken } from '../lib/api'
 import type { Vista } from '../components/Sidebar'
 import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
+import { ActivitiesView } from './business/ActivitiesView'
 import { BalanceSheetView } from './business/BalanceSheetView'
 import { BanksView } from './business/BanksView'
 import { SimulationView } from './business/SimulationView'
@@ -227,12 +228,14 @@ export function CompanyPage({
     }
   }
   // Dati contabili, tesoreria e banche non dipendono dal periodo scelto.
-  const senzaPeriodo = vista === 'dati' || vista === 'tesoreria' || vista === 'banche'
+  // Nemmeno attività e ore: sono il lavoro dello studio, non i conti dell'azienda.
+  const senzaPeriodo =
+    vista === 'dati' || vista === 'tesoreria' || vista === 'banche' || vista === 'attivita'
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <header className="flex items-center gap-4 border-b border-ink-700 px-8 py-4">
-        <div className="flex-1">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-700 px-4 py-3 md:px-8 md:py-4">
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold text-ink-100">{company.name}</h1>
           <p className="mt-0.5 font-mono text-xs text-ink-400">
             {company.code}
@@ -243,12 +246,12 @@ export function CompanyPage({
 
         {vista !== 'dati' && <MenuPannelli vista={vista} />}
         {periods.length > 0 && !senzaPeriodo && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-ink-400">Periodo</span>
+          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+            <span className="hidden text-xs text-ink-400 sm:inline">Periodo</span>
             <Select
               value={periodUuid}
               onChange={(e) => setPeriodUuid(e.target.value)}
-              className="w-60 py-1.5 text-xs"
+              className="min-w-0 flex-1 py-1.5 text-xs md:w-60 md:flex-none"
             >
               {periods.map((p) => {
                 // Un periodo senza lo scenario scelto lo dichiara già nel menu,
@@ -270,7 +273,7 @@ export function CompanyPage({
             <Select
               value={scenario}
               onChange={(e) => setScenario(e.target.value as Scenario)}
-              className="w-40 py-1.5 text-xs"
+              className="w-32 py-1.5 text-xs md:w-40"
             >
               {SCENARI.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -291,7 +294,7 @@ export function CompanyPage({
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-8 md:py-6">
         {report && (
           <div className="mb-5">
             <Alert tone="info">{report}</Alert>
@@ -306,6 +309,8 @@ export function CompanyPage({
         {vista === 'dati' && canImport && (
           <DataView company={company} periods={periods} canEdit={canImport} onChanged={caricaPeriodi} />
         )}
+
+        {vista === 'attivita' && canImport && <ActivitiesView company={company} />}
 
         {vista === 'tesoreria' &&
           (tesoreria ? (

@@ -1,0 +1,96 @@
+name: Demo per Android
+
+# La demo per Android (APK) si costruisce su una macchina Linux di GitHub con
+# l'SDK di Android già installato. Parte da sola quando si pubblica una release
+# e aggiunge l'APK ai file della release; lanciata a mano senza tag, lascia
+# l'APK fra gli "artifact" della procedura (utile per provarla prima), come
+# nelle pull request che toccano la parte Android.
+#
+# L'app è la stessa del programma per computer (interfaccia, calcoli, dati di
+# esempio), impacchettata da Capacitor: vedi vite.android.config.ts.
+on:
+  release:
+    types: [published]
+  # Le modifiche alla parte Android si provano già nella pull request: l'APK
+  # resta fra gli artifact, senza toccare nessuna release.
+  pull_request:
+    paths:
+      - 'src/web/**'
+      - 'vite.android.config.ts'
+      - 'capacitor.config.json'
+      - 'scripts/android-prepare.mjs'
+      - 'build/android/**'
+      - '.github/workflows/android-demo.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag della release a cui aggiungere l''APK (vuoto = solo prova)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG || github.ref }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Installa le dipendenze
+        # Senza script: su Linux non serve ricompilare il database nativo di Electron.
+        run: npm ci --ignore-scripts
+
+      - name: Controllo dei tipi e test
+        run: |
+          npm run typecheck
+          npm run test
+
+      - name: Build web della demo
+        run: npm run android:web
+
+      - name: Progetto Android, icone e versione
+        run: |
+          npx cap add android
+          npx --yes @capacitor/assets@3 generate --android --assetPath build/android \
+            --iconBackgroundColor '#0b0f18' --splashBackgroundColor '#0b0f18'
+          node scripts/android-prepare.mjs
+          npx cap sync android
+
+      - name: Build dell'APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Nome dell'APK
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          mkdir -p release/android
+          cp android/app/build/outputs/apk/release/app-release.apk \
+            "release/android/DaProdFinanza-Demo-${VERSION}-android.apk"
+          ls -la release/android
+
+      - name: Aggiunge l'APK alla release
+        if: env.TAG != ''
+        run: gh release upload "$TAG" release/android/*.apk --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: APK fra gli artifact (prova senza release)
+        if: env.TAG == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: DaProdFinanza-Demo-android
+          path: release/android/*.apk

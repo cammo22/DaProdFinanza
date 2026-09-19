@@ -1,0 +1,8 @@
+{
+  "appId": "com.daprodproduzioni.daprodfinanza.demo",
+  "appName": "DaProdFinanza Demo",
+  "webDir": "out/web",
+  "android": {
+    "backgroundColor": "#0b0f18"
+  }
+}

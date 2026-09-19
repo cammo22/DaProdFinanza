@@ -30,3 +30,6 @@ Thumbs.db
 
 # --- electron-vite ---
 .vite/
+
+# --- Android: il progetto si genera nella CI (npx cap add android) ---
+/android/

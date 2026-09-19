@@ -10,7 +10,8 @@ export const UPDATE_REPO = { owner: 'cammo22', repo: 'DaProdFinanza' } as const
 
 /** Come è stata distribuita la copia in esecuzione. */
 /** 'mac': la demo per Mac, che si aggiorna scaricando il DMG dalla pagina della release. */
-export type UpdateKind = 'installer' | 'portable' | 'demo' | 'mac' | 'dev'
+/** 'android': la demo per telefono, che si aggiorna scaricando l'APK dalla pagina della release. */
+export type UpdateKind = 'installer' | 'portable' | 'demo' | 'mac' | 'android' | 'dev'
 
 export type UpdateStatus =
   | 'idle'
@@ -48,6 +49,8 @@ export function assetPattern(kind: UpdateKind): RegExp | null {
       return /^DaProdFinanza-Demo-(\d+\.\d+\.\d+)-portable\.exe$/
     case 'mac':
       return /^DaProdFinanza-Demo-(\d+\.\d+\.\d+)-mac-(?:arm64|x64)\.dmg$/
+    case 'android':
+      return /^DaProdFinanza-Demo-(\d+\.\d+\.\d+)-android\.apk$/
     case 'dev':
       return null
   }

@@ -3,6 +3,7 @@ import { createClient } from '../server/services/clients.service'
 import { createCompany } from '../server/services/companies.service'
 import { insertUser } from '../server/services/auth.service'
 import { DEMO_BUILD } from '../build-flags'
+import { seedDemoActivities } from './demo-activities'
 import { seedDemoFinancials } from './demo-data'
 import { seedDemoBanks } from './demo-banks'
 import { seedDemoTreasury } from './demo-treasury'
@@ -78,6 +79,8 @@ export function seedDemoData(): void {
   seedDemoTreasury(company.uuid)
   // Istituti, linee di credito e finanziamenti.
   seedDemoBanks(company.uuid)
+  // Attività e ore del consulente.
+  seedDemoActivities(company.uuid)
 
   insertUser(
     {
@@ -139,5 +142,13 @@ function aggiornaDemoEsistente(): void {
     ).run(new Date().toISOString(), azienda.uuid)
     seedDemoBanks(azienda.uuid)
     console.log('[db] seed dimostrativo: aggiunti banche e finanziamenti della Pizzeria DaProd')
+  }
+
+  const attivita = db
+    .prepare('SELECT count(*) AS n FROM tasks WHERE company_uuid = ?')
+    .get(azienda.uuid) as { n: number }
+  if (attivita.n === 0) {
+    seedDemoActivities(azienda.uuid)
+    console.log('[db] seed dimostrativo: aggiunte attività e ore della Pizzeria DaProd')
   }
 }

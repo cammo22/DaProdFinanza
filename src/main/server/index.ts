@@ -6,6 +6,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import type { HealthState } from '@shared/types'
 import { isDatabaseHealthy } from '../db'
 import { HttpError } from './http-error'
+import { timerRouter } from './routes/activities.routes'
 import { authRouter } from './routes/auth.routes'
 import { clientsRouter } from './routes/clients.routes'
 import { companiesRouter } from './routes/companies.routes'
@@ -54,6 +55,7 @@ export function createServerApp(): express.Express {
   api.use('/api/clients', clientsRouter)
   api.use('/api/companies', companiesRouter)
   api.use('/api/reference', referenceRouter)
+  api.use('/api/timer', timerRouter)
 
   api.use((_req, res) => res.status(404).json({ error: 'Risorsa non trovata.' }))
   api.use(errorHandler)

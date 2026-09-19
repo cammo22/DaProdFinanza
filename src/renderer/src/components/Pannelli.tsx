@@ -107,7 +107,11 @@ function predefinita(pannelli: { i: string; w: number }[], altezze: Map<string, 
   return compatta(out)
 }
 
+/** Sotto questa larghezza (telefono) i pannelli vanno uno sotto l'altro. */
+const TELEFONO = 700
+
 function fascia(larghezza: number): string {
+  if (larghezza > 0 && larghezza < TELEFONO) return 'telefono'
   return larghezza < 1100 ? 'stretto' : larghezza < 2000 ? 'standard' : 'ampio'
 }
 
@@ -207,6 +211,12 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
   const griglia = useRef<HTMLDivElement>(null)
   const [larghezza, setLarghezza] = useState(0)
   const chiave = `${PREFIX}${vista}.${fascia(larghezza)}`
+  // Su un telefono due pannelli affiancati sarebbero larghi un dito ciascuno.
+  const telefono = larghezza > 0 && larghezza < TELEFONO
+  const pannelliMostrati = useMemo(
+    () => (telefono ? pannelli.map((p) => ({ ...p, w: COLS })) : pannelli),
+    [pannelli, telefono]
+  )
   const [salvata, setSalvata] = useState<Item[] | null>(null)
   const [altezze, setAltezze] = useState<Map<string, number>>(new Map())
   const [op, setOp] = useState<Operazione | null>(null)
@@ -249,17 +259,17 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
 
   // --- disposizione corrente ---
   const layout = useMemo(() => {
-    const presenti = new Set(pannelli.map((p) => p.i))
-    if (!salvata) return predefinita(pannelli, altezze)
+    const presenti = new Set(pannelliMostrati.map((p) => p.i))
+    if (!salvata) return predefinita(pannelliMostrati, altezze)
     const noti = salvata.filter((it) => presenti.has(it.i))
-    const nuovi = pannelli.filter((p) => !noti.some((it) => it.i === p.i))
+    const nuovi = pannelliMostrati.filter((p) => !noti.some((it) => it.i === p.i))
     const fondo = noti.reduce((m, it) => Math.max(m, it.y + it.h), 0)
     const aggiunti = predefinita(nuovi, altezze).map((it) => ({ ...it, y: it.y + fondo }))
     const insieme = [...noti, ...aggiunti].map((it) =>
       it.auto && altezze.has(it.i) ? { ...it, h: altezze.get(it.i)! } : it
     )
     return compatta(insieme)
-  }, [pannelli, salvata, altezze])
+  }, [pannelliMostrati, salvata, altezze])
 
   const mostrato = anteprima ?? layout
 

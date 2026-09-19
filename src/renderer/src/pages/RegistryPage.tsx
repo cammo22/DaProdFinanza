@@ -123,7 +123,7 @@ export function RegistryPage({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <header className="flex items-center gap-4 border-b border-ink-700 px-8 py-5">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-ink-700 px-4 py-4 md:px-8 md:py-5">
         <div>
           <h1 className="text-lg font-semibold text-ink-100">Clienti e Aziende</h1>
           <p className="mt-0.5 text-xs text-ink-400">
@@ -136,7 +136,7 @@ export function RegistryPage({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cerca per nome, codice o P.IVA…"
-          className="ml-6 w-72 rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400 outline-none focus:border-brand-500"
+          className="w-full rounded-lg md:ml-6 md:w-72 border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400 outline-none focus:border-brand-500"
         />
 
         <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-300">
@@ -149,7 +149,7 @@ export function RegistryPage({
           Mostra archiviati
         </label>
 
-        <div className="ml-auto flex gap-3">
+        <div className="flex gap-3 md:ml-auto">
           <Button onClick={() => setDialog({ kind: 'new-client' })}>+ Nuovo cliente</Button>
           <Button
             variant="primary"
@@ -162,7 +162,7 @@ export function RegistryPage({
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-8 md:py-6">
         {(error || notice) && (
           <div className="mb-5">
             {error ? <Alert>{error}</Alert> : <Alert tone="success">{notice}</Alert>}
@@ -194,7 +194,7 @@ export function RegistryPage({
                 key={client.uuid}
                 className="rounded-xl border border-ink-700 bg-ink-850 shadow-lg shadow-black/30"
               >
-                <header className="flex items-center gap-4 border-b border-ink-700 px-5 py-4">
+                <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-700 px-4 py-4 md:px-5">
                   <div className="flex items-baseline gap-3">
                     <span className="rounded-md bg-ink-800 px-2 py-0.5 font-mono text-xs text-brand-300">
                       {client.code}
@@ -215,7 +215,7 @@ export function RegistryPage({
                     {formatDate(client.start_date)}
                   </p>
 
-                  <div className="ml-auto flex gap-2">
+                  <div className="flex gap-2 md:ml-auto">
                     <Button
                       className="px-3 py-1 text-xs"
                       onClick={() => setDialog({ kind: 'new-company', clientUuid: client.uuid })}
@@ -243,78 +243,80 @@ export function RegistryPage({
                     Nessuna azienda per questo cliente.
                   </p>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs uppercase tracking-wider text-ink-400">
-                        <th className="px-5 py-2 font-medium">Codice</th>
-                        <th className="px-5 py-2 font-medium">Ragione sociale</th>
-                        <th className="px-5 py-2 font-medium">P.IVA</th>
-                        <th className="px-5 py-2 font-medium">Forma</th>
-                        <th className="px-5 py-2 font-medium">Tipo di attività</th>
-                        <th className="px-5 py-2 font-medium">Dal</th>
-                        <th className="px-5 py-2" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {client.companies.map((company) => (
-                        <tr
-                          key={company.uuid}
-                          className="border-t border-ink-800 transition-colors hover:bg-ink-800/60"
-                        >
-                          <td className="px-5 py-3 font-mono text-xs text-ink-300">
-                            {company.code}
-                          </td>
-                          <td className="px-5 py-3">
-                            <button
-                              type="button"
-                              onClick={() => onOpenCompany(company)}
-                              className="font-medium text-ink-100 hover:text-brand-300"
-                              title="Apri la suite Business"
-                            >
-                              {company.name}
-                            </button>
-                            {company.archived === 1 && (
-                              <span className="ml-2 rounded-md bg-warning/10 px-2 py-0.5 text-xs text-warning">
-                                archiviata
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3 font-mono text-xs text-ink-300">
-                            {company.vat_number ?? '—'}
-                          </td>
-                          <td className="px-5 py-3 text-ink-300">{company.legal_form ?? '—'}</td>
-                          <td className="px-5 py-3 text-ink-300">{company.business_type ?? '—'}</td>
-                          <td className="px-5 py-3 text-ink-300">
-                            {formatDate(company.start_date)}
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                className="px-2.5 py-1 text-xs"
-                                onClick={() => setDialog({ kind: 'new-company-user', company })}
-                                title="Crea le credenziali per l'app Azienda"
-                              >
-                                Accesso
-                              </Button>
-                              <Button
-                                className="px-2.5 py-1 text-xs"
-                                onClick={() => toggleCompanyArchive(company)}
-                              >
-                                {company.archived ? 'Ripristina' : 'Archivia'}
-                              </Button>
-                              <Button
-                                variant="danger"
-                                className="px-2.5 py-1 text-xs"
-                                onClick={() => removeCompany(company)}
-                              >
-                                Rimuovi
-                              </Button>
-                            </div>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[720px] text-sm">
+                      <thead>
+                        <tr className="text-left text-xs uppercase tracking-wider text-ink-400">
+                          <th className="px-5 py-2 font-medium">Codice</th>
+                          <th className="px-5 py-2 font-medium">Ragione sociale</th>
+                          <th className="px-5 py-2 font-medium">P.IVA</th>
+                          <th className="px-5 py-2 font-medium">Forma</th>
+                          <th className="px-5 py-2 font-medium">Tipo di attività</th>
+                          <th className="px-5 py-2 font-medium">Dal</th>
+                          <th className="px-5 py-2" />
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {client.companies.map((company) => (
+                          <tr
+                            key={company.uuid}
+                            className="border-t border-ink-800 transition-colors hover:bg-ink-800/60"
+                          >
+                            <td className="px-5 py-3 font-mono text-xs text-ink-300">
+                              {company.code}
+                            </td>
+                            <td className="px-5 py-3">
+                              <button
+                                type="button"
+                                onClick={() => onOpenCompany(company)}
+                                className="font-medium text-ink-100 hover:text-brand-300"
+                                title="Apri la suite Business"
+                              >
+                                {company.name}
+                              </button>
+                              {company.archived === 1 && (
+                                <span className="ml-2 rounded-md bg-warning/10 px-2 py-0.5 text-xs text-warning">
+                                  archiviata
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-5 py-3 font-mono text-xs text-ink-300">
+                              {company.vat_number ?? '—'}
+                            </td>
+                            <td className="px-5 py-3 text-ink-300">{company.legal_form ?? '—'}</td>
+                            <td className="px-5 py-3 text-ink-300">{company.business_type ?? '—'}</td>
+                            <td className="px-5 py-3 text-ink-300">
+                              {formatDate(company.start_date)}
+                            </td>
+                            <td className="px-5 py-3">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  className="px-2.5 py-1 text-xs"
+                                  onClick={() => setDialog({ kind: 'new-company-user', company })}
+                                  title="Crea le credenziali per l'app Azienda"
+                                >
+                                  Accesso
+                                </Button>
+                                <Button
+                                  className="px-2.5 py-1 text-xs"
+                                  onClick={() => toggleCompanyArchive(company)}
+                                >
+                                  {company.archived ? 'Ripristina' : 'Archivia'}
+                                </Button>
+                                <Button
+                                  variant="danger"
+                                  className="px-2.5 py-1 text-xs"
+                                  onClick={() => removeCompany(company)}
+                                >
+                                  Rimuovi
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </section>
             ))}

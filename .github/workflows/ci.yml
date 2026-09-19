@@ -27,3 +27,6 @@ jobs:
 
       - name: Build (main + preload + renderer)
         run: npx electron-vite build
+
+      - name: Build della versione Android (solo la parte web)
+        run: npm run android:web
