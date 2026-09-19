@@ -688,6 +688,7 @@ va isolato dietro un'interfaccia, così da poterlo sostituire.
 | Attività e Tempi | `migrations/007_activities.ts`, `services/activities.service.ts`, `routes/activities.routes.ts`, `shared/engine/activities.ts` (+ test), `pages/business/ActivitiesView.tsx`, `components/TimerBar.tsx`, `db/demo-activities.ts` |
 | Versione web / Android | `src/web/` (ponte, backend in pagina, database, sostituti), `vite.android.config.ts`, `tsconfig.android.json`, `capacitor.config.json` |
 | APK | `.github/workflows/android-demo.yml`, `scripts/android-prepare.mjs`, `build/android/` (icona, splash, chiave demo) |
+| Telefono (1.2.2) | pannelli **bloccati di partenza** sotto 768 px se non c'è una scelta salvata (lo scorrimento col dito prendeva i bordi); lucchetto 🔒/🔓 sempre visibile nell'intestazione (`BloccoPannelli`), allineato al menu *Pannelli* con l'evento `daprod:blocco-pannelli` |
 | Telefono (1.2.1) | intestazione dell'azienda richiudibile in una riga (▾/▴, chiusa di partenza, ricordata), striscia demo con la ×, niente pulsanti di zoom — tutto solo sotto 768 px (`max-md:`) |
 | Telefono | menu laterale a scomparsa sotto 768 px (`Sidebar`/`App`), intestazioni che vanno a capo, pannelli uno sotto l'altro sotto 700 px (fascia `telefono` in `Pannelli`), zoom automatico al 100% sugli schermi piccoli |
 

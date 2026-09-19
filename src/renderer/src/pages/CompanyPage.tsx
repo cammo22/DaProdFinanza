@@ -16,7 +16,7 @@ import { BalanceSheetView } from './business/BalanceSheetView'
 import { BanksView } from './business/BanksView'
 import { SimulationView } from './business/SimulationView'
 import { DataView } from './business/DataView'
-import { MenuPannelli } from '../components/Pannelli'
+import { BloccoPannelli, MenuPannelli } from '../components/Pannelli'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 import { TreasuryView } from './business/TreasuryView'
@@ -285,6 +285,7 @@ export function CompanyPage({
             <MenuPannelli vista={vista} />
           </div>
         )}
+        {vista !== 'dati' && <BloccoPannelli className="md:hidden" />}
         <button
           type="button"
           onClick={() => apriIntestazione(!intestazione)}

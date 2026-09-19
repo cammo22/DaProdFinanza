@@ -134,12 +134,48 @@ function scrivi(chiave: string, items: Item[] | null): void {
   }
 }
 
+/**
+ * Senza una scelta, sul telefono i pannelli partono bloccati: scorrendo col dito
+ * si finiva per prendere un bordo e ridimensionare un pannello per sbaglio.
+ */
 export function pannelliBloccati(): boolean {
   try {
-    return localStorage.getItem(CHIAVE_BLOCCO) === '1'
+    const v = localStorage.getItem(CHIAVE_BLOCCO)
+    if (v !== null) return v === '1'
   } catch {
-    return false
+    // niente: vale la scelta predefinita
   }
+  return window.innerWidth < 768
+}
+
+/** Stato del blocco, allineato fra tutti i componenti che lo mostrano. */
+function useBloccati(): boolean {
+  const [bloccati, setBloccati] = useState(pannelliBloccati)
+  useEffect(() => {
+    const f = (e: Event): void => setBloccati(Boolean((e as CustomEvent).detail))
+    window.addEventListener(EVENTO_BLOCCO, f)
+    return () => window.removeEventListener(EVENTO_BLOCCO, f)
+  }, [])
+  return bloccati
+}
+
+/** Lucchetto sempre a portata di dito: blocca e sblocca i pannelli con un tocco. */
+export function BloccoPannelli({ className = '' }: { className?: string }): React.JSX.Element {
+  const bloccati = useBloccati()
+  return (
+    <button
+      type="button"
+      onClick={() => bloccaPannelli(!bloccati)}
+      aria-pressed={bloccati}
+      aria-label={bloccati ? 'Sblocca i pannelli' : 'Blocca i pannelli'}
+      title={bloccati ? 'Pannelli bloccati: tocca per poterli spostare e ridimensionare' : 'Pannelli sbloccati: tocca per bloccarli'}
+      className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs ${
+        bloccati ? 'border-ink-700 bg-ink-800 text-ink-300' : 'border-warning/50 bg-warning/10 text-warning'
+      } ${className}`}
+    >
+      {bloccati ? '🔒' : '🔓'}
+    </button>
+  )
 }
 
 export function bloccaPannelli(bloccati: boolean): void {
@@ -551,7 +587,7 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
 /** Menu "Pannelli" dell'intestazione: ripristina la disposizione, blocca i pannelli. */
 export function MenuPannelli({ vista }: { vista: string }): React.JSX.Element {
   const [aperto, setAperto] = useState(false)
-  const [bloccati, setBloccati] = useState(pannelliBloccati)
+  const bloccati = useBloccati()
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!aperto) return
@@ -589,7 +625,6 @@ export function MenuPannelli({ vista }: { vista: string }): React.JSX.Element {
             className={voce}
             onClick={() => {
               bloccaPannelli(!bloccati)
-              setBloccati(!bloccati)
               setAperto(false)
             }}
           >
