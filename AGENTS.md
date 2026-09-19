@@ -213,6 +213,16 @@ Il modulo più sofisticato: selettore di scenario (salvabile/nominabile), pannel
 ### 10.10 Configura (Piano dei Conti & Regole)
 Dietro il pulsante "Configura" visto in alto a destra su ogni tab: mapping conto → categoria di riclassificazione, % costo diretto/indiretto per conto (con default dal Tipo di attività, sovrascrivibile), soglie per gli alert di Panoramica, soglia minima di liquidità per Tesoreria, parametri di scadenza/pagamento di default per lo Scadenziario.
 
+### 10.11 Attività e Tempi (versione 1.2.0 — ispirata a Ever Teams)
+Il lavoro del **consulente** su ogni azienda, non i conti dell'azienda: per questo la vede solo il ruolo Consulente (§4). L'idea viene da [Ever Teams](https://github.com/ever-co/ever-teams) (piattaforma open source di gestione del lavoro: bacheca, timer, registro ore, timesheet), ridotta a ciò che serve a uno studio. **Nessun codice copiato**: Ever Teams è AGPL-3.0, incompatibile con la nostra MIT; si prendono solo le idee.
+- **Striscia KPI**: ore della settimana (da lunedì), ore del mese con quota fatturabile, valore del mese (ore fatturabili × tariffa oraria dell'azienda), attività aperte e scadute.
+- **Timer unico in tutto il programma** (come Ever Teams): uno solo acceso alla volta; avviarne un altro chiude il precedente, anche su un'altra azienda. Sempre visibile nella barra in alto (`TimerBar`), da dove si ferma o si apre l'azienda su cui conta. Meno di un minuto non si registra. Avviarlo su un'attività "Da fare" la porta in "In corso".
+- **Ore a mano**: giorno, durata ("1:30", "1,5", "45m"), attività facoltativa, descrizione, fatturabile sì/no.
+- **Bacheca** a quattro colonne (Da fare, In corso, Da verificare, Fatto): priorità, scadenza (rossa se passata), tempo registrato e barra sulla stima (rossa oltre la stima). Si sposta trascinando (computer) o con le frecce (telefono).
+- **Ore per settimana** (ultime 8, fatturabili e no), **tariffa oraria** per azienda, **registro ore** giorno per giorno.
+- Tabelle `tasks`, `time_entries`, `activity_settings` (migrazione 007), stessi campi di sync di tutto il resto (§6). Il riepilogo è una funzione pura (`shared/engine/activities.ts`, con test). Cancellare un'attività lascia le sue ore nel registro, senza attività.
+- **Non fa** (di proposito, per ora): fatture, tracciamento automatico di app/siti o schermate (Ever Teams lo fa; in uno studio è invadente e non richiesto), più persone dello studio con i propri timer — vedi §14 punto 10.
+
 ---
 
 ## 11. Import e integrazioni dati
@@ -270,6 +280,8 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ Prossima |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Regola del cliente (2026-09-16): una release a ogni aggiornamento importante, sempre con i tre eseguibili — installer, portable e demo** (`npm run dist` e `npm run dist:demo`). La prima così è la v0.0.5, con le Fasi 5 e 6 |
+| **A** | Attività e Tempi (§10.11), idea presa da Ever Teams | Bacheca, timer, ore e valore per azienda | ✅ **Fatta** (versione 1.2.0) |
+| **B** | Demo per Android (§13, versione 1.2.0) | APK con i dati di esempio, dalla release | ✅ **Fatta** (versione 1.2.0) — da provare su più telefoni |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
 
 ### 13-bis. Stato alla fine della sessione 1 (Fasi 0 → 4)
@@ -669,6 +681,51 @@ presenti: passa dai relay DERP gratuiti di Tailscale (senza garanzie; si può
 installare un relay proprio), progetto giovane senza stabilità di API. Il trasporto
 va isolato dietro un'interfaccia, così da poterlo sostituire.
 
+### Versione 1.2.0 — Attività e Tempi, demo per Android
+
+| Pezzo | Dove |
+|---|---|
+| Attività e Tempi | `migrations/007_activities.ts`, `services/activities.service.ts`, `routes/activities.routes.ts`, `shared/engine/activities.ts` (+ test), `pages/business/ActivitiesView.tsx`, `components/TimerBar.tsx`, `db/demo-activities.ts` |
+| Versione web / Android | `src/web/` (ponte, backend in pagina, database, sostituti), `vite.android.config.ts`, `tsconfig.android.json`, `capacitor.config.json` |
+| APK | `.github/workflows/android-demo.yml`, `scripts/android-prepare.mjs`, `build/android/` (icona, splash, chiave demo) |
+| Telefono | menu laterale a scomparsa sotto 768 px (`Sidebar`/`App`), intestazioni che vanno a capo, pannelli uno sotto l'altro sotto 700 px (fascia `telefono` in `Pannelli`), zoom automatico al 100% sugli schermi piccoli |
+
+**Attività e Tempi.** Vedi §10.11. Timer: la voce accesa è quella con `started_at` e
+senza `ended_at`; la chiusura scrive i minuti (tetto 24 h: oltre è un timer
+dimenticato) e se sono meno di uno la voce si scarta. Rotte sotto
+`/api/companies/:uuid/{activities,tasks,time-entries,timer/start}` e `/api/timer`
+(stato e stop, globali). Tutte solo Consulente.
+
+**Demo per Android — come funziona.** Non è un'app riscritta: è **lo stesso
+programma**. `vite.android.config.ts` costruisce una pagina web che contiene
+l'interfaccia di `src/renderer` *e il backend di `src/main`* (Express, rotte, servizi,
+migrazioni, seed, motore): un plugin sostituisce i soli moduli che sul telefono non
+esistono.
+- **Database**: `better-sqlite3` → `src/web/sqlite.ts`, un adattatore con la stessa
+  API (`prepare().get/all/run`, `exec`, `pragma`, `transaction` con savepoint) sopra
+  **sql.js** (SQLite in WebAssembly). Salvato nell'IndexedDB del telefono dopo ogni
+  richiesta che modifica. **Non cifrato**: sono solo dati di esempio, nello spazio
+  privato dell'app.
+- **Express** → `src/web/shims/express.ts`: router annidati con parametri,
+  middleware, errori sincroni e `async`, gestore d'errore a quattro argomenti. Le
+  richieste arrivano da `fetch` intercettata in `src/web/bridge.ts` sull'indirizzo
+  finto `http://daprodfinanza.locale`: `api.ts` non sa di essere su un telefono.
+- **Sessioni**: niente JWT, un identificativo casuale in memoria (`src/web/lib/tokens.ts`).
+  **Password**: stesso formato scrypt, calcolato con `@noble/hashes`.
+- **Cosa non c'è sul telefono** (avviso chiaro, nessun blocco): import/export Excel,
+  report PDF, backup. `window.daprod` (`bridge.ts`) li risponde con un messaggio.
+- **Aggiornamenti**: `kind: 'android'`, asset `DaProdFinanza-Demo-X.Y.Z-android.apk`;
+  come sul Mac si apre la pagina della release e l'APK nuovo si installa sopra.
+- **APK**: lo costruisce GitHub (`android-demo.yml`, Ubuntu + JDK 21) a ogni release
+  pubblicata, o a mano per prova (resta fra gli artifact). Capacitor 8 genera il
+  progetto Android (`android/` non è nella repo), `@capacitor/assets` fa icone e
+  splash da `build/android/`, `scripts/android-prepare.mjs` mette versione
+  (`versionCode` = 1.2.0 → 10200) e firma. **Firma**: una chiave dedicata alla demo,
+  nella repo con password pubblica — serve solo a far installare ogni versione sopra
+  la precedente; non protegge nulla e non va mai usata per un'app con dati veri.
+- **Provarla senza telefono**: `npm run android:web` e `npm run android:preview`, poi
+  il browser su `http://localhost:4173` (ridotto a larghezza di telefono).
+
 ---
 
 ## 14. Punti aperti
@@ -690,6 +747,8 @@ va isolato dietro un'interfaccia, così da poterlo sostituire.
 6. **Magazzino**: serve solo la "valorizzazione contabile" (rimanenze iniziali/finali per il conto economico e il DIO) o anche gestione scorte operativa (SKU, giacenze fisiche, carico/scarico)? La nota cliente su "logiche di controllo gestione di magazzino" e "calcolo rimanenze" sembra puntare alla prima, più semplice; ma va confermato.
 7. **Nome/branding definitivo**: confermare "DaProdFinanza" come nome finale prodotto + repo.
 8. **Nome dell'app Cliente**: per coerenza con `IrideeCRM` / `IrideeCRM Satellite`, proposta `DaProdFinanza` / `DaProdFinanza Cliente` — confermare.
+10. **Attività e Tempi per più persone**: oggi il timer e le ore sono del consulente (uno solo). Se nello studio lavorano più persone, servono ore per persona e magari una vista "chi sta facendo cosa" (come in Ever Teams). E l'azienda cliente deve poter vedere le attività che la riguardano (es. "documenti da mandare")? Da chiedere al consulente.
+11. **Demo Android**: provata nel browser a larghezza di telefono; l'APK va provato su qualche telefono vero (versioni di Android diverse).
 
 ---
 

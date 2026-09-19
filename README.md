@@ -8,9 +8,10 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/versione-1.1.0-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.2.0-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 ![demo mac](https://img.shields.io/badge/demo-macOS-3ddbff)
+![demo android](https://img.shields.io/badge/demo-Android-3ddbff)
 [![release](https://img.shields.io/github/v/release/cammo22/DaProdFinanza?label=scarica&color=5cff9d)](https://github.com/cammo22/DaProdFinanza/releases/latest)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
 
@@ -142,6 +143,8 @@ nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 - **Tesoreria** — quanti soldi ci saranno in banca fra una settimana, un mese, tre mesi
 - **Banche e Finanziamenti** — fidi, mutui e leasing, e quanto pesano sulla cassa futura
 - **Analisi & Simulazioni** — "cosa succede se": assumo, investo, alzo i prezzi
+- **Attività e Tempi** *(nuova nella 1.2.0)* — il lavoro del consulente su ogni
+  azienda: le cose da fare, il tempo che ci si spende e quanto vale
 
 In più, su ogni schermata:
 
@@ -161,6 +164,23 @@ In più, su ogni schermata:
   conto economico, stato patrimoniale e indici, circolante, tesoreria, banche.
 - **Aggiornamenti con un clic**: il programma controlla da solo se su GitHub c'è una
   versione nuova, la scarica, la verifica e si aggiorna.
+
+## Attività e Tempi
+
+Una schermata per il lavoro **del consulente**, non per i conti dell'azienda: la vede
+solo lui. L'idea viene da [Ever Teams](https://github.com/ever-co/ever-teams), un
+programma open source per organizzare il lavoro di un gruppo; qui è ridotta a quello
+che serve a uno studio.
+
+- **Bacheca a colonne** — *Da fare, In corso, Da verificare, Fatto*: ogni attività ha
+  priorità, scadenza (rossa quando è passata), una stima e il tempo già speso. Si
+  sposta trascinandola, o con le frecce.
+- **Timer** — si avvia su un'attività con un clic e resta visibile in alto in ogni
+  schermata; se ne avvii un altro, il primo si ferma da solo. Le ore si possono anche
+  scrivere a mano ("1:30", "1,5").
+- **Quanto vale** — con la tariffa oraria dell'azienda, le ore fatturabili del mese
+  diventano un importo. Più il grafico delle ultime otto settimane e il registro giorno
+  per giorno.
 
 ## Come entrano i dati
 
@@ -205,8 +225,9 @@ si muovono le leve (ricavi, costi, dipendenti, giorni di incasso, un investiment
 finanziamento) e si vede subito l'effetto su utile, cassa e debito, scenario salvabile
 ed esportabile in Excel. Tutte e sette le viste esistono. Dalla versione 1.0.0 i dati si
 inseriscono direttamente nel programma, c'è il report PDF, il cruscotto a widget con i
-riquadri spostabili e l'aggiornamento automatico da GitHub. Manca il collegamento fra
-i due programmi.
+riquadri spostabili e l'aggiornamento automatico da GitHub. Con la 1.2.0 arrivano
+**Attività e Tempi** e la **demo per telefoni Android**. Manca il collegamento fra i
+due programmi.
 
 | | Fase | Stato |
 |---|---|---|
@@ -220,6 +241,7 @@ i due programmi.
 | 7 | Analisi e simulazioni | ✅ Fatta |
 | 1.0 | Aggiornamenti automatici, dati nel programma, report PDF, cruscotto, riquadri spostabili | ✅ Versione 1.0.0 |
 | 1.1 | Pannelli liberi e ridimensionabili, zoom, scenari pronti, demo per Mac | ✅ Versione 1.1.0 |
+| 1.2 | Attività e Tempi (bacheca, timer, ore), demo per Android | ✅ Versione 1.2.0 |
 | 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ Prossima |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
@@ -237,7 +259,7 @@ consulente con **`cammo` / `1234`**, oppure come azienda con **`Pizzeria DaProd`
 quelli di un'installazione vera.
 
 Ogni versione sulla pagina **[Releases](https://github.com/cammo22/DaProdFinanza/releases)**
-ha tre file, tutti per Windows a 64 bit:
+ha tre file per Windows a 64 bit, e la demo per Mac e per Android:
 
 | File | A cosa serve |
 |---|---|
@@ -246,12 +268,20 @@ ha tre file, tutti per Windows a 64 bit:
 | `DaProdFinanza-x.y.z-portable.exe` | Usarlo davvero senza installare niente |
 | `DaProdFinanza-Demo-x.y.z-mac-arm64.dmg` | La demo su un Mac con chip Apple (M1 e successivi) |
 | `DaProdFinanza-Demo-x.y.z-mac-x64.dmg` | La demo su un Mac con processore Intel |
+| `DaProdFinanza-Demo-x.y.z-android.apk` | La demo su un telefono o tablet Android |
 
 **Sul Mac c'è solo la demo.** Si apre il DMG e si trascina il programma in
 Applicazioni (o lo si avvia direttamente dal DMG). Non è firmato da Apple: al primo
 avvio macOS lo blocca; si apre *Impostazioni di Sistema → Privacy e sicurezza* e si
 sceglie *Apri comunque* (oppure clic destro sul programma → *Apri*). Per aggiornarla,
 il pulsante *Aggiornamenti* apre la pagina da cui scaricare il DMG nuovo.
+
+**Su Android c'è solo la demo.** Si scarica l'APK dal telefono e lo si apre: Android
+chiede il permesso di installare app da quella fonte (il browser o *File*), si
+concede e si installa. È lo stesso programma, con gli stessi dati di esempio, lo
+stesso accesso (`cammo` / `1234`) e il menu che si apre dal tasto ☰. Sul telefono non
+ci sono import/export Excel, report PDF e backup. Per aggiornarla si installa l'APK
+nuovo sopra quello vecchio: i dati di esempio restano.
 
 Dalla 1.0.0 non serve più scaricarli a mano: il pulsante **Aggiornamenti** (in basso
 a destra, e nella schermata d'ingresso) trova la versione nuova e si aggiorna da solo,
@@ -288,6 +318,7 @@ Da qui in giù serve solo a chi mette le mani nel codice.
 | Build | electron-vite + TypeScript, electron-builder per gli installatori |
 | Grafici | Recharts |
 | Test | Vitest |
+| Demo Android | Capacitor 8 + sql.js (SQLite in WebAssembly), stesso codice |
 
 Convenzione di progetto: **identificatori in inglese, interfaccia in italiano**.
 
@@ -315,6 +346,7 @@ src/
 │   └── server/      REST: routes/ → services/
 ├── preload/         unico ponte main ↔ renderer (contextIsolation attivo)
 ├── renderer/        React + Tailwind
+├── web/             versione Android: backend in pagina, sql.js, sostituti di Node/Electron
 └── shared/
     ├── engine/      il motore di calcolo: funzioni pure, zero dipendenze
     └── types.ts     tipi condivisi
@@ -347,6 +379,18 @@ doppioni e impronta SHA-256 del file. Scrivere è una chiamata separata, in una 
 transazione, che rifiuta di sovrascrivere un periodo già caricato senza conferma
 esplicita, e un periodo chiuso in ogni caso.
 
+### La demo per Android
+
+Non è un'app a parte: `vite.android.config.ts` mette in una sola pagina web
+l'interfaccia **e il backend** (Express, rotte, servizi, migrazioni, seed, motore),
+sostituendo solo i moduli che su un telefono non esistono. Il database è sql.js con
+un adattatore che parla come `better-sqlite3` (`src/web/sqlite.ts`), salvato
+nell'IndexedDB; Express è un piccolo router compatibile (`src/web/shims/express.ts`)
+e le chiamate `fetch` all'indirizzo del backend restano nella pagina
+(`src/web/bridge.ts`). Capacitor la impacchetta in un APK sulla CI di GitHub
+(`.github/workflows/android-demo.yml`), a ogni release. Dettagli in
+[`AGENTS.md`](./AGENTS.md), versione 1.2.0.
+
 ## Comandi
 
 ```bash
@@ -358,6 +402,8 @@ npm run dist           # installatore e portable in release/
 npm run dist:demo      # versione demo portable, con dati di esempio, in release/demo/
 npm run demo           # build compilata, con gli account di prova attivi
 npm run verify:schema  # prova i vincoli del database e fa rollback
+npm run android:web    # la demo Android come pagina web, in out/web/
+npm run android:preview  # la serve su http://localhost:4173 (per provarla nel browser)
 ```
 
 In sviluppo un seed crea due account di prova — `cammo` / `1234` (consulente) e
