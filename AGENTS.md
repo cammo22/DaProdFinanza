@@ -748,7 +748,7 @@ esistono.
 7. **Nome/branding definitivo**: confermare "DaProdFinanza" come nome finale prodotto + repo.
 8. **Nome dell'app Cliente**: per coerenza con `IrideeCRM` / `IrideeCRM Satellite`, proposta `DaProdFinanza` / `DaProdFinanza Cliente` — confermare.
 10. **Attività e Tempi per più persone**: oggi il timer e le ore sono del consulente (uno solo). Se nello studio lavorano più persone, servono ore per persona e magari una vista "chi sta facendo cosa" (come in Ever Teams). E l'azienda cliente deve poter vedere le attività che la riguardano (es. "documenti da mandare")? Da chiedere al consulente.
-11. **Demo Android**: provata nel browser a larghezza di telefono; l'APK va provato su qualche telefono vero (versioni di Android diverse).
+11. **Demo Android**: provata nel browser a larghezza di telefono e l'APK della CI sull'emulatore (Android 14: installazione, accesso demo, cruscotto, menu, Attività e Tempi). Va provata su qualche telefono vero, con versioni di Android diverse.
 
 ---
 

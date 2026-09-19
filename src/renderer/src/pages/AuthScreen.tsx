@@ -18,7 +18,7 @@ function Shell({
   onBack?: () => void
 }): React.JSX.Element {
   return (
-    <div className="flex h-full items-center justify-center bg-ink-950 p-8">
+    <div className="flex h-full items-center-safe justify-center overflow-y-auto bg-ink-950 p-4 md:p-8">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <Logo size={88} />

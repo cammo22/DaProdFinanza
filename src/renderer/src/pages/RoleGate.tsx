@@ -75,7 +75,7 @@ export function RoleGate({
   const nuova = updates && ['available', 'downloading', 'ready'].includes(updates.status)
 
   return (
-    <div className="flex h-full flex-col items-center justify-center bg-ink-950 p-8">
+    <div className="flex h-full flex-col items-center justify-center-safe overflow-y-auto bg-ink-950 p-4 md:p-8">
       <div className="mb-10 flex flex-col items-center text-center">
         <Logo size={132} />
         <h1 className="sr-only">DaProdFinanza</h1>
