@@ -113,7 +113,8 @@ function ZoomControl(): React.JSX.Element {
   const bottone =
     'h-6 w-6 rounded-md border border-ink-700 bg-ink-800 text-ink-200 hover:border-brand-400/70 hover:bg-brand-500/20 disabled:opacity-40'
   return (
-    <span className="flex items-center gap-1.5" title="Zoom dell'interfaccia (Ctrl + / Ctrl − / Ctrl 0)">
+    // Sul telefono lo zoom non serve (le schermate si ridispongono da sole): via i pulsanti.
+    <span className="flex items-center gap-1.5 max-md:hidden" title="Zoom dell'interfaccia (Ctrl + / Ctrl − / Ctrl 0)">
       <span className="text-ink-400">Zoom</span>
       <button type="button" className={bottone} disabled={zoom <= ZOOM_MIN + 0.001} onClick={() => applicaZoom(zoom - ZOOM_PASSO)} aria-label="Riduci">
         −

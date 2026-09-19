@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/versione-1.2.0-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.2.1-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 ![demo mac](https://img.shields.io/badge/demo-macOS-3ddbff)
 ![demo android](https://img.shields.io/badge/demo-Android-3ddbff)
@@ -279,7 +279,9 @@ il pulsante *Aggiornamenti* apre la pagina da cui scaricare il DMG nuovo.
 **Su Android c'è solo la demo.** Si scarica l'APK dal telefono e lo si apre: Android
 chiede il permesso di installare app da quella fonte (il browser o *File*), si
 concede e si installa. È lo stesso programma, con gli stessi dati di esempio, lo
-stesso accesso (`cammo` / `1234`) e il menu che si apre dal tasto ☰. Sul telefono non
+stesso accesso (`cammo` / `1234`) e il menu che si apre dal tasto ☰. In ogni schermata
+l'intestazione dell'azienda è richiusa in una riga (▾ per aprire periodo, scenario e
+report), e l'avviso della demo si chiude con la ×. Sul telefono non
 ci sono import/export Excel, report PDF e backup. Per aggiornarla si installa l'APK
 nuovo sopra quello vecchio: i dati di esempio restano.
 
