@@ -30,6 +30,17 @@ import { WorkingCapitalView } from './business/WorkingCapitalView'
  * di analisi — un solo calcolo per periodo, tre modi di guardarlo.
  */
 
+const CHIAVE_INTESTAZIONE = 'daprodfinanza.intestazione-aperta'
+
+/** Sul telefono l'intestazione parte richiusa, poi resta come la si lascia. */
+function leggiIntestazioneAperta(): boolean {
+  try {
+    return localStorage.getItem(CHIAVE_INTESTAZIONE) === '1'
+  } catch {
+    return false
+  }
+}
+
 const SCENARI: { id: Scenario; label: string }[] = [
   { id: 'actual', label: 'Consuntivo' },
   { id: 'budget', label: 'Budget' },
@@ -231,22 +242,60 @@ export function CompanyPage({
   // Nemmeno attività e ore: sono il lavoro dello studio, non i conti dell'azienda.
   const senzaPeriodo =
     vista === 'dati' || vista === 'tesoreria' || vista === 'banche' || vista === 'attivita'
+  const conSelettori = periods.length > 0 && !senzaPeriodo
+  // Sul telefono l'intestazione si richiude in una riga: sotto resta tutto lo
+  // schermo per i numeri. Sul computer è sempre aperta (le classi md: la mostrano).
+  const [intestazione, setIntestazione] = useState(leggiIntestazioneAperta)
+  const apriIntestazione = (aperta: boolean): void => {
+    setIntestazione(aperta)
+    try {
+      localStorage.setItem(CHIAVE_INTESTAZIONE, aperta ? '1' : '0')
+    } catch {
+      // resta per questa sessione
+    }
+  }
+  const nascosta = intestazione ? '' : 'max-md:hidden'
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-700 px-4 py-3 md:px-8 md:py-4">
+      <header
+        className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-700 px-4 md:px-8 md:py-4 ${
+          intestazione ? 'py-3' : 'py-2'
+        }`}
+      >
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold text-ink-100">{company.name}</h1>
-          <p className="mt-0.5 font-mono text-xs text-ink-400">
+          <h1 className={`truncate font-semibold text-ink-100 md:text-lg ${intestazione ? 'text-lg' : 'text-sm'}`}>
+            {company.name}
+          </h1>
+          {!intestazione && conSelettori && (
+            <p className="truncate text-xs text-ink-400 md:hidden">
+              {periods.find((p) => p.uuid === periodUuid)?.label ?? ''} ·{' '}
+              {SCENARI.find((x) => x.id === scenario)?.label}
+            </p>
+          )}
+          <p className={`mt-0.5 font-mono text-xs text-ink-400 ${nascosta}`}>
             {company.code}
             {company.vat_number ? ` · P.IVA ${company.vat_number}` : ''}
             {company.business_type ? ` · ${company.business_type}` : ''}
           </p>
         </div>
 
-        {vista !== 'dati' && <MenuPannelli vista={vista} />}
-        {periods.length > 0 && !senzaPeriodo && (
-          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+        {vista !== 'dati' && (
+          <div className={nascosta}>
+            <MenuPannelli vista={vista} />
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => apriIntestazione(!intestazione)}
+          className="shrink-0 rounded-lg border border-ink-700 bg-ink-800 px-2.5 py-1 text-xs text-ink-300 md:hidden"
+          aria-expanded={intestazione}
+          aria-label={intestazione ? 'Richiudi i comandi' : 'Mostra i comandi'}
+        >
+          {intestazione ? '▴' : '▾'}
+        </button>
+        {conSelettori && (
+          <div className={`flex w-full flex-wrap items-center gap-2 md:w-auto ${nascosta}`}>
             <span className="hidden text-xs text-ink-400 sm:inline">Periodo</span>
             <Select
               value={periodUuid}

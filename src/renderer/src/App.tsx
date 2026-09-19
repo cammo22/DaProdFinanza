@@ -159,18 +159,51 @@ function Root(): React.JSX.Element {
   )
 }
 
+const CHIAVE_STRISCIA_DEMO = 'daprodfinanza.striscia-demo-chiusa'
+
 /**
- * Nella versione dimostrativa una striscia sempre visibile lo dice: chi la
+ * Nella versione dimostrativa una striscia in alto lo dice: chi la
  * prova non deve mai scambiare la Pizzeria DaProd per dati veri.
  */
 function Frame(): React.JSX.Element {
   const { demoBuild } = useAuth()
+  // Sul telefono la striscia si può chiudere con la ×: lo spazio conta, e che
+  // sia una demo lo dicono già le schermate d'ingresso. Sul computer resta.
+  const [chiusa, setChiusa] = useState(() => {
+    try {
+      return localStorage.getItem(CHIAVE_STRISCIA_DEMO) === '1'
+    } catch {
+      return false
+    }
+  })
+  const chiudi = (): void => {
+    setChiusa(true)
+    try {
+      localStorage.setItem(CHIAVE_STRISCIA_DEMO, '1')
+    } catch {
+      // resta chiusa per questa sessione
+    }
+  }
   return (
     <div className="flex h-full flex-col">
       {demoBuild && (
-        <div className="shrink-0 border-b border-warning/30 bg-warning/10 px-4 py-1.5 text-center text-xs text-warning">
-          <span className="font-semibold">Versione dimostrativa</span> — i dati sono di esempio e
-          restano separati da quelli di un&apos;installazione reale.
+        <div
+          className={`flex shrink-0 items-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-1.5 text-xs text-warning ${
+            chiusa ? 'max-md:hidden' : ''
+          }`}
+        >
+          <p className="flex-1 text-center">
+            <span className="font-semibold">Versione dimostrativa</span> — i dati sono di esempio e
+            restano separati da quelli di un&apos;installazione reale.
+          </p>
+          <button
+            type="button"
+            onClick={chiudi}
+            className="-my-1 shrink-0 rounded px-2.5 py-1 text-lg leading-none hover:bg-warning/20 md:hidden"
+            aria-label="Chiudi l'avviso"
+          >
+            ×
+          </button>
         </div>
       )}
       <div className="min-h-0 flex-1">
