@@ -117,6 +117,58 @@ export function createCompany(input: CreateCompanyInput): Company {
   return company
 }
 
+/**
+ * Modifica dei dati di un'azienda (versione 1.3.0: prima si potevano solo
+ * creare). Il codice leggibile e il cliente non cambiano: il codice sta sulle
+ * cartelle su disco e nei documenti già esportati.
+ */
+export function updateCompany(uuid: string, input: Partial<CreateCompanyInput>): Company {
+  const current = getCompany(uuid)
+  const pick = <K extends keyof CreateCompanyInput>(key: K): CreateCompanyInput[K] | null | undefined =>
+    input[key] === undefined ? (current[key as keyof Company] as CreateCompanyInput[K]) : input[key]
+
+  const name = (pick('name') ?? '').toString().trim()
+  if (!name) throw new HttpError(400, 'La ragione sociale è obbligatoria.')
+
+  const vat = normalizeVat(nullable(pick('vat_number') as string | null))
+  if (vat) {
+    const clash = getDatabase()
+      .prepare('SELECT code FROM companies WHERE vat_number = ? AND deleted = 0 AND uuid <> ?')
+      .get(vat, uuid) as { code: string } | undefined
+    if (clash) {
+      throw new HttpError(409, `La Partita IVA ${vat} è già registrata (azienda ${clash.code}).`)
+    }
+  }
+
+  const legalForm = nullable(pick('legal_form') as string | null)
+  if (legalForm && !LEGAL_FORMS.includes(legalForm as never)) {
+    throw new HttpError(400, `Forma giuridica non riconosciuta: ${legalForm}.`)
+  }
+  const businessType = nullable(pick('business_type') as string | null)
+  if (businessType && !BUSINESS_TYPES.includes(businessType as never)) {
+    throw new HttpError(400, `Tipo di attività non riconosciuto: ${businessType}.`)
+  }
+
+  getDatabase()
+    .prepare(
+      `UPDATE companies SET name = ?, vat_number = ?, tax_code = ?, legal_form = ?, business_type = ?,
+              start_date = ?, notes = ?, updated_at = ?, synced = 0
+        WHERE uuid = ?`
+    )
+    .run(
+      name,
+      vat,
+      nullable(pick('tax_code') as string | null),
+      legalForm,
+      businessType,
+      nullable(pick('start_date') as string | null),
+      nullable(pick('notes') as string | null),
+      nowIso(),
+      uuid
+    )
+  return getCompany(uuid)
+}
+
 export function setCompanyArchived(uuid: string, archived: boolean): Company {
   getCompany(uuid)
   getDatabase()

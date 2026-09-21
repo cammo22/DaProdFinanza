@@ -5,6 +5,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { join } from 'node:path'
 import { backupDatabase, closeDatabase, openDatabase } from './db'
 import { seedDemoData } from './db/seed'
+import { avviaBackupAutomatico } from './lib/auto-backup'
 import { dataRoot } from './lib/paths'
 import { apiBaseUrl, startServer, stopServer } from './server'
 import { registerReportIpc } from './report'
@@ -122,6 +123,8 @@ app.whenReady().then(async () => {
 
   registerIpc()
   initUpdates()
+  // Una copia del database al giorno, se l'impostazione è accesa (§10.12).
+  avviaBackupAutomatico()
   createWindow()
 
   app.on('activate', () => {

@@ -1,12 +1,15 @@
 import { Router, type Request } from 'express'
 import { HttpError } from '../http-error'
+import { permessiAzienda, visteAzienda } from '@shared/settings'
 import {
   createCompany,
   deleteCompany,
   getCompany,
   listCompanies,
-  setCompanyArchived
+  setCompanyArchived,
+  updateCompany
 } from '../services/companies.service'
+import { getAppSettings, getPortalSettings, savePortalSettings } from '../services/settings.service'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { activitiesRouter } from './activities.routes'
 import { analysisRouter } from './analysis.routes'
@@ -53,6 +56,38 @@ companiesRouter.get('/:uuid', (req, res) => {
 
 companiesRouter.post('/', requireRole('consultant'), (req, res) => {
   res.status(201).json(createCompany(req.body ?? {}))
+})
+
+companiesRouter.put('/:uuid', requireRole('consultant'), (req, res) => {
+  res.json(updateCompany(uuidParam(req), req.body ?? {}))
+})
+
+/**
+ * Cosa vede e cosa può fare l'operatore Azienda (§10.12). Il consulente legge e
+ * cambia le impostazioni; l'azienda riceve solo il risultato — le viste che
+ * vede e i permessi — per costruire il suo menu.
+ */
+companiesRouter.get('/:uuid/portal', (req, res) => {
+  const uuid = uuidParam(req)
+  if (req.auth!.role === 'company' && req.auth!.company_uuid !== uuid) {
+    throw new HttpError(403, 'Operazione non consentita per questo ruolo.')
+  }
+  getCompany(uuid)
+  const portale = getPortalSettings(uuid)
+  const app = getAppSettings()
+  res.json({
+    settings: req.auth!.role === 'consultant' ? portale : null,
+    viste: visteAzienda(portale, app),
+    permessi: permessiAzienda(portale, app)
+  })
+})
+
+companiesRouter.put('/:uuid/portal', requireRole('consultant'), (req, res) => {
+  const uuid = uuidParam(req)
+  getCompany(uuid)
+  const portale = savePortalSettings(uuid, req.body ?? {})
+  const app = getAppSettings()
+  res.json({ settings: portale, viste: visteAzienda(portale, app), permessi: permessiAzienda(portale, app) })
 })
 
 companiesRouter.post('/:uuid/archive', requireRole('consultant'), (req, res) => {

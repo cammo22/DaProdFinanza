@@ -21,7 +21,9 @@ function formatDate(value: string | null): string {
 
 type Dialog =
   | { kind: 'new-client' }
+  | { kind: 'edit-client'; client: Client }
   | { kind: 'new-company'; clientUuid?: string }
+  | { kind: 'edit-company'; company: Company }
   | { kind: 'new-company-user'; company: Company }
   | null
 
@@ -224,6 +226,12 @@ export function RegistryPage({
                     </Button>
                     <Button
                       className="px-3 py-1 text-xs"
+                      onClick={() => setDialog({ kind: 'edit-client', client })}
+                    >
+                      Modifica
+                    </Button>
+                    <Button
+                      className="px-3 py-1 text-xs"
                       onClick={() => toggleClientArchive(client)}
                     >
                       {client.archived ? 'Ripristina' : 'Archivia'}
@@ -292,6 +300,12 @@ export function RegistryPage({
                               <div className="flex justify-end gap-2">
                                 <Button
                                   className="px-2.5 py-1 text-xs"
+                                  onClick={() => setDialog({ kind: 'edit-company', company })}
+                                >
+                                  Modifica
+                                </Button>
+                                <Button
+                                  className="px-2.5 py-1 text-xs"
                                   onClick={() => setDialog({ kind: 'new-company-user', company })}
                                   title="Crea le credenziali per l'app Azienda"
                                 >
@@ -331,6 +345,31 @@ export function RegistryPage({
             setDialog(null)
             reload()
             flash(`Cliente ${client.code} creato.`)
+          }}
+        />
+      )}
+
+      {dialog?.kind === 'edit-client' && (
+        <NewClientModal
+          client={dialog.client}
+          onClose={() => setDialog(null)}
+          onCreated={(client) => {
+            setDialog(null)
+            reload()
+            flash(`Cliente ${client.code} aggiornato.`)
+          }}
+        />
+      )}
+
+      {dialog?.kind === 'edit-company' && (
+        <NewCompanyModal
+          clients={flatClients}
+          company={dialog.company}
+          onClose={() => setDialog(null)}
+          onCreated={(company) => {
+            setDialog(null)
+            reload()
+            flash(`Azienda ${company.code} aggiornata.`)
           }}
         />
       )}

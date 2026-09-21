@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 import type { Role } from '@shared/enums'
 import type { DemoCredential, LoginResponse, SessionUser, SetupState } from '@shared/types'
-import { api, ApiRequestError, initApi, setToken } from './api'
+import { api, ApiRequestError, EVENTO_SESSIONE, initApi, setToken } from './api'
 
 interface AuthContextValue {
   ready: boolean
@@ -17,6 +17,10 @@ interface AuthContextValue {
   login: (username: string, password: string, role?: Role) => Promise<void>
   setupConsultant: (username: string, password: string, fullName: string) => Promise<void>
   logout: () => void
+  /** Dopo una modifica del proprio profilo: il nome in alto si aggiorna subito. */
+  updateUser: (user: SessionUser) => void
+  /** Perché si è tornati all'ingresso senza aver premuto "Esci" (sessione scaduta…). */
+  motivoUscita: string | null
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -59,9 +63,22 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     }
   }, [])
 
+  // Sessione scaduta o accesso disattivato: si torna all'ingresso, col motivo.
+  const [motivoUscita, setMotivoUscita] = useState<string | null>(null)
+  useEffect(() => {
+    const finita = (e: Event): void => {
+      setMotivoUscita((e as CustomEvent<string>).detail ?? 'Sessione scaduta.')
+      setToken(null)
+      setUser(null)
+    }
+    window.addEventListener(EVENTO_SESSIONE, finita)
+    return () => window.removeEventListener(EVENTO_SESSIONE, finita)
+  }, [])
+
   const login = useCallback(async (username: string, password: string, role?: Role) => {
     const response = await api.post<LoginResponse>('/api/auth/login', { username, password, role })
     setToken(response.token)
+    setMotivoUscita(null)
     setUser(response.user)
   }, [])
 
@@ -81,12 +98,35 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
   const logout = useCallback(() => {
     setToken(null)
+    setMotivoUscita(null)
     setUser(null)
   }, [])
 
+  const updateUser = useCallback((next: SessionUser) => {
+    setUser({
+      uuid: next.uuid,
+      username: next.username,
+      full_name: next.full_name,
+      role: next.role,
+      company_uuid: next.company_uuid
+    })
+  }, [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ ready, version, configured, demo, demoBuild, user, login, setupConsultant, logout }),
-    [ready, version, configured, demo, demoBuild, user, login, setupConsultant, logout]
+    () => ({
+      ready,
+      version,
+      configured,
+      demo,
+      demoBuild,
+      user,
+      login,
+      setupConsultant,
+      logout,
+      updateUser,
+      motivoUscita
+    }),
+    [ready, version, configured, demo, demoBuild, user, login, setupConsultant, logout, updateUser, motivoUscita]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

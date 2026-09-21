@@ -282,6 +282,24 @@ app.whenReady().then(() => {
     check('scenario', () => insertScenario('Espansione', '{"ricaviPercent":10}'), 'accettato')
     check('stesso nome con le maiuscole diverse', () => insertScenario('ESPANSIONE', '{}'), 'rifiutato')
     check('parametri che non sono JSON', () => insertScenario('Rotto', 'ricavi +10'), 'rifiutato')
+
+    console.log('\n Impostazioni (migrazione 008)')
+    const insertSetting = (scope, owner, key, value) =>
+      db
+        .prepare(
+          `INSERT INTO settings (uuid, scope, owner_uuid, key, value, created_at, updated_at, synced, deleted)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0)`
+        )
+        .run(randomUUID(), scope, owner, key, value, now, now)
+    const chiave = `verifica-${randomUUID().slice(0, 8)}`
+    check("impostazione dell'azienda", () => insertSetting('company', tempCompany, chiave, '{"viste":{}}'), 'accettato')
+    check('stessa chiave per la stessa azienda', () => insertSetting('company', tempCompany, chiave, '{}'), 'rifiutato')
+    check('impostazione del programma senza proprietario', () => insertSetting('app', null, chiave, '{}'), 'accettato')
+    check('impostazione del programma con un proprietario', () => insertSetting('app', tempCompany, `${chiave}-x`, '{}'), 'rifiutato')
+    check("impostazione d'utente senza utente", () => insertSetting('user', null, `${chiave}-u`, '{}'), 'rifiutato')
+    check('valore che non è JSON', () => insertSetting('company', tempCompany, `${chiave}-j`, 'acceso'), 'rifiutato')
+    check('ambito inventato', () => insertSetting('studio', tempCompany, `${chiave}-s`, '{}'), 'rifiutato')
+    check('telefono di un utente (colonna nuova)', () => db.prepare('SELECT phone, email FROM users LIMIT 1').all(), 'accettato')
   } finally {
     db.exec('ROLLBACK')
     db.close()

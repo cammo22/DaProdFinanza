@@ -19,6 +19,7 @@ export function NewCompanyUserModal({
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -31,7 +32,8 @@ export function NewCompanyUserModal({
         username,
         password,
         full_name: fullName,
-        company_uuid: company.uuid
+        company_uuid: company.uuid,
+        phone
       })
       onCreated(username)
     } catch (err) {
@@ -84,6 +86,12 @@ export function NewCompanyUserModal({
               required
             />
           </Field>
+
+          <div className="col-span-2">
+            <Field label="Telefono" hint="Facoltativo: il numero a cui lo studio richiama quando l'azienda chiede una chiamata.">
+              <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+            </Field>
+          </div>
         </div>
 
         <footer className="flex justify-end gap-3 border-t border-ink-700 px-6 py-4">

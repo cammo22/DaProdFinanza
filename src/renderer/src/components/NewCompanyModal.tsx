@@ -7,28 +7,31 @@ import { Alert, Button, Field, Modal, Select, TextInput } from './ui'
 /**
  * Wizard rapido "+ Nuova azienda" — AGENTS.md §10.1:
  * ragione sociale, P.IVA/CF, forma giuridica, tipo di attività,
- * data inizio collaborazione.
+ * data inizio collaborazione. Con `company` modifica quella esistente (1.3.0):
+ * il cliente e il codice non cambiano.
  */
 export function NewCompanyModal({
   clients,
   defaultClientUuid,
+  company,
   onClose,
   onCreated
 }: {
   clients: Client[]
   defaultClientUuid?: string
+  company?: Company
   onClose: () => void
   onCreated: (company: Company) => void
 }): React.JSX.Element {
   const [form, setForm] = useState({
-    client_uuid: defaultClientUuid ?? clients[0]?.uuid ?? '',
-    name: '',
-    vat_number: '',
-    tax_code: '',
-    legal_form: '',
-    business_type: '',
-    start_date: '',
-    notes: ''
+    client_uuid: company?.client_uuid ?? defaultClientUuid ?? clients[0]?.uuid ?? '',
+    name: company?.name ?? '',
+    vat_number: company?.vat_number ?? '',
+    tax_code: company?.tax_code ?? '',
+    legal_form: company?.legal_form ?? '',
+    business_type: company?.business_type ?? '',
+    start_date: company?.start_date ?? '',
+    notes: company?.notes ?? ''
   })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -43,9 +46,13 @@ export function NewCompanyModal({
     setError(null)
     setBusy(true)
     try {
-      onCreated(await api.post<Company>('/api/companies', form))
+      onCreated(
+        company
+          ? await api.put<Company>(`/api/companies/${company.uuid}`, form)
+          : await api.post<Company>('/api/companies', form)
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Creazione non riuscita.')
+      setError(err instanceof Error ? err.message : 'Salvataggio non riuscito.')
     } finally {
       setBusy(false)
     }
@@ -53,7 +60,7 @@ export function NewCompanyModal({
 
   return (
     <Modal
-      title="Nuova azienda"
+      title={company ? `Modifica ${company.code}` : 'Nuova azienda'}
       subtitle="L'azienda è l'unità su cui gira tutto il modulo Business: ha un proprio piano dei conti, un proprio bilancio, una propria cassa."
       onClose={onClose}
     >
@@ -70,6 +77,7 @@ export function NewCompanyModal({
               <Select
                 value={form.client_uuid}
                 onChange={(e) => update('client_uuid')(e.target.value)}
+                disabled={Boolean(company)}
                 required
               >
                 {clients.map((client) => (
@@ -106,7 +114,7 @@ export function NewCompanyModal({
             <TextInput value={form.tax_code} onChange={(e) => update('tax_code')(e.target.value)} />
           </Field>
 
-          <Field label="Forma giuridica" hint="Guiderà la stima fiscale in fase futura.">
+          <Field label="Forma giuridica" hint="Decide il calcolo di imposte e contributi.">
             <Select value={form.legal_form} onChange={(e) => update('legal_form')(e.target.value)}>
               <option value="">— non specificata —</option>
               {LEGAL_FORMS.map((legalForm) => (
@@ -119,7 +127,7 @@ export function NewCompanyModal({
 
           <Field
             label="Tipo di attività"
-            hint="Precompilerà le % di costo diretto/indiretto del piano dei conti."
+            hint="Decide cosa mostra la Marginalità e le % di costo diretto."
           >
             <Select
               value={form.business_type}
@@ -152,7 +160,7 @@ export function NewCompanyModal({
             Annulla
           </Button>
           <Button type="submit" variant="primary" disabled={busy || !form.client_uuid}>
-            {busy ? 'Creazione…' : 'Crea azienda'}
+            {busy ? 'Salvataggio…' : company ? 'Salva' : 'Crea azienda'}
           </Button>
         </footer>
       </form>

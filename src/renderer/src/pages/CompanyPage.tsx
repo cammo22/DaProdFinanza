@@ -17,6 +17,7 @@ import { BanksView } from './business/BanksView'
 import { SimulationView } from './business/SimulationView'
 import { DataView } from './business/DataView'
 import { BloccoPannelli, MenuPannelli } from '../components/Pannelli'
+import { CompanySettingsView } from './business/CompanySettingsView'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 import { TreasuryView } from './business/TreasuryView'
@@ -47,17 +48,30 @@ const SCENARI: { id: Scenario; label: string }[] = [
   { id: 'forecast', label: 'Forecast' }
 ]
 
+/**
+ * Le viste che non guardano un periodo di bilancio: dati contabili, tesoreria e
+ * banche guardano da oggi in avanti; attività e impostazioni sono il lavoro e
+ * le regole dello studio, non i conti dell'azienda.
+ */
+const SENZA_PERIODO: Vista[] = ['dati', 'tesoreria', 'banche', 'attivita', 'impostazioni-azienda']
+
 export function CompanyPage({
   company,
   vista,
   onVista,
-  canImport
+  canImport,
+  onCompanyChanged
 }: {
   company: Company
   vista: Vista
   onVista: (vista: Vista) => void
   canImport: boolean
+  /** Dopo una modifica dei dati dell'azienda (Impostazioni dell'azienda). */
+  onCompanyChanged?: (company: Company) => void
 }): React.JSX.Element {
+  // Solo le viste sui bilanci chiedono i periodi: all'operatore Azienda che
+  // vede, per esempio, soltanto la tesoreria il server li rifiuterebbe (§10.12).
+  const servonoPeriodi = !SENZA_PERIODO.includes(vista) || vista === 'dati'
   const [periods, setPeriods] = useState<FiscalPeriod[]>([])
   const [periodUuid, setPeriodUuid] = useState<string>('')
   const [scenario, setScenario] = useState<Scenario>('actual')
@@ -97,15 +111,17 @@ export function CompanyPage({
   }, [company.uuid])
 
   useEffect(() => {
-    caricaPeriodi()
-  }, [caricaPeriodi])
+    if (servonoPeriodi) caricaPeriodi()
+    else setLoading(false)
+  }, [caricaPeriodi, servonoPeriodi])
 
   useEffect(() => {
+    if (!servonoPeriodi) return
     api
       .get<SeriesPoint[]>(`/api/companies/${company.uuid}/series?scenario=${scenario}`)
       .then(setSerie)
       .catch(() => setSerie([]))
-  }, [company.uuid, scenario, periods.length])
+  }, [company.uuid, scenario, periods.length, servonoPeriodi])
 
   useEffect(() => {
     if (!periodUuid) {
@@ -238,10 +254,7 @@ export function CompanyPage({
       setTimeout(() => setReport(null), 8000)
     }
   }
-  // Dati contabili, tesoreria e banche non dipendono dal periodo scelto.
-  // Nemmeno attività e ore: sono il lavoro dello studio, non i conti dell'azienda.
-  const senzaPeriodo =
-    vista === 'dati' || vista === 'tesoreria' || vista === 'banche' || vista === 'attivita'
+  const senzaPeriodo = SENZA_PERIODO.includes(vista)
   const conSelettori = periods.length > 0 && !senzaPeriodo
   // Sul telefono l'intestazione si richiude in una riga: sotto resta tutto lo
   // schermo per i numeri. Sul computer è sempre aperta (le classi md: la mostrano).
@@ -280,12 +293,12 @@ export function CompanyPage({
           </p>
         </div>
 
-        {vista !== 'dati' && (
+        {vista !== 'dati' && vista !== 'impostazioni-azienda' && (
           <div className={nascosta}>
             <MenuPannelli vista={vista} />
           </div>
         )}
-        {vista !== 'dati' && <BloccoPannelli className="md:hidden" />}
+        {vista !== 'dati' && vista !== 'impostazioni-azienda' && <BloccoPannelli className="md:hidden" />}
         <button
           type="button"
           onClick={() => apriIntestazione(!intestazione)}
@@ -361,6 +374,10 @@ export function CompanyPage({
         )}
 
         {vista === 'attivita' && canImport && <ActivitiesView company={company} />}
+
+        {vista === 'impostazioni-azienda' && canImport && (
+          <CompanySettingsView company={company} onCompanyChanged={(c) => onCompanyChanged?.(c)} />
+        )}
 
         {vista === 'tesoreria' &&
           (tesoreria ? (

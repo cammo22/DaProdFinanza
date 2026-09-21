@@ -24,8 +24,8 @@ import { days, euro, percent } from '../lib/format'
  * euro, come nei mockup, perché su un grafico le cifre intere non si leggono.
  */
 
-const ASSE = { stroke: '#64748b', fontSize: 11 }
-const GRIGLIA = '#1d2636'
+const ASSE = { stroke: 'var(--color-ink-400)', fontSize: 11 }
+const GRIGLIA = 'var(--color-ink-700)'
 
 export const COLORI = {
   ricavi: '#34d399',
@@ -118,7 +118,7 @@ export function SerieEconomica({ dati }: { dati: PuntoSerie[] }): React.JSX.Elem
         />
         <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
         <Tooltip content={<TooltipEuro />} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-ink-300)' }} iconType="plainline" />
         <Line name="Ricavi" dataKey="ricavi" stroke={COLORI.ricavi} strokeWidth={2} dot={false} />
         <Line name="Costi totali" dataKey="costiTotali" stroke={COLORI.costi} strokeWidth={2} dot={false} />
         <Line name="EBITDA" dataKey="ebitda" stroke={COLORI.ebitda} strokeWidth={2} dot={false} />
@@ -151,7 +151,7 @@ export function SerieABarre({
           tickFormatter={etichettaAsse(dati)}
         />
         <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
-        <Tooltip content={<TooltipEuro />} cursor={{ fill: '#1d2636', opacity: 0.4 }} />
+        <Tooltip content={<TooltipEuro />} cursor={{ fill: 'var(--color-ink-700)', opacity: 0.4 }} />
         <Bar name={nome} dataKey={chiave} radius={[3, 3, 0, 0]}>
           {dati.map((punto, i) => (
             // Un valore negativo si colora di rosso: su un utile è l'informazione
@@ -371,7 +371,7 @@ export function SerieCiclo({ dati }: { dati: PuntoCiclo[] }): React.JSX.Element 
           domain={[(min: number) => Math.floor(min) - 1, (max: number) => Math.ceil(max) + 1]}
         />
         <Tooltip content={<TooltipGiorni />} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-ink-300)' }} iconType="plainline" />
         <Line name="DSO" dataKey="dso" stroke={COLORI.dso} strokeWidth={2} dot={false} />
         <Line name="DIO" dataKey="dio" stroke={COLORI.dio} strokeWidth={2} dot={false} />
         <Line name="DPO" dataKey="dpo" stroke={COLORI.dpo} strokeWidth={2} dot={false} />
@@ -403,7 +403,7 @@ export function SerieCcc({ dati }: { dati: PuntoCiclo[] }): React.JSX.Element {
           domain={[(min: number) => Math.floor(min) - 1, (max: number) => Math.ceil(max) + 1]}
         />
         <Tooltip content={<TooltipGiorni />} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-ink-300)' }} iconType="plainline" />
         <Line
           name="CCC"
           dataKey="ccc"
@@ -414,7 +414,7 @@ export function SerieCcc({ dati }: { dati: PuntoCiclo[] }): React.JSX.Element {
         <Line
           name="Media mobile 3 mesi"
           dataKey="cccMedia"
-          stroke="#94a3b8"
+          stroke="var(--color-ink-300)"
           strokeWidth={1.5}
           strokeDasharray="5 4"
           dot={false}
@@ -484,7 +484,7 @@ export function GraficoTesoreria({
         />
         <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
         <Tooltip content={<TooltipEuro />} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-ink-300)' }} iconType="plainline" />
         {soglia !== null && (
           <ReferenceLine
             y={soglia}
@@ -500,9 +500,9 @@ export function GraficoTesoreria({
         )}
         <ReferenceLine
           x="Oggi"
-          stroke="#e2e8f0"
+          stroke="var(--color-ink-200)"
           strokeDasharray="2 3"
-          label={{ value: 'OGGI', fill: '#e2e8f0', fontSize: 10, position: 'top' }}
+          label={{ value: 'OGGI', fill: 'var(--color-ink-200)', fontSize: 10, position: 'top' }}
         />
         <Line
           name="Consuntivo"
@@ -538,10 +538,10 @@ export function ConfrontoBarre({ dati }: { dati: VoceConfronto[] }): React.JSX.E
         <CartesianGrid stroke={GRIGLIA} strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="nome" tick={ASSE} axisLine={false} tickLine={false} interval={0} />
         <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
-        <Tooltip content={<TooltipEuro />} cursor={{ fill: '#1d2636', opacity: 0.4 }} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} />
-        <ReferenceLine y={0} stroke="#334155" />
-        <Bar name="Attuale" dataKey="attuale" fill="#64748b" radius={[3, 3, 0, 0]} />
+        <Tooltip content={<TooltipEuro />} cursor={{ fill: 'var(--color-ink-700)', opacity: 0.4 }} />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-ink-300)' }} />
+        <ReferenceLine y={0} stroke="var(--color-ink-600)" />
+        <Bar name="Attuale" dataKey="attuale" fill="var(--color-ink-400)" radius={[3, 3, 0, 0]} />
         <Bar name="Scenario" dataKey="simulato" fill={COLORI.utile} radius={[3, 3, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
@@ -569,7 +569,7 @@ export function ConfrontoCassa({
         <XAxis dataKey="label" tick={ASSE} axisLine={false} tickLine={false} />
         <YAxis tick={ASSE} axisLine={false} tickLine={false} tickFormatter={migliaia} width={48} />
         <Tooltip content={<TooltipEuro />} />
-        <Legend wrapperStyle={{ fontSize: 11, color: '#8b99ad' }} iconType="plainline" />
+        <Legend wrapperStyle={{ fontSize: 11, color: 'var(--color-ink-300)' }} iconType="plainline" />
         {soglia !== null && (
           <ReferenceLine
             y={soglia}
@@ -583,7 +583,7 @@ export function ConfrontoCassa({
             }}
           />
         )}
-        <Line name="Attuale" dataKey="attuale" stroke="#94a3b8" strokeWidth={2} dot={false} />
+        <Line name="Attuale" dataKey="attuale" stroke="var(--color-ink-300)" strokeWidth={2} dot={false} />
         <Line
           name="Scenario"
           dataKey="simulato"

@@ -16,6 +16,7 @@ import {
 import { DEMO_BUILD } from './build-flags'
 import { backupDatabase } from './db'
 import { userDataDir } from './lib/paths'
+import { getAppSettings } from './server/services/settings.service'
 
 /**
  * Tasto "Aggiornamenti": prende l'ultima release pubblicata su GitHub.
@@ -279,8 +280,13 @@ export function initUpdates(): void {
 
   // In sviluppo non si interroga GitHub da solo: il controllo resta a mano.
   if (state.kind === 'dev') return
-  setTimeout(() => void checkForUpdates(), FIRST_CHECK_DELAY_MS)
-  setInterval(() => void checkForUpdates(), CHECK_EVERY_MS)
+  // L'impostazione si rilegge a ogni giro: spenta o riaccesa dalle Impostazioni
+  // vale subito, senza riavviare. Il pulsante "Aggiornamenti" funziona sempre.
+  const automatico = (): void => {
+    if (getAppSettings().aggiornamentiAutomatici) void checkForUpdates()
+  }
+  setTimeout(automatico, FIRST_CHECK_DELAY_MS)
+  setInterval(automatico, CHECK_EVERY_MS)
 }
 
 function messageOf(error: unknown, fallback: string): string {
