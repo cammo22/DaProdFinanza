@@ -33,14 +33,16 @@ export function TavolozzaComandi(): React.JSX.Element | null {
       .filter((x) => x.s > 0)
       // Senza testo: solo le cose utili subito, non l'elenco completo.
       .filter((x) => testo.trim() || x.c.rapido || x.c.gruppo === 'Aziende' || x.c.gruppo === 'Vai a')
-    return ORDINE.map((g) => ({
-      gruppo: g,
-      voci: trovati
+    const perGruppo = ORDINE.map((g, ordine) => {
+      const voci = trovati
         .filter((x) => x.c.gruppo === g)
         .sort((a, b) => b.s - a.s || Number(b.c.inPrimoPiano ?? false) - Number(a.c.inPrimoPiano ?? false))
         .slice(0, MASSIMO_PER_GRUPPO)
-        .map((x) => x.c)
-    })).filter((g) => g.voci.length > 0)
+      return { gruppo: g, ordine, migliore: voci[0]?.s ?? 0, voci: voci.map((x) => x.c) }
+    }).filter((g) => g.voci.length > 0)
+    // Scrivendo, prima il gruppo che ha la voce più somigliante ("personale" → la sezione, non l'azione).
+    if (testo.trim()) perGruppo.sort((a, b) => b.migliore - a.migliore || a.ordine - b.ordine)
+    return perGruppo
   }, [comandi, testo])
 
   const piatti = useMemo(() => gruppi.flatMap((g) => g.voci), [gruppi])
@@ -94,6 +96,7 @@ export function TavolozzaComandi(): React.JSX.Element | null {
           <Icona nome="cerca" className="h-5 w-5 text-ink-400" />
           <input
             ref={campo}
+            autoFocus
             value={testo}
             onChange={(e) => {
               setTesto(e.target.value)

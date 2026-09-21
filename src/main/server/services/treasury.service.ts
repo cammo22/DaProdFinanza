@@ -14,6 +14,7 @@ import { HttpError } from '../http-error'
 import { engineAccounts, listPeriods, periodEnd, series } from './analysis.service'
 import { creditLinesSummary, loanTreasuryItemsFor } from './banks.service'
 import { getCompany } from './companies.service'
+import { personaleTreasuryItemsFor } from './personale.service'
 
 /**
  * Tesoreria e scadenziario — AGENTS.md §10.6.
@@ -338,9 +339,10 @@ export function treasuryView(companyUuid: string, today = todayLocal()): Treasur
   const opening = openingCash(companyUuid, today)
   // Le rate dei finanziamenti entrano nella previsione senza essere copiate
   // nello scadenziario: il piano di ammortamento resta l'unica fonte (§10.7).
+  // Lo stesso per stipendi e F24 del Personale, se l'azienda li ha accesi.
   const result = forecast({
     opening,
-    items: [...items, ...loanTreasuryItemsFor(companyUuid, today)],
+    items: [...items, ...loanTreasuryItemsFor(companyUuid, today), ...personaleTreasuryItemsFor(companyUuid, today)],
     today,
     minLiquidityCents: settings.min_liquidity_cents
   })

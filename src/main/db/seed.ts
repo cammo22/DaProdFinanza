@@ -8,6 +8,7 @@ import { seedDemoFinancials } from './demo-data'
 import { seedDemoBanks } from './demo-banks'
 import { seedDemoTreasury } from './demo-treasury'
 import { seedDemoPortal } from './demo-portal'
+import { seedDemoPersonale } from './demo-personale'
 import { getDatabase } from './index'
 import { saveAppSettings } from '../server/services/settings.service'
 
@@ -83,6 +84,8 @@ export async function seedDemoData(): Promise<void> {
   seedDemoBanks(company.uuid)
   // Attività e ore del consulente.
   seedDemoActivities(company.uuid)
+  // Il personale (1.3.0).
+  seedDemoPersonale(company.uuid)
 
   const consulente = insertUser(
     {
@@ -164,6 +167,15 @@ async function aggiornaDemoEsistente(): Promise<void> {
   if (attivita.n === 0) {
     seedDemoActivities(azienda.uuid)
     console.log('[db] seed dimostrativo: aggiunte attività e ore della Pizzeria DaProd')
+  }
+
+  // Versione 1.3.0: il personale.
+  const personale = db
+    .prepare('SELECT count(*) AS n FROM employees WHERE company_uuid = ?')
+    .get(azienda.uuid) as { n: number }
+  if (personale.n === 0) {
+    seedDemoPersonale(azienda.uuid)
+    console.log('[db] seed dimostrativo: aggiunto il personale della Pizzeria DaProd')
   }
 
   // Versione 1.3.0: documenti, richieste e i dati dello studio.

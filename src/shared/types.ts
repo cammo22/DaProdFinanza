@@ -268,7 +268,7 @@ export interface ImportDocument extends BaseRecord {
 export interface TreasuryItem extends BaseRecord {
   company_uuid: string
   direction: 'in' | 'out'
-  source: 'scadenziario' | 'manuale' | 'finanziamento'
+  source: 'scadenziario' | 'manuale' | 'finanziamento' | 'personale' | 'fiscale'
   category: string
   description: string
   counterparty: string | null
@@ -392,3 +392,27 @@ export interface ActivitiesPayload {
   hourly_rate_cents: number | null
   running: RunningTimer | null
 }
+
+// --- Personale (1.3.0) ------------------------------------------------------
+
+/** Una persona dell'azienda (§10.16). Costo aziendale e orario li calcola il motore. */
+export interface Employee extends BaseRecord {
+  company_uuid: string
+  name: string
+  role: string | null
+  department: string | null
+  contract: 'indeterminato' | 'determinato' | 'apprendistato' | 'collaborazione' | 'altro'
+  ccnl_level: string | null
+  hours_week: number
+  gross_annual_cents: number
+  monthly_payments: number
+  employer_contrib_pct: number | null
+  inail_pct: number | null
+  other_costs_cents: number
+  direct: 0 | 1
+  start_date: string | null
+  end_date: string | null
+  notes: string | null
+}
+
+export type EmployeeInput = Partial<Omit<Employee, keyof BaseRecord | 'company_uuid'>>
