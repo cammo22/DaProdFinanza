@@ -11,16 +11,23 @@ import type { Plugin } from 'vite'
  *
  * `connect-src` consente solo il backend Express locale (127.0.0.1), che è
  * l'unica rete a cui la UI parla — vedi AGENTS.md §3.
+ *
+ * `blob:` (versione 1.3.0) serve ai visualizzatori del cassetto documenti:
+ * immagini, audio e video si mostrano da un blob, PDF.js lavora in un worker,
+ * i documenti Word portano i propri caratteri, e le pagine Word si impaginano
+ * in un riquadro isolato senza script (`frame-src 'self'`, sandbox).
  */
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
-  "font-src 'self' data:",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "font-src 'self' data: blob:",
+  "worker-src 'self' blob:",
   "connect-src 'self' http://127.0.0.1:*",
   "object-src 'none'",
-  "frame-src 'none'"
+  "frame-src 'self' blob:"
 ].join('; ')
 
 function contentSecurityPolicy(): Plugin {

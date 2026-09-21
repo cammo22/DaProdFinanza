@@ -31,6 +31,7 @@ const SOSTITUTI: Record<string, string> = {
   [posix(resolve('src/main/lib/paths'))]: web('lib/stubs.ts'),
   [posix(resolve('src/main/lib/secrets'))]: web('lib/stubs.ts'),
   [posix(resolve('src/main/lib/auto-backup'))]: web('lib/stubs.ts'),
+  [posix(resolve('src/main/lib/document-store'))]: web('lib/document-store.ts'),
   [posix(resolve('src/main/build-flags'))]: web('lib/stubs.ts')
 }
 

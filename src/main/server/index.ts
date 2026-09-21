@@ -11,6 +11,7 @@ import { authRouter } from './routes/auth.routes'
 import { clientsRouter } from './routes/clients.routes'
 import { companiesRouter } from './routes/companies.routes'
 import { referenceRouter } from './routes/reference.routes'
+import { inboxRouter } from './routes/requests.routes'
 import { settingsRouter } from './routes/settings.routes'
 
 /**
@@ -58,6 +59,7 @@ export function createServerApp(): express.Express {
   api.use('/api/reference', referenceRouter)
   api.use('/api/timer', timerRouter)
   api.use('/api/settings', settingsRouter)
+  api.use('/api/inbox', inboxRouter)
 
   api.use((_req, res) => res.status(404).json({ error: 'Risorsa non trovata.' }))
   api.use(errorHandler)

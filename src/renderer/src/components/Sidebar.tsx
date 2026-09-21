@@ -16,6 +16,10 @@ export type Vista =
   | 'anagrafica'
   | 'impostazioni'
   | 'profilo'
+  | 'richieste-studio'
+  | 'riepilogo'
+  | 'documenti'
+  | 'richieste'
   | 'panoramica'
   | 'conto-economico'
   | 'stato-patrimoniale'
@@ -53,13 +57,37 @@ const IMPOSTAZIONI: Voce = {
   icona: icona('M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1')
 }
 
+const RICHIESTE_STUDIO: Voce = {
+  id: 'richieste-studio',
+  label: 'Richieste',
+  icona: icona('M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0'),
+  modulo: 'richieste'
+}
+
 const PROFILO: Voce = {
   id: 'profilo',
   label: 'Profilo',
   icona: icona('M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8')
 }
 
-const V: Record<Exclude<Vista, 'anagrafica' | 'impostazioni' | 'profilo'>, Voce> = {
+const V: Record<Exclude<Vista, 'anagrafica' | 'impostazioni' | 'profilo' | 'richieste-studio'>, Voce> = {
+  riepilogo: {
+    id: 'riepilogo',
+    label: 'Riepilogo',
+    icona: icona('M3 11.5 12 4l9 7.5M5 10v10h5v-6h4v6h5V10')
+  },
+  documenti: {
+    id: 'documenti',
+    label: 'Documenti',
+    icona: icona('M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'),
+    modulo: 'documenti'
+  },
+  richieste: {
+    id: 'richieste',
+    label: 'Richieste e chiamate',
+    icona: icona('M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'),
+    modulo: 'richieste'
+  },
   panoramica: {
     id: 'panoramica',
     label: 'Panoramica',
@@ -119,7 +147,7 @@ const GRUPPI_CONSULENTE: { titolo: string; voci: Vista[] }[] = [
   { titolo: 'Analisi', voci: ['panoramica', 'conto-economico', 'stato-patrimoniale', 'capitale-circolante'] },
   { titolo: 'Cassa e banche', voci: ['tesoreria', 'banche'] },
   { titolo: 'Pianificazione', voci: ['simulazioni'] },
-  { titolo: "Lavoro con l'azienda", voci: ['attivita'] },
+  { titolo: "Lavoro con l'azienda", voci: ['documenti', 'richieste', 'attivita'] },
   { titolo: 'Dati e impostazioni', voci: ['dati', 'impostazioni-azienda'] }
 ]
 
@@ -137,11 +165,14 @@ const VISTE_AZIENDA_ORDINE: Extract<VistaCondivisibile, Vista>[] = [
 function Bottone({
   voce,
   attiva,
-  onClick
+  onClick,
+  badge = 0
 }: {
   voce: Voce
   attiva: boolean
   onClick: () => void
+  /** Novità non lette: un pallino col numero. */
+  badge?: number
 }): React.JSX.Element {
   return (
     <button
@@ -155,6 +186,11 @@ function Bottone({
     >
       <span className="h-4.5 w-4.5 shrink-0">{voce.icona}</span>
       <span className="truncate">{voce.label}</span>
+      {badge > 0 && (
+        <span className="ml-auto shrink-0 rounded-full bg-brand-500 px-1.5 text-[10px] font-semibold leading-4 text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </button>
   )
 }
@@ -173,6 +209,8 @@ export function Sidebar({
   consulente,
   moduloAttivo,
   visteAzienda,
+  permessiAzienda,
+  novita,
   version,
   aperta = false,
   onChiudi
@@ -186,6 +224,10 @@ export function Sidebar({
   moduloAttivo: (m: Modulo) => boolean
   /** Per l'operatore Azienda: le viste che il consulente gli ha acceso. */
   visteAzienda: VistaCondivisibile[]
+  /** Per l'operatore Azienda: se vede il cassetto e le richieste. */
+  permessiAzienda: { documenti: boolean; richieste: boolean } | null
+  /** Novità non lette: in tutto (per lo studio) e per azienda. */
+  novita: { totale: number; perAzienda: Record<string, number> }
   version: string
   /** Sul telefono il menu è a scomparsa: aperto o chiuso dal tasto ☰. */
   aperta?: boolean
@@ -217,6 +259,14 @@ export function Sidebar({
           {consulente && (
             <Bottone voce={ANAGRAFICA} attiva={vista === 'anagrafica'} onClick={onAnagrafica} />
           )}
+          {consulente && moduloAttivo('richieste') && (
+            <Bottone
+              voce={RICHIESTE_STUDIO}
+              attiva={vista === 'richieste-studio'}
+              onClick={() => onVista('richieste-studio')}
+              badge={novita.totale}
+            />
+          )}
 
           {company && (
             <>
@@ -237,14 +287,37 @@ export function Sidebar({
                       <div key={g.titolo}>
                         <Titolo>{g.titolo}</Titolo>
                         {voci.map((id) => (
-                          <Bottone key={id} voce={V[id as keyof typeof V]} attiva={vista === id} onClick={() => onVista(id)} />
+                          <Bottone
+                            key={id}
+                            voce={V[id as keyof typeof V]}
+                            attiva={vista === id}
+                            onClick={() => onVista(id)}
+                            badge={id === 'richieste' ? (novita.perAzienda[company.uuid] ?? 0) : 0}
+                          />
                         ))}
                       </div>
                     )
                   })
-                : VISTE_AZIENDA_ORDINE.filter((v) => visteAzienda.includes(v)).map((id) => (
-                    <Bottone key={id} voce={V[id as keyof typeof V]} attiva={vista === id} onClick={() => onVista(id)} />
-                  ))}
+                : (
+                    <>
+                      <Bottone voce={V.riepilogo} attiva={vista === 'riepilogo'} onClick={() => onVista('riepilogo')} />
+                      {permessiAzienda?.documenti && (
+                        <Bottone voce={V.documenti} attiva={vista === 'documenti'} onClick={() => onVista('documenti')} />
+                      )}
+                      {permessiAzienda?.richieste && (
+                        <Bottone
+                          voce={V.richieste}
+                          attiva={vista === 'richieste'}
+                          onClick={() => onVista('richieste')}
+                          badge={novita.totale}
+                        />
+                      )}
+                      {visteAzienda.length > 0 && <Titolo>I tuoi numeri</Titolo>}
+                      {VISTE_AZIENDA_ORDINE.filter((v) => visteAzienda.includes(v)).map((id) => (
+                        <Bottone key={id} voce={V[id as keyof typeof V]} attiva={vista === id} onClick={() => onVista(id)} />
+                      ))}
+                    </>
+                  )}
             </>
           )}
         </nav>

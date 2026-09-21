@@ -4,6 +4,9 @@ import type { Company } from '@shared/types'
 import { api } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
 import { ImpostazioniProvider, useImpostazioni } from './lib/impostazioni'
+import { InboxProvider, useInbox } from './lib/inbox'
+import { Campanello, IncomingCalls } from './components/IncomingCalls'
+import { RequestsBoard } from './components/RequestsBoard'
 import { Sidebar, type Vista } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TimerBar } from './components/TimerBar'
@@ -23,10 +26,14 @@ import { SettingsPage } from './pages/SettingsPage'
 function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   const { user, version } = useAuth()
   const { pronte, portale, moduloAttivo } = useImpostazioni()
+  const { riepilogo } = useInbox()
   const consulente = user?.role === 'consultant'
 
   const [company, setCompany] = useState<Company | null>(null)
-  const [vista, setVista] = useState<Vista>(consulente ? 'anagrafica' : 'panoramica')
+  // L'azienda entra nel suo riepilogo; il consulente nell'anagrafica.
+  const [vista, setVista] = useState<Vista>(consulente ? 'anagrafica' : 'riepilogo')
+  // Una richiesta da aprire nella casella (dal pannello delle chiamate o dal campanello).
+  const [richiestaScelta, setRichiestaScelta] = useState<{ companyUuid: string; requestUuid: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   // Menu laterale sul telefono (sul computer è sempre aperto).
   const [menu, setMenu] = useState(false)
@@ -34,12 +41,20 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   // L'operatore Azienda vede solo le viste che il consulente gli ha acceso
   // (§10.12): se quella aperta non c'è più, si va sulla prima disponibile.
   const visteAzienda = portale?.viste ?? []
+  const permessiAzienda = portale?.permessi ?? null
   useEffect(() => {
-    if (consulente || !pronte || vista === 'profilo') return
-    if (!visteAzienda.includes(vista as never)) {
-      setVista((visteAzienda[0] as Vista | undefined) ?? 'profilo')
-    }
-  }, [consulente, pronte, vista, visteAzienda])
+    if (consulente || !pronte) return
+    const sempre: Vista[] = ['profilo', 'riepilogo']
+    if (permessiAzienda?.documenti) sempre.push('documenti')
+    if (permessiAzienda?.richieste) sempre.push('richieste')
+    if (!sempre.includes(vista) && !visteAzienda.includes(vista as never)) setVista('riepilogo')
+  }, [consulente, pronte, vista, visteAzienda, permessiAzienda])
+
+  const apriRichiesta = (companyUuid: string, requestUuid: string): void => {
+    setRichiestaScelta({ companyUuid, requestUuid })
+    setVista(consulente ? 'richieste-studio' : 'richieste')
+    setMenu(false)
+  }
 
   // L'operatore Azienda entra direttamente nella propria azienda (§4).
   useEffect(() => {
@@ -84,6 +99,8 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
           consulente={consulente}
           moduloAttivo={moduloAttivo}
           visteAzienda={visteAzienda}
+          permessiAzienda={permessiAzienda}
+          novita={{ totale: riepilogo?.unread ?? 0, perAzienda: riepilogo?.per_company ?? {} }}
           version={version}
           aperta={menu}
           onChiudi={() => setMenu(false)}
@@ -104,6 +121,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
             </span>
             <div className="ml-auto flex min-w-0 items-center gap-2 md:gap-4">
               {consulente && <TimerBar onApri={apriAttivita} />}
+              <Campanello onClick={() => setVista(consulente ? 'richieste-studio' : 'richieste')} />
               <span className="hidden text-xs text-ink-300 sm:inline">{user?.full_name}</span>
               <Button className="px-3 py-1 text-xs" onClick={onLogout}>
                 Esci
@@ -118,6 +136,18 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
               </div>
             ) : vista === 'impostazioni' && consulente ? (
               <SettingsPage />
+            ) : vista === 'richieste-studio' && consulente ? (
+              <div className="flex h-full flex-col overflow-hidden">
+                <header className="border-b border-ink-700 px-4 py-4 md:px-8">
+                  <h1 className="text-lg font-semibold text-ink-100">Richieste</h1>
+                  <p className="mt-0.5 text-xs text-ink-400">
+                    Chiamate, domande e documenti da tutte le aziende. Le novità hanno il pallino.
+                  </p>
+                </header>
+                <div className="min-h-0 flex-1 px-3 py-4 md:px-8">
+                  <RequestsBoard companyUuid={null} selezioneIniziale={richiestaScelta} />
+                </div>
+              </div>
             ) : vista === 'profilo' ? (
               <SettingsPage soloProfilo />
             ) : !pronte ? (
@@ -129,6 +159,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
                 onVista={setVista}
                 canImport={consulente}
                 onCompanyChanged={setCompany}
+                richiestaScelta={richiestaScelta}
               />
             ) : consulente ? (
               <RegistryPage onOpenCompany={apriAzienda} />
@@ -139,6 +170,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
         </div>
       </div>
 
+      {consulente && <IncomingCalls onApri={apriRichiesta} />}
       <StatusBar version={version} />
     </div>
   )
@@ -184,12 +216,14 @@ function Root(): React.JSX.Element {
   // Uscendo si torna alla scelta iniziale, non al login dell'ultimo ruolo usato.
   return (
     <ImpostazioniProvider key={user.uuid}>
-      <Workspace
-        onLogout={() => {
-          logout()
-          setRole(null)
-        }}
-      />
+      <InboxProvider>
+        <Workspace
+          onLogout={() => {
+            logout()
+            setRole(null)
+          }}
+        />
+      </InboxProvider>
     </ImpostazioniProvider>
   )
 }

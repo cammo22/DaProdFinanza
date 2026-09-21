@@ -38,6 +38,21 @@ const api = {
     set: (factor: number): void => webFrame.setZoomFactor(factor)
   },
 
+  /**
+   * Cassetto documenti (§10.13): aprire col programma del computer, salvare una
+   * copia altrove, mostrare nella cartella. Il main ricontrolla il percorso.
+   */
+  documenti: {
+    apri: (path: string): Promise<void> => ipcRenderer.invoke('documenti:apri', path),
+    salvaCopia: (path: string): Promise<string | null> => ipcRenderer.invoke('documenti:salva-copia', path),
+    mostra: (path: string): Promise<void> => ipcRenderer.invoke('documenti:mostra', path),
+    /** true dove i file si possono aprire col programma del computer. */
+    esterni: true as boolean
+  },
+
+  /** Una chiamata in arrivo: la finestra lampeggia se non è in primo piano. */
+  attenzione: (): void => ipcRenderer.send('finestra:attenzione'),
+
   /** Report PDF: chiede dove salvarlo, lo impagina e lo apre. null se annullato. */
   exportReport: (params: ReportParams): Promise<string | null> =>
     ipcRenderer.invoke('report:export', params),

@@ -10,11 +10,14 @@ import {
   updateCompany
 } from '../services/companies.service'
 import { getAppSettings, getPortalSettings, savePortalSettings } from '../services/settings.service'
+import { companySummary } from '../services/portal.service'
 import { requireAuth, requireRole } from '../middleware/auth'
 import { activitiesRouter } from './activities.routes'
 import { analysisRouter } from './analysis.routes'
 import { banksRouter } from './banks.routes'
+import { documentsRouter } from './documents.routes'
 import { ledgerRouter } from './ledger.routes'
+import { requestsRouter } from './requests.routes'
 import { simulationRouter } from './simulation.routes'
 import { treasuryRouter } from './treasury.routes'
 
@@ -30,6 +33,8 @@ companiesRouter.use('/:uuid', banksRouter)
 companiesRouter.use('/:uuid', simulationRouter)
 companiesRouter.use('/:uuid', ledgerRouter)
 companiesRouter.use('/:uuid', activitiesRouter)
+companiesRouter.use('/:uuid', documentsRouter)
+companiesRouter.use('/:uuid', requestsRouter)
 
 function uuidParam(req: Request): string {
   const value = req.params['uuid']
@@ -80,6 +85,15 @@ companiesRouter.get('/:uuid/portal', (req, res) => {
     viste: visteAzienda(portale, app),
     permessi: permessiAzienda(portale, app)
   })
+})
+
+/** Il riepilogo dell'azienda (§10.15): lo vede l'azienda, e il consulente per sapere cosa vede lei. */
+companiesRouter.get('/:uuid/summary', (req, res) => {
+  const uuid = uuidParam(req)
+  if (req.auth!.role === 'company' && req.auth!.company_uuid !== uuid) {
+    throw new HttpError(403, 'Operazione non consentita per questo ruolo.')
+  }
+  res.json(companySummary(uuid))
 })
 
 companiesRouter.put('/:uuid/portal', requireRole('consultant'), (req, res) => {

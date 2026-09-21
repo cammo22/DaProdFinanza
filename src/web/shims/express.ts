@@ -152,6 +152,9 @@ export type Router = RouterImpl
 export interface Risposta {
   status: number
   body: unknown
+  /** Presente quando la risposta è un file (Uint8Array) e non JSON. */
+  tipo?: string
+  intestazioni?: Record<string, string>
 }
 
 export class App extends RouterImpl {
@@ -175,6 +178,8 @@ export class App extends RouterImpl {
         headers: lower,
         header: (name: string) => lower[name.toLowerCase()]
       }
+      const intestazioni: Record<string, string> = {}
+      let tipo = 'application/json'
       const res = {
         statusCode: 200,
         finito: false,
@@ -188,7 +193,14 @@ export class App extends RouterImpl {
           resolve({ status: res.statusCode, body: corpo === undefined ? null : corpo })
           return res
         },
+        // Un file (i documenti del cassetto) esce così com'è, col suo tipo.
         send(corpo?: unknown) {
+          if (corpo instanceof Uint8Array) {
+            if (res.finito) return res
+            res.finito = true
+            resolve({ status: res.statusCode, body: corpo, tipo, intestazioni })
+            return res
+          }
           return res.json(corpo ?? null)
         },
         sendStatus(code: number) {
@@ -198,9 +210,17 @@ export class App extends RouterImpl {
         end() {
           return res.json(null)
         },
-        set: () => res,
-        setHeader: () => res,
-        type: () => res
+        set(nome: unknown, valore: unknown) {
+          if (typeof nome === 'string') intestazioni[nome] = String(valore)
+          return res
+        },
+        setHeader(nome: unknown, valore: unknown) {
+          return res.set(nome, valore)
+        },
+        type(t: unknown) {
+          if (typeof t === 'string') tipo = t
+          return res
+        }
       }
       this.handle(req, res as unknown as Response, u.pathname, (err) => {
         if (!res.finito) {
@@ -223,10 +243,20 @@ function json(): Handler {
   return (_req, _res, next) => next()
 }
 
+/** Il corpo di un file arriva già come Uint8Array dal ponte (../bridge.ts). */
+function raw(): Handler {
+  return (_req, _res, next) => next()
+}
+
 function express(): App {
   return new App()
 }
 express.json = json
+express.raw = raw
 express.Router = Router
 
-export default express as unknown as (() => Express) & { json: typeof json; Router: typeof Router }
+export default express as unknown as (() => Express) & {
+  json: typeof json
+  raw: typeof raw
+  Router: typeof Router
+}

@@ -300,6 +300,51 @@ app.whenReady().then(() => {
     check('valore che non è JSON', () => insertSetting('company', tempCompany, `${chiave}-j`, 'acceso'), 'rifiutato')
     check('ambito inventato', () => insertSetting('studio', tempCompany, `${chiave}-s`, '{}'), 'rifiutato')
     check('telefono di un utente (colonna nuova)', () => db.prepare('SELECT phone, email FROM users LIMIT 1').all(), 'accettato')
+
+    console.log('\n Documenti e richieste (migrazione 009)')
+    const insertRequest = (fields) => {
+      const r = {
+        uuid: randomUUID(),
+        number: 9000 + Math.floor(Math.random() * 1000),
+        kind: 'domanda',
+        origin: 'azienda',
+        status: 'inviata',
+        ...fields
+      }
+      db.prepare(
+        `INSERT INTO requests (uuid, company_uuid, number, kind, origin, subject, status, created_by_name,
+           last_event_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'Verifica', ?, 'Verifica', ?, ?, ?)`
+      ).run(r.uuid, tempCompany, r.number, r.kind, r.origin, r.status, now, now, now)
+      return r
+    }
+    let richiesta = { uuid: 'mancante' }
+    check("richiesta dell'azienda", () => (richiesta = insertRequest({ number: 1 })), 'accettato')
+    check('stesso numero per la stessa azienda', () => insertRequest({ number: 1 }), 'rifiutato')
+    check('chiamata chiesta dallo studio', () => insertRequest({ kind: 'chiamata', origin: 'studio' }), 'rifiutato')
+    check("chiamata chiesta dall'azienda", () => insertRequest({ kind: 'chiamata' }), 'accettato')
+    check('stato inventato', () => insertRequest({ status: 'dimenticata' }), 'rifiutato')
+    const insertEvent = (kind, role) =>
+      db
+        .prepare(
+          `INSERT INTO request_events (uuid, request_uuid, company_uuid, kind, author_name, author_role, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'Verifica', ?, ?, ?)`
+        )
+        .run(randomUUID(), richiesta.uuid, tempCompany, kind, role, now, now)
+    check('messaggio nella storia', () => insertEvent('messaggio', 'company'), 'accettato')
+    check('evento inventato', () => insertEvent('cancellata', 'company'), 'rifiutato')
+    check('autore con un ruolo inventato', () => insertEvent('messaggio', 'ospite'), 'rifiutato')
+    const insertDocument = (role, shared) =>
+      db
+        .prepare(
+          `INSERT INTO documents (uuid, company_uuid, name, size_bytes, sha256, storage_key, shared,
+             uploaded_by_name, uploaded_by_role, created_at, updated_at)
+           VALUES (?, ?, 'verifica.pdf', 10, 'x', 'aziende/x/documenti/y/verifica.pdf', ?, 'Verifica', ?, ?, ?)`
+        )
+        .run(randomUUID(), tempCompany, shared, role, now, now)
+    check("documento dell'azienda", () => insertDocument('company', 1), 'accettato')
+    check("documento dell'azienda nascosto all'azienda", () => insertDocument('company', 0), 'rifiutato')
+    check('documento riservato dello studio', () => insertDocument('consultant', 0), 'accettato')
   } finally {
     db.exec('ROLLBACK')
     db.close()
