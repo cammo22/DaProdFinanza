@@ -218,7 +218,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
         ? [
             { id: 'analisi', titolo: 'Analisi', icona: 'grafico', voci: GRUPPI_CONSULENTE[0]!.voci },
             { id: 'cassa', titolo: 'Cassa', icona: 'cassa', voci: ['tesoreria', 'banche'] },
-            { id: 'piani', titolo: 'Piani', icona: 'andamento', voci: ['simulazioni', 'personale', 'fiscale'] },
+            { id: 'piani', titolo: 'Piani', icona: 'andamento', voci: ['simulazioni', 'marginalita', 'personale', 'fiscale'] },
             {
               id: 'lavoro',
               titolo: 'Lavoro',
@@ -377,6 +377,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
     azione('azione-ore', 'Registra ore di lavoro', 'orologio', 'attivita', 'registra-ore', 'tempo tempi')
     azione('azione-attivita', 'Nuova attività da fare', 'spunta', 'attivita', 'nuova-attivita', 'compito scadenza')
     azione('azione-persona', 'Aggiungi una persona al personale', 'utente', 'personale', 'nuova-persona', 'dipendente assunzione')
+    azione('azione-margine', 'Nuova ricetta, prodotto o commessa', 'euro', 'marginalita', 'nuova-voce-margine', 'food cost distinta base preventivo')
     if (visibile('attivita')) {
       const quiAcceso = timer?.company_uuid === company.uuid
       comandi.push({

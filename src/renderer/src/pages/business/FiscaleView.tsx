@@ -204,6 +204,7 @@ export function FiscaleView({ company, canEdit }: { company: Company; canEdit: b
           </Card>
         </Griglia>
 
+        {canEdit && (
         <Card
           title="Impostazioni"
           actions={
@@ -331,6 +332,7 @@ export function FiscaleView({ company, canEdit }: { company: Company; canEdit: b
             </Sezione>
           </fieldset>
         </Card>
+        )}
       </Pannelli>
     </div>
   )

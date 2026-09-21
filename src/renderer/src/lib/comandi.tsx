@@ -127,6 +127,7 @@ export type AzioneSchermata =
   | 'nuova-azienda'
   | 'nuovo-cliente'
   | 'nuova-persona'
+  | 'nuova-voce-margine'
 
 export function richiediAzione(nome: AzioneSchermata): void {
   inAttesa.set(nome, Date.now())

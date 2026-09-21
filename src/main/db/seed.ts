@@ -9,6 +9,7 @@ import { seedDemoBanks } from './demo-banks'
 import { seedDemoTreasury } from './demo-treasury'
 import { seedDemoPortal } from './demo-portal'
 import { seedDemoPersonale } from './demo-personale'
+import { seedDemoMarginalita } from './demo-marginalita'
 import { getDatabase } from './index'
 import { saveAppSettings } from '../server/services/settings.service'
 
@@ -84,8 +85,9 @@ export async function seedDemoData(): Promise<void> {
   seedDemoBanks(company.uuid)
   // Attività e ore del consulente.
   seedDemoActivities(company.uuid)
-  // Il personale (1.3.0).
+  // Il personale e le ricette col food cost (1.3.0).
   seedDemoPersonale(company.uuid)
+  seedDemoMarginalita(company.uuid)
 
   const consulente = insertUser(
     {
@@ -176,6 +178,15 @@ async function aggiornaDemoEsistente(): Promise<void> {
   if (personale.n === 0) {
     seedDemoPersonale(azienda.uuid)
     console.log('[db] seed dimostrativo: aggiunto il personale della Pizzeria DaProd')
+  }
+
+  // Versione 1.3.0: ricette e ingredienti.
+  const ricette = db
+    .prepare('SELECT count(*) AS n FROM margin_items WHERE company_uuid = ?')
+    .get(azienda.uuid) as { n: number }
+  if (ricette.n === 0) {
+    seedDemoMarginalita(azienda.uuid)
+    console.log('[db] seed dimostrativo: aggiunte ricette e ingredienti della Pizzeria DaProd')
   }
 
   // Versione 1.3.0: documenti, richieste e i dati dello studio.

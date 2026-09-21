@@ -416,3 +416,49 @@ export interface Employee extends BaseRecord {
 }
 
 export type EmployeeInput = Partial<Omit<Employee, keyof BaseRecord | 'company_uuid'>>
+
+// --- Marginalità (1.3.0) ----------------------------------------------------
+
+export interface MarginMaterial extends BaseRecord {
+  company_uuid: string
+  name: string
+  unit: string
+  unit_cost_cents: number
+  waste_pct: number
+  category: string | null
+  supplier: string | null
+  notes: string | null
+}
+
+export interface MarginLine extends BaseRecord {
+  item_uuid: string
+  company_uuid: string
+  phase: 'preventivo' | 'consuntivo'
+  kind: 'materiale' | 'manodopera' | 'esterno' | 'altro'
+  material_uuid: string | null
+  employee_uuid: string | null
+  description: string | null
+  qty: number
+  unit: string | null
+  unit_cost_cents: number | null
+  position: number
+}
+
+export interface MarginItem extends BaseRecord {
+  company_uuid: string
+  kind: 'ricetta' | 'prodotto' | 'commessa' | 'servizio'
+  name: string
+  code: string | null
+  category: string | null
+  price_cents: number
+  vat_pct: number
+  yield_qty: number
+  monthly_volume: number | null
+  overhead_pct: number | null
+  status: 'attiva' | 'preventivo' | 'in_corso' | 'chiusa' | 'archiviata'
+  customer: string | null
+  start_date: string | null
+  end_date: string | null
+  notes: string | null
+  lines: MarginLine[]
+}

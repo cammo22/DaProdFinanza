@@ -472,7 +472,7 @@ function SchedaPersona({
   )
 
   return (
-    <Modal title={persona ? persona.name : 'Nuova persona'} subtitle="Il costo si ricalcola mentre scrivi." onClose={onClose}>
+    <Modal title={persona ? persona.name : 'Nuova persona'} subtitle="Il costo si ricalcola mentre scrivi." onClose={onClose} larga>
       <form onSubmit={salva}>
         <div className="grid gap-5 px-5 py-5 md:grid-cols-[1fr_15rem] md:px-6">
           <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-3">

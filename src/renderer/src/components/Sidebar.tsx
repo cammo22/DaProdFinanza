@@ -35,6 +35,7 @@ export type Vista =
   | 'simulazioni'
   | 'personale'
   | 'fiscale'
+  | 'marginalita'
   | 'dati'
   | 'attivita'
   | 'impostazioni-azienda'
@@ -148,6 +149,13 @@ export const V: Record<Exclude<Vista, 'anagrafica' | 'impostazioni' | 'profilo' 
     icona: <Icona nome="utenti" className="h-full w-full" />,
     modulo: 'personale'
   },
+  marginalita: {
+    id: 'marginalita',
+    label: 'Marginalità',
+    breve: 'Margini',
+    icona: icona('M4 20h16M6 16l4-5 3 3 5-7M18 7h-3M18 7v3'),
+    modulo: 'marginalita'
+  },
   fiscale: {
     id: 'fiscale',
     label: 'Area fiscale e contributi',
@@ -181,7 +189,7 @@ export const GRUPPI_CONSULENTE: { titolo: string; voci: Vista[] }[] = [
   { titolo: 'Analisi', voci: ['panoramica', 'conto-economico', 'stato-patrimoniale', 'capitale-circolante'] },
   { titolo: 'Cassa e banche', voci: ['tesoreria', 'banche'] },
   { titolo: 'Pianificazione', voci: ['simulazioni'] },
-  { titolo: 'Costi, margini e tasse', voci: ['personale', 'fiscale'] },
+  { titolo: 'Costi, margini e tasse', voci: ['marginalita', 'personale', 'fiscale'] },
   { titolo: "Lavoro con l'azienda", voci: ['documenti', 'richieste', 'attivita'] },
   { titolo: 'Dati e impostazioni', voci: ['dati', 'impostazioni-azienda'] }
 ]
@@ -195,6 +203,7 @@ export const VISTE_AZIENDA_ORDINE: Extract<VistaCondivisibile, Vista>[] = [
   'tesoreria',
   'banche',
   'simulazioni',
+  'marginalita',
   'personale',
   'fiscale'
 ]
