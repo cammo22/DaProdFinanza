@@ -4,13 +4,18 @@ import { api } from '../lib/api'
 import { NewClientModal } from '../components/NewClientModal'
 import { NewCompanyModal } from '../components/NewCompanyModal'
 import { NewCompanyUserModal } from '../components/NewCompanyUserModal'
-import { Alert, Button, EmptyState } from '../components/ui'
+import { Alert, Button, EmptyState, Scheletro } from '../components/ui'
+import { iniziali, Separatore, Tendina, VoceMenu } from '../components/Guscio'
+import { Icona } from '../components/icone'
+import { useAzione } from '../lib/comandi'
+import { useInbox } from '../lib/inbox'
 
 /**
  * Anagrafica Clienti e Aziende — AGENTS.md §10.1.
  * È la schermata iniziale del Consulente: elenco Clienti, ognuno con le proprie
- * Aziende, creazione e rimozione. Il click su un'azienda entrerà nella suite
- * Business (Fase 4+).
+ * Aziende, creazione e rimozione. Un clic su un'azienda (tutta la riga, o
+ * "Apri") entra nella suite Business; le azioni meno frequenti stanno nel
+ * menu "⋯" di ogni riga, così l'elenco resta leggibile anche sul telefono.
  */
 
 function formatDate(value: string | null): string {
@@ -39,6 +44,12 @@ export function RegistryPage({
   const [notice, setNotice] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const { riepilogo } = useInbox()
+  const novita = riepilogo?.per_company ?? {}
+
+  // Dai comandi rapidi (Ctrl+K o il pulsante "Nuovo").
+  useAzione('nuovo-cliente', () => setDialog({ kind: 'new-client' }))
+  useAzione('nuova-azienda', () => setDialog(clients.length ? { kind: 'new-company' } : { kind: 'new-client' }), !loading)
 
   const reload = useCallback(async () => {
     setError(null)
@@ -152,14 +163,16 @@ export function RegistryPage({
         </label>
 
         <div className="flex gap-3 md:ml-auto">
-          <Button onClick={() => setDialog({ kind: 'new-client' })}>+ Nuovo cliente</Button>
+          <Button onClick={() => setDialog({ kind: 'new-client' })}>
+            <Icona nome="piu" className="h-4 w-4" /> Nuovo cliente
+          </Button>
           <Button
             variant="primary"
             disabled={clients.length === 0}
             title={clients.length === 0 ? 'Crea prima un cliente' : undefined}
             onClick={() => setDialog({ kind: 'new-company' })}
           >
-            + Nuova azienda
+            <Icona nome="piu" className="h-4 w-4" /> Nuova azienda
           </Button>
         </div>
       </header>
@@ -172,7 +185,14 @@ export function RegistryPage({
         )}
 
         {loading ? (
-          <p className="text-sm text-ink-400">Caricamento…</p>
+          <div className="flex flex-col gap-4">
+            {[0, 1].map((i) => (
+              <div key={i} className="rounded-xl border border-ink-700 bg-ink-850 p-5">
+                <Scheletro className="h-4 w-48" />
+                <Scheletro className="mt-4 h-10 w-full" />
+              </div>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState
             title={search ? 'Nessun risultato' : 'Nessun cliente registrato'}
@@ -217,32 +237,34 @@ export function RegistryPage({
                     {formatDate(client.start_date)}
                   </p>
 
-                  <div className="flex gap-2 md:ml-auto">
+                  <div className="ml-auto flex items-center gap-2">
                     <Button
                       className="px-3 py-1 text-xs"
                       onClick={() => setDialog({ kind: 'new-company', clientUuid: client.uuid })}
                     >
-                      + Azienda
+                      <Icona nome="piu" className="h-3.5 w-3.5" /> Azienda
                     </Button>
-                    <Button
-                      className="px-3 py-1 text-xs"
-                      onClick={() => setDialog({ kind: 'edit-client', client })}
+                    <Tendina
+                      titolo="Altre azioni sul cliente"
+                      larghezza="w-52"
+                      classeBottone="rounded-lg border border-ink-700 bg-ink-800 p-1.5 text-ink-300 hover:bg-ink-700"
+                      etichetta={<Icona nome="altro" className="h-4 w-4" />}
                     >
-                      Modifica
-                    </Button>
-                    <Button
-                      className="px-3 py-1 text-xs"
-                      onClick={() => toggleClientArchive(client)}
-                    >
-                      {client.archived ? 'Ripristina' : 'Archivia'}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      className="px-3 py-1 text-xs"
-                      onClick={() => removeClient(client)}
-                    >
-                      Rimuovi
-                    </Button>
+                      {(chiudi) => (
+                        <>
+                          <VoceMenu icona="matita" onClick={() => { chiudi(); setDialog({ kind: 'edit-client', client }) }}>
+                            Modifica il cliente
+                          </VoceMenu>
+                          <VoceMenu icona="cartella" onClick={() => { chiudi(); toggleClientArchive(client) }}>
+                            {client.archived ? 'Ripristina' : 'Archivia'}
+                          </VoceMenu>
+                          <Separatore />
+                          <VoceMenu icona="cestino" pericolo onClick={() => { chiudi(); removeClient(client) }}>
+                            Rimuovi
+                          </VoceMenu>
+                        </>
+                      )}
+                    </Tendina>
                   </div>
                 </header>
 
@@ -251,86 +273,86 @@ export function RegistryPage({
                     Nessuna azienda per questo cliente.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[720px] text-sm">
-                      <thead>
-                        <tr className="text-left text-xs uppercase tracking-wider text-ink-400">
-                          <th className="px-5 py-2 font-medium">Codice</th>
-                          <th className="px-5 py-2 font-medium">Ragione sociale</th>
-                          <th className="px-5 py-2 font-medium">P.IVA</th>
-                          <th className="px-5 py-2 font-medium">Forma</th>
-                          <th className="px-5 py-2 font-medium">Tipo di attività</th>
-                          <th className="px-5 py-2 font-medium">Dal</th>
-                          <th className="px-5 py-2" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {client.companies.map((company) => (
-                          <tr
-                            key={company.uuid}
-                            className="border-t border-ink-800 transition-colors hover:bg-ink-800/60"
-                          >
-                            <td className="px-5 py-3 font-mono text-xs text-ink-300">
-                              {company.code}
-                            </td>
-                            <td className="px-5 py-3">
-                              <button
-                                type="button"
-                                onClick={() => onOpenCompany(company)}
-                                className="font-medium text-ink-100 hover:text-brand-300"
-                                title="Apri la suite Business"
+                  <ul className="divide-y divide-ink-800">
+                    {client.companies.map((company) => (
+                      <li
+                        key={company.uuid}
+                        className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-ink-800/60 md:px-5"
+                        onClick={(e) => {
+                          // I pulsanti della riga fanno la loro cosa; il resto apre l'azienda.
+                          if ((e.target as HTMLElement).closest('button')) return
+                          onOpenCompany(company)
+                        }}
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/15 text-xs font-bold text-brand-300">
+                          {iniziali(company.name)}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="flex items-center gap-2">
+                            <span className="truncate font-medium text-ink-100 group-hover:text-brand-200">{company.name}</span>
+                            {company.archived === 1 && (
+                              <span className="shrink-0 rounded-md bg-warning/10 px-2 py-0.5 text-[11px] text-warning">archiviata</span>
+                            )}
+                            {(novita[company.uuid] ?? 0) > 0 && (
+                              <span
+                                className="shrink-0 rounded-full bg-brand-500 px-1.5 text-[10px] font-semibold leading-4 text-white"
+                                title="Richieste con novità"
                               >
-                                {company.name}
-                              </button>
-                              {company.archived === 1 && (
-                                <span className="ml-2 rounded-md bg-warning/10 px-2 py-0.5 text-xs text-warning">
-                                  archiviata
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-5 py-3 font-mono text-xs text-ink-300">
-                              {company.vat_number ?? '—'}
-                            </td>
-                            <td className="px-5 py-3 text-ink-300">{company.legal_form ?? '—'}</td>
-                            <td className="px-5 py-3 text-ink-300">{company.business_type ?? '—'}</td>
-                            <td className="px-5 py-3 text-ink-300">
-                              {formatDate(company.start_date)}
-                            </td>
-                            <td className="px-5 py-3">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  className="px-2.5 py-1 text-xs"
-                                  onClick={() => setDialog({ kind: 'edit-company', company })}
-                                >
-                                  Modifica
-                                </Button>
-                                <Button
-                                  className="px-2.5 py-1 text-xs"
-                                  onClick={() => setDialog({ kind: 'new-company-user', company })}
-                                  title="Crea le credenziali per l'app Azienda"
-                                >
-                                  Accesso
-                                </Button>
-                                <Button
-                                  className="px-2.5 py-1 text-xs"
-                                  onClick={() => toggleCompanyArchive(company)}
-                                >
-                                  {company.archived ? 'Ripristina' : 'Archivia'}
-                                </Button>
-                                <Button
-                                  variant="danger"
-                                  className="px-2.5 py-1 text-xs"
-                                  onClick={() => removeCompany(company)}
-                                >
-                                  Rimuovi
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                                {novita[company.uuid]}
+                              </span>
+                            )}
+                          </p>
+                          <p className="mt-0.5 truncate text-xs text-ink-400">
+                            <span className="font-mono">{company.code}</span>
+                            {company.vat_number ? <span className="font-mono"> · P.IVA {company.vat_number}</span> : ''}
+                            {company.legal_form ? ` · ${company.legal_form}` : ''}
+                            {company.business_type ? ` · ${company.business_type}` : ''}
+                            <span className="max-sm:hidden"> · dal {formatDate(company.start_date)}</span>
+                          </p>
+                        </div>
+                        <Button
+                          variant="primary"
+                          className="shrink-0 px-3 py-1 text-xs max-sm:hidden"
+                          onClick={() => onOpenCompany(company)}
+                          title="Apri la suite Business"
+                        >
+                          Apri
+                          <Icona nome="destra" className="h-3.5 w-3.5" />
+                        </Button>
+                        <Tendina
+                          titolo="Altre azioni sull'azienda"
+                          larghezza="w-60"
+                          classeBottone="rounded-lg border border-ink-700 bg-ink-800 p-1.5 text-ink-300 hover:bg-ink-700"
+                          etichetta={<Icona nome="altro" className="h-4 w-4" />}
+                        >
+                          {(chiudi) => (
+                            <>
+                              <VoceMenu icona="destra" onClick={() => { chiudi(); onOpenCompany(company) }}>
+                                Apri
+                              </VoceMenu>
+                              <VoceMenu icona="matita" onClick={() => { chiudi(); setDialog({ kind: 'edit-company', company }) }}>
+                                Modifica i dati
+                              </VoceMenu>
+                              <VoceMenu
+                                icona="lucchetto"
+                                dettaglio="Credenziali per l'app Azienda"
+                                onClick={() => { chiudi(); setDialog({ kind: 'new-company-user', company }) }}
+                              >
+                                Accesso dell'azienda
+                              </VoceMenu>
+                              <VoceMenu icona="cartella" onClick={() => { chiudi(); toggleCompanyArchive(company) }}>
+                                {company.archived ? 'Ripristina' : 'Archivia'}
+                              </VoceMenu>
+                              <Separatore />
+                              <VoceMenu icona="cestino" pericolo onClick={() => { chiudi(); removeCompany(company) }}>
+                                Rimuovi
+                              </VoceMenu>
+                            </>
+                          )}
+                        </Tendina>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </section>
             ))}

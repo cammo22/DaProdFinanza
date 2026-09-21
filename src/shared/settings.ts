@@ -120,6 +120,16 @@ export const VISTE_AZIENDA_PREDEFINITE: Record<VistaCondivisibile, boolean> = {
 
 export type Tema = 'scuro' | 'chiaro' | 'sistema'
 
+/** Il colore dei pulsanti e delle evidenze: a gusto di chi usa il programma. */
+export const ACCENTI = ['blu', 'turchese', 'viola', 'indaco'] as const
+export type Accento = (typeof ACCENTI)[number]
+export const ACCENTO_LABELS: Record<Accento, string> = {
+  blu: 'Blu',
+  turchese: 'Turchese',
+  viola: 'Viola',
+  indaco: 'Indaco'
+}
+
 export interface AppSettings {
   moduli: Record<Modulo, boolean>
   /** Controllo degli aggiornamenti all'avvio e ogni 6 ore. */
@@ -134,6 +144,8 @@ export interface AppSettings {
 
 export interface UserSettings {
   tema: Tema
+  /** Colore d'accento dell'interfaccia. */
+  accento: Accento
   /** Avviso di sistema quando arriva una richiesta o una risposta. */
   avvisiDesktop: boolean
   /** Squillo quando un'azienda chiede una chiamata. */
@@ -163,7 +175,7 @@ export function appPredefinite(): AppSettings {
 }
 
 export function utentePredefinite(): UserSettings {
-  return { tema: 'scuro', avvisiDesktop: true, suonoChiamate: true }
+  return { tema: 'scuro', accento: 'blu', avvisiDesktop: true, suonoChiamate: true }
 }
 
 export function portalePredefinito(): PortalSettings {
@@ -221,8 +233,10 @@ export function normalizzaApp(v: unknown, base: AppSettings = appPredefinite()):
 export function normalizzaUtente(v: unknown, base: UserSettings = utentePredefinite()): UserSettings {
   const o = oggetto(v)
   const tema = o.tema === 'scuro' || o.tema === 'chiaro' || o.tema === 'sistema' ? o.tema : base.tema
+  const accento = ACCENTI.includes(o.accento as Accento) ? (o.accento as Accento) : base.accento
   return {
     tema,
+    accento,
     avvisiDesktop: booleano(o.avvisiDesktop, base.avvisiDesktop),
     suonoChiamate: booleano(o.suonoChiamate, base.suonoChiamate)
   }

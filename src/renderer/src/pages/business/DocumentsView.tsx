@@ -13,6 +13,7 @@ import { useImpostazioni } from '../../lib/impostazioni'
 import { segnalaAzione, useAlCambioRichieste } from '../../lib/inbox'
 import { Alert, Button, Card, EmptyState, Field, Interruttore, Modal, Select, TextInput } from '../../components/ui'
 import { UploadDialog } from '../../components/UploadDialog'
+import { useAzione } from '../../lib/comandi'
 import { DocumentViewer } from '../../components/viewer/DocumentViewer'
 import { quandoBreve } from '../../components/RequestDetail'
 
@@ -54,6 +55,8 @@ export function DocumentsView({ company }: { company: Company }): React.JSX.Elem
   const [aperto, setAperto] = useState<DocumentItem | null>(null)
   const [modifica, setModifica] = useState<DocumentItem | null>(null)
   const [trascinando, setTrascinando] = useState(false)
+  // "Carica un documento" dai comandi rapidi: si apre subito la finestra.
+  useAzione('carica-documento', () => setCarica([]), puoInviare)
 
   const ricarica = useCallback(async () => {
     try {

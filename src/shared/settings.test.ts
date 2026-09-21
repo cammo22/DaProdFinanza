@@ -35,6 +35,8 @@ describe('impostazioni', () => {
   it('il tema accetta solo i tre valori previsti', () => {
     expect(normalizzaUtente({ tema: 'chiaro' }).tema).toBe('chiaro')
     expect(normalizzaUtente({ tema: 'fucsia' }).tema).toBe('scuro')
+    expect(normalizzaUtente({ accento: 'viola' }).accento).toBe('viola')
+    expect(normalizzaUtente({ accento: 'fucsia' }).accento).toBe('blu')
   })
 
   it("di partenza l'azienda vede i numeri principali, non tutto il gestionale", () => {

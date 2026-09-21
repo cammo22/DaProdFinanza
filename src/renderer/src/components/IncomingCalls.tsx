@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 import { useImpostazioni } from '../lib/impostazioni'
 import { segnalaAzione, useInbox } from '../lib/inbox'
 import { Button } from './ui'
+import { Icona } from './icone'
 import { chiama, quandoBreve } from './RequestDetail'
 
 /**
@@ -68,6 +69,8 @@ export function IncomingCalls({ onApri }: { onApri: (companyUuid: string, reques
   const { utente } = useImpostazioni()
   const [silenziate, setSilenziate] = useState<Record<string, number>>({})
   const [errore, setErrore] = useState<string | null>(null)
+  // Sul telefono il riquadro copre metà schermo: si riduce a una pastiglia.
+  const [ridotto, setRidotto] = useState(false)
   const viste = useRef<Set<string>>(new Set())
   const nonLette = useRef<number | null>(null)
   const [adesso, setAdesso] = useState(() => Date.now())
@@ -111,6 +114,28 @@ export function IncomingCalls({ onApri }: { onApri: (companyUuid: string, reques
 
   if (!chiamate.length) return null
 
+  // Ridotto a una pastiglia: la chiamata resta in vista senza coprire il lavoro.
+  if (ridotto) {
+    const c = chiamate[0]!
+    return (
+      <button
+        type="button"
+        onClick={() => setRidotto(false)}
+        className="compare fixed right-3 top-14 z-40 flex max-w-[calc(100vw-24px)] items-center gap-2 rounded-full border border-brand-500/60 bg-ink-900 py-1.5 pr-3 pl-2 text-xs text-ink-100 shadow-xl shadow-black/50 md:top-auto md:bottom-14"
+        title="Mostra le chiamate richieste"
+      >
+        <span className="relative flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/25 text-brand-200">
+          <span className="absolute inset-0 animate-ping rounded-full bg-brand-500/30" />
+          <Icona nome="telefono" className="h-3.5 w-3.5" />
+        </span>
+        <span className="truncate">
+          {chiamate.length === 1 ? c.company_name : `${chiamate.length} chiamate richieste`}
+        </span>
+        <Icona nome="su" className="h-3.5 w-3.5 text-ink-400 md:rotate-0" />
+      </button>
+    )
+  }
+
   const azione = async (c: RequestItem, action: RequestAction, extra: Record<string, unknown> = {}): Promise<void> => {
     setErrore(null)
     try {
@@ -122,16 +147,23 @@ export function IncomingCalls({ onApri }: { onApri: (companyUuid: string, reques
   }
 
   return (
-    <div className="fixed right-3 bottom-14 z-40 flex w-[min(420px,calc(100vw-24px))] flex-col gap-2" aria-live="polite">
+    // Sul telefono in alto (sotto l'intestazione), sul computer in basso a destra.
+    <div
+      className="compare fixed inset-x-3 top-14 z-40 flex flex-col gap-2 md:inset-x-auto md:top-auto md:right-3 md:bottom-14 md:w-[420px]"
+      aria-live="polite"
+    >
       {errore && <p className="rounded-lg border border-negative/40 bg-ink-900 px-3 py-2 text-xs text-negative">{errore}</p>}
-      {chiamate.slice(0, 3).map((c) => {
+      {chiamate.slice(0, 3).map((c, i) => {
         const richiamo = Boolean(c.callback_at)
         return (
-          <div key={c.uuid} className="rounded-xl border border-brand-500/50 bg-ink-900 p-3 shadow-2xl shadow-black/50">
+          <div
+            key={c.uuid}
+            className={`rounded-xl border border-brand-500/50 bg-ink-900 p-3 shadow-2xl shadow-black/50 ${i > 0 ? 'max-md:hidden' : ''}`}
+          >
             <div className="flex items-start gap-2">
-              <span className="relative mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-sm">
+              <span className="relative mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
                 <span className="absolute inset-0 animate-ping rounded-full bg-brand-500/30" />
-                📞
+                <Icona nome="telefono" className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-300">
@@ -149,15 +181,24 @@ export function IncomingCalls({ onApri }: { onApri: (companyUuid: string, reques
               </div>
               <button
                 type="button"
-                className="rounded px-1.5 text-lg leading-none text-ink-400 hover:text-ink-100"
+                className="rounded-md p-1 text-ink-400 hover:bg-ink-800 hover:text-ink-100"
+                onClick={() => setRidotto(true)}
+                title="Riduci: resta una pastiglia in un angolo"
+                aria-label="Riduci"
+              >
+                <Icona nome="giu" className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="rounded-md p-1 text-ink-400 hover:bg-ink-800 hover:text-ink-100"
                 onClick={() => setSilenziate({ ...silenziate, [c.uuid]: Date.now() + SILENZIO_MS })}
                 title="Più tardi: nascondi per un quarto d'ora"
                 aria-label="Più tardi"
               >
-                ×
+                <Icona nome="chiudi" className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5 md:flex md:flex-wrap">
               <Button
                 variant="primary"
                 className="px-2.5 py-1 text-xs"
@@ -166,20 +207,20 @@ export function IncomingCalls({ onApri }: { onApri: (companyUuid: string, reques
                   void azione(c, 'chiamo_ora')
                 }}
               >
-                📞 Chiamo ora
+                <Icona nome="telefono" className="h-3.5 w-3.5" /> Chiamo ora
               </Button>
               <Button
                 className="px-2.5 py-1 text-xs"
                 onClick={() => void azione(c, 'richiamo', { callback_at: new Date(Date.now() + 15 * 60_000).toISOString() })}
               >
-                🕒 Tra 15 minuti
+                <Icona nome="orologio" className="h-3.5 w-3.5" /> Tra 15 minuti
               </Button>
               <Button className="px-2.5 py-1 text-xs" onClick={() => onApri(c.company_uuid, c.uuid)}>
-                💬 Rispondo per scritto
+                <Icona nome="messaggio" className="h-3.5 w-3.5" /> Rispondo per scritto
               </Button>
               {!richiamo && (
                 <Button className="px-2.5 py-1 text-xs" onClick={() => void azione(c, 'prendi_in_carico')}>
-                  ✋ La prendo io
+                  <Icona nome="spunta" className="h-3.5 w-3.5" /> La prendo io
                 </Button>
               )}
             </div>
@@ -187,7 +228,7 @@ export function IncomingCalls({ onApri }: { onApri: (companyUuid: string, reques
         )
       })}
       {chiamate.length > 3 && (
-        <p className="rounded-lg bg-ink-900 px-3 py-1.5 text-center text-xs text-ink-300">…e altre {chiamate.length - 3} chiamate in attesa</p>
+        <p className="rounded-lg bg-ink-900 px-3 py-1.5 text-center text-xs text-ink-300 max-md:hidden">…e altre {chiamate.length - 3} chiamate in attesa</p>
       )}
     </div>
   )
@@ -202,11 +243,11 @@ export function Campanello({ onClick }: { onClick: () => void }): React.JSX.Elem
     <button
       type="button"
       onClick={onClick}
-      className="relative rounded-lg border border-ink-700 bg-ink-800 px-2.5 py-1 text-sm text-ink-200 hover:border-brand-400/60"
+      className="relative rounded-lg p-2 text-ink-300 hover:bg-ink-800 hover:text-ink-100"
       title={n ? `${n} richieste con novità` : 'Richieste'}
       aria-label={n ? `Richieste: ${n} con novità` : 'Richieste'}
     >
-      🔔
+      <Icona nome="campanello" className="h-4.5 w-4.5" />
       {n > 0 && (
         <span className="absolute -top-1.5 -right-1.5 min-w-4.5 rounded-full bg-negative px-1 text-center text-[10px] font-bold leading-4.5 text-white">
           {n > 99 ? '99+' : n}

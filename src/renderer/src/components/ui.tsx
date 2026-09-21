@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
+import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
 
 type Variant = 'primary' | 'ghost' | 'danger'
 
@@ -103,11 +103,20 @@ export function Modal({
   onClose: () => void
   children: ReactNode
 }): React.JSX.Element {
+  // Esc chiude, come ogni finestra.
+  useEffect(() => {
+    const esc = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', esc)
+    return () => document.removeEventListener('keydown', esc)
+  }, [onClose])
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
-      <div className="w-full max-w-2xl rounded-xl border border-ink-700 bg-ink-850 shadow-2xl">
-        <header className="flex items-start justify-between border-b border-ink-700 px-6 py-4">
-          <div>
+    // Sul telefono la finestra sale dal basso e occupa quasi tutto lo schermo.
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 md:items-center md:p-6">
+      <div className="sale md:compare flex max-h-[94vh] w-full max-w-2xl flex-col rounded-t-2xl border border-ink-700 bg-ink-850 shadow-2xl md:max-h-[90vh] md:rounded-xl">
+        <header className="flex shrink-0 items-start justify-between border-b border-ink-700 px-5 py-4 md:px-6">
+          <div className="min-w-0">
             <h2 className="text-base font-semibold text-ink-100">{title}</h2>
             {subtitle && <p className="mt-0.5 text-xs text-ink-400">{subtitle}</p>}
           </div>
@@ -115,12 +124,14 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Chiudi"
-            className="rounded-md px-2 text-lg leading-none text-ink-400 hover:text-ink-100"
+            className="-mr-1 rounded-md p-1.5 text-ink-400 hover:bg-ink-800 hover:text-ink-100"
           >
-            ×
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
           </button>
         </header>
-        {children}
+        <div className="fondo-sicuro min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
   )
@@ -247,6 +258,73 @@ export function EmptyState({
       <h3 className="text-sm font-semibold text-ink-100">{title}</h3>
       <p className="max-w-md text-sm text-ink-400">{description}</p>
       {action}
+    </div>
+  )
+}
+
+/**
+ * Scelta fra poche opzioni a pulsanti affiancati (es. Consuntivo / Budget /
+ * Forecast): un clic invece di aprire un menu.
+ */
+export function Segmentato<T extends string>({
+  valore,
+  opzioni,
+  onChange,
+  className = '',
+  piccolo = false
+}: {
+  valore: T
+  opzioni: { id: T; label: string; titolo?: string }[]
+  onChange: (id: T) => void
+  className?: string
+  piccolo?: boolean
+}): React.JSX.Element {
+  return (
+    <div className={`inline-flex rounded-lg border border-ink-700 bg-ink-900 p-0.5 ${className}`} role="radiogroup">
+      {opzioni.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={valore === o.id}
+          title={o.titolo}
+          onClick={() => onChange(o.id)}
+          className={`flex-1 whitespace-nowrap rounded-md font-medium transition-colors ${piccolo ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm'} ${
+            valore === o.id ? 'bg-brand-500/20 text-brand-200 shadow-sm' : 'text-ink-400 hover:text-ink-100'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Riquadro che luccica mentre i dati arrivano, della forma di quello che arriverà. */
+export function Scheletro({ className = 'h-4 w-full' }: { className?: string }): React.JSX.Element {
+  return <div className={`scheletro rounded-md ${className}`} aria-hidden="true" />
+}
+
+/** Una schermata in caricamento: indicatori in alto e due riquadri. */
+export function CaricamentoPagina(): React.JSX.Element {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true" aria-label="Caricamento">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl border border-ink-700 bg-ink-850 p-4">
+            <Scheletro className="h-3 w-24" />
+            <Scheletro className="mt-3 h-6 w-32" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {[0, 1].map((i) => (
+          <div key={i} className="rounded-xl border border-ink-700 bg-ink-850 p-4">
+            <Scheletro className="h-3 w-40" />
+            <Scheletro className="mt-4 h-40 w-full" />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

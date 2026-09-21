@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Pannelli } from '../../components/Pannelli'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Griglia, Pannelli } from '../../components/Pannelli'
 import {
   impactRows,
   PARAMETRI_ZERO,
@@ -14,7 +14,8 @@ import {
 import type { SimulationScenario } from '@shared/types'
 import { api } from '../../lib/api'
 import { days, euro, euroInput, parseEuro, percent } from '../../lib/format'
-import { Alert, Button, Card, Select, TextInput } from '../../components/ui'
+import { Alert, Button, Card, Segmentato, Select, TextInput } from '../../components/ui'
+import { Icona } from '../../components/icone'
 import { ConfrontoBarre, ConfrontoCassa } from '../../components/charts'
 
 /**
@@ -23,7 +24,42 @@ import { ConfrontoBarre, ConfrontoCassa } from '../../components/charts'
  * Lo scenario si ricalcola nella schermata, con lo stesso motore del server:
  * ogni leva mossa cambia i risultati subito. Si salva solo l'elenco delle
  * variazioni, mai i risultati, che dipendono dai numeri del giorno.
+ *
+ * Disposizione (1.3.0): su uno schermo largo leve a sinistra (colonna che si
+ * allarga, si stringe e si richiude) e risultati a destra; su telefono e
+ * schermi medi due schede, Leve e Risultati, con un riassunto sempre in vista
+ * in cima — muovendo una leva si vede subito cosa cambia.
  */
+
+const CHIAVE_LEVE = 'daprodfinanza.simulazioni-leve'
+const LEVE_MIN = 280
+const LEVE_MAX = 520
+
+function leggiLeve(): { larghezza: number; aperte: boolean } {
+  try {
+    const v = JSON.parse(localStorage.getItem(CHIAVE_LEVE) ?? 'null')
+    const w = Number(v?.larghezza)
+    return {
+      larghezza: Number.isFinite(w) ? Math.min(LEVE_MAX, Math.max(LEVE_MIN, w)) : 340,
+      aperte: v?.aperte !== false
+    }
+  } catch {
+    return { larghezza: 340, aperte: true }
+  }
+}
+
+/** Schermo abbastanza largo per leve e risultati affiancati. */
+function useLargo(): boolean {
+  const query = '(min-width: 1280px)'
+  const [largo, setLargo] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const m = window.matchMedia(query)
+    const f = (): void => setLargo(m.matches)
+    m.addEventListener('change', f)
+    return () => m.removeEventListener('change', f)
+  }, [])
+  return largo
+}
 
 const MESI_BREVI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic']
 
@@ -385,10 +421,41 @@ export function SimulationView({
   const pct = (v: number | null): string => percent(v)
   const nf = simulato.nuovoFinanziamento
 
-  return (
-    <div className="grid grid-cols-[340px_1fr] items-start gap-5">
-      {/* --- leve ------------------------------------------------------------ */}
-      <div className="sticky top-0 flex flex-col gap-4">
+  // --- disposizione ---
+  const largo = useLargo()
+  const [scheda, setScheda] = useState<'leve' | 'risultati'>('leve')
+  const [leveUi, setLeveUi] = useState(leggiLeve)
+  const presa = useRef<{ x: number; w: number } | null>(null)
+  const [trascinando, setTrascinando] = useState(false)
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHIAVE_LEVE, JSON.stringify(leveUi))
+    } catch {
+      // resta per questa sessione
+    }
+  }, [leveUi])
+  useEffect(() => {
+    if (!trascinando) return
+    const muovi = (e: PointerEvent): void => {
+      const p = presa.current
+      if (p) setLeveUi((l) => ({ ...l, larghezza: Math.min(LEVE_MAX, Math.max(LEVE_MIN, p.w + e.clientX - p.x)) }))
+    }
+    const fine = (): void => {
+      presa.current = null
+      setTrascinando(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    window.addEventListener('pointermove', muovi)
+    window.addEventListener('pointerup', fine)
+    return () => {
+      window.removeEventListener('pointermove', muovi)
+      window.removeEventListener('pointerup', fine)
+    }
+  }, [trascinando])
+
+  const colonnaLeve = (
+      <div className="flex flex-col gap-4">
         <Card title="Scenario">
           <div className="flex flex-col gap-3 px-5 py-4">
             <Select value={scelto} onChange={(e) => scegli(e.target.value)} className="text-sm">
@@ -567,8 +634,9 @@ export function SimulationView({
           </Gruppo>
         </Card>
       </div>
+  )
 
-      {/* --- risultati ------------------------------------------------------- */}
+  const risultati = (
       <div className="min-w-0">
         {pronto?.tono === 'estremo' && (
           <div className="mb-5 rounded-xl border-2 border-negative/60 bg-negative/10 px-5 py-3">
@@ -588,21 +656,22 @@ export function SimulationView({
           </p>
         )}
         <Pannelli vista="simulazioni">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <p className="text-sm text-ink-400">
             Base: <span className="text-ink-200">{base.label}</span> · proiezione sui 12 mesi da oggi
           </p>
           <div className="flex gap-2">
             <Button className="px-3 py-1.5 text-xs" onClick={esporta} disabled={busy}>
-              Esporta scenario
+              <Icona nome="scarica" className="h-3.5 w-3.5" /> Esporta
             </Button>
             <Button className="px-3 py-1.5 text-xs" onClick={onVaiTesoreria}>
-              Vai alla Tesoreria
+              Tesoreria <Icona nome="destra" className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="@container">
+        <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4">
           {CONFRONTI.map((c) => (
             <CardConfronto
               key={c.label}
@@ -618,6 +687,7 @@ export function SimulationView({
             />
           ))}
         </div>
+        </div>
 
         {simulato.liquiditaFinale < 0 || simulato.curva.some((v) => v < (soglia ?? 0)) ? (
           <Alert>
@@ -626,7 +696,7 @@ export function SimulationView({
           </Alert>
         ) : null}
 
-        <div className="grid grid-cols-2 gap-5">
+        <Griglia colonne={2}>
           <Card title="Conto economico: attuale e scenario">
             <div className="px-3 py-4">
               <ConfrontoBarre dati={barre} />
@@ -637,42 +707,66 @@ export function SimulationView({
               <ConfrontoCassa dati={cassa} soglia={soglia} />
             </div>
           </Card>
-        </div>
+        </Griglia>
 
         <Card title="Dettaglio degli impatti">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-ink-700 text-xs text-ink-400">
-                <th className="px-5 py-2.5 text-left font-medium">Voce</th>
-                <th className="px-5 py-2.5 text-right font-medium">Attuale</th>
-                <th className="px-5 py-2.5 text-right font-medium">Scenario</th>
-                <th className="px-5 py-2.5 text-right font-medium">Differenza</th>
-                <th className="px-5 py-2.5 text-left font-medium">Da dove arriva</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="@container">
+            <table className="hidden w-full text-sm @2xl:table">
+              <thead>
+                <tr className="border-b border-ink-700 text-xs text-ink-400">
+                  <th className="px-5 py-2.5 text-left font-medium">Voce</th>
+                  <th className="px-5 py-2.5 text-right font-medium">Attuale</th>
+                  <th className="px-5 py-2.5 text-right font-medium">Scenario</th>
+                  <th className="px-5 py-2.5 text-right font-medium">Differenza</th>
+                  <th className="px-5 py-2.5 text-left font-medium">Da dove arriva</th>
+                </tr>
+              </thead>
+              <tbody>
+                {righe.map((r) => {
+                  const d = r.simulato - r.attuale
+                  const risultato = r.key === 'ebitda' || r.key === 'utile' || r.key === 'cashflow'
+                  return (
+                    <tr key={r.key} className={`border-b border-ink-800 last:border-0 ${risultato ? 'bg-ink-900/60 font-medium' : ''}`}>
+                      <td className="px-5 py-2 text-ink-200">{r.label}</td>
+                      <td className="whitespace-nowrap px-5 py-2 text-right tabular-nums text-ink-400">{euro(r.attuale)}</td>
+                      <td className="whitespace-nowrap px-5 py-2 text-right tabular-nums text-ink-100">{euro(r.simulato)}</td>
+                      <td className={`whitespace-nowrap px-5 py-2 text-right tabular-nums ${d === 0 ? 'text-ink-500' : 'text-ink-200'}`}>
+                        {d === 0 ? '—' : `${d > 0 ? '+' : ''}${euro(d)}`}
+                      </td>
+                      <td className="px-5 py-2 text-xs text-ink-400">{r.nota}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            {/* Su schermo stretto: una riga per voce, la differenza in evidenza. */}
+            <ul className="divide-y divide-ink-800 @2xl:hidden">
               {righe.map((r) => {
                 const d = r.simulato - r.attuale
                 const risultato = r.key === 'ebitda' || r.key === 'utile' || r.key === 'cashflow'
                 return (
-                  <tr key={r.key} className={`border-b border-ink-800 last:border-0 ${risultato ? 'bg-ink-900/60 font-medium' : ''}`}>
-                    <td className="px-5 py-2 text-ink-200">{r.label}</td>
-                    <td className="whitespace-nowrap px-5 py-2 text-right tabular-nums text-ink-400">{euro(r.attuale)}</td>
-                    <td className="whitespace-nowrap px-5 py-2 text-right tabular-nums text-ink-100">{euro(r.simulato)}</td>
-                    <td className={`whitespace-nowrap px-5 py-2 text-right tabular-nums ${d === 0 ? 'text-ink-500' : 'text-ink-200'}`}>
-                      {d === 0 ? '—' : `${d > 0 ? '+' : ''}${euro(d)}`}
-                    </td>
-                    <td className="px-5 py-2 text-xs text-ink-400">{r.nota}</td>
-                  </tr>
+                  <li key={r.key} className={`px-4 py-2.5 ${risultato ? 'bg-ink-900/60' : ''}`}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className={`text-sm ${risultato ? 'font-medium text-ink-100' : 'text-ink-200'}`}>{r.label}</span>
+                      <span className="whitespace-nowrap text-sm tabular-nums text-ink-100">{euro(r.simulato)}</span>
+                    </div>
+                    <div className="mt-0.5 flex items-baseline justify-between gap-3 text-[11px]">
+                      <span className="text-ink-500">attuale {euro(r.attuale)}</span>
+                      <span className={`whitespace-nowrap tabular-nums ${d === 0 ? 'text-ink-500' : 'text-ink-200'}`}>
+                        {d === 0 ? '—' : `${d > 0 ? '+' : ''}${euro(d)}`}
+                      </span>
+                    </div>
+                    {r.nota && <p className="mt-0.5 text-[11px] text-ink-500">{r.nota}</p>}
+                  </li>
                 )
               })}
-            </tbody>
-          </table>
+            </ul>
+          </div>
         </Card>
 
         {(params.investimentoCents > 0 || nf) && (
           <Card title="Investimento e finanziamento">
-            <div className="grid grid-cols-4 gap-px bg-ink-700">
+            <div className="grid grid-cols-2 gap-px bg-ink-700 md:grid-cols-4">
               {[
                 { l: 'Rata mensile', v: nf ? euro(nf.rata, true) : '—' },
                 { l: 'Interessi totali', v: nf ? euro(nf.interessiTotali) : '—' },
@@ -696,6 +790,116 @@ export function SimulationView({
         </p>
         </Pannelli>
       </div>
+  )
+
+  // Il riassunto che resta in cima mentre si muovono le leve (telefono e schermi medi).
+  const riassunto = (
+    // In cima anche scorrendo: il margine negativo copre lo spazio interno della pagina.
+    <div className="sticky -top-4 z-20 -mx-3 -mt-4 mb-3 border-b border-ink-700 bg-ink-950/95 px-3 pt-3 pb-2 backdrop-blur md:-top-6 md:-mx-8 md:-mt-6 md:px-8 md:pt-4">
+      <div className="flex items-center gap-2">
+        <Segmentato
+          piccolo
+          valore={scheda}
+          onChange={setScheda}
+          className="shrink-0"
+          opzioni={[
+            { id: 'leve', label: 'Leve' },
+            { id: 'risultati', label: 'Risultati' }
+          ]}
+        />
+        {toccato && (
+          <button
+            type="button"
+            onClick={() => {
+              setParams(PARAMETRI_ZERO)
+              setPronto(null)
+            }}
+            className="ml-auto text-xs text-brand-300"
+          >
+            Ripristina
+          </button>
+        )}
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {[
+          { l: 'EBITDA', a: attuale.ebitda, v: simulato.ebitda },
+          { l: 'Utile', a: attuale.utile, v: simulato.utile },
+          { l: 'Cassa a 12 mesi', a: attuale.liquiditaFinale, v: simulato.liquiditaFinale }
+        ].map((x) => {
+          const d = x.v - x.a
+          return (
+            <div key={x.l} className="min-w-0 rounded-lg border border-ink-700 bg-ink-850 px-2.5 py-1.5">
+              <p className="truncate text-[10px] text-ink-400">{x.l}</p>
+              <p className="truncate text-sm font-semibold tabular-nums text-ink-100">{euro(x.v)}</p>
+              <p className={`truncate text-[10px] tabular-nums ${Math.abs(d) < 100 ? 'text-ink-500' : d > 0 ? 'text-positive' : 'text-negative'}`}>
+                {Math.abs(d) < 100 ? 'come ora' : `${d > 0 ? '▲' : '▼'} ${euro(Math.abs(d))}`}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+
+  if (!largo) {
+    return (
+      <div>
+        {riassunto}
+        {scheda === 'leve' ? colonnaLeve : risultati}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="grid items-start gap-5"
+      style={{ gridTemplateColumns: leveUi.aperte ? `${leveUi.larghezza}px minmax(0, 1fr)` : '2.5rem minmax(0, 1fr)' }}
+    >
+      {leveUi.aperte ? (
+        <div className="relative">
+          {colonnaLeve}
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setLeveUi((l) => ({ ...l, aperte: false }))}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-ink-400 hover:bg-ink-800 hover:text-ink-100"
+              title="Richiudi le leve: i risultati prendono tutta la larghezza"
+            >
+              <Icona nome="doppia-sinistra" className="h-3.5 w-3.5" /> Richiudi le leve
+            </button>
+          </div>
+          {/* Bordo da trascinare: leve più larghe o più strette (doppio clic: misura di partenza). */}
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Allarga o stringi la colonna delle leve"
+            title="Trascina per allargare o stringere le leve"
+            onPointerDown={(e) => {
+              if (e.button !== 0) return
+              e.preventDefault()
+              presa.current = { x: e.clientX, w: leveUi.larghezza }
+              setTrascinando(true)
+              document.body.style.cursor = 'col-resize'
+              document.body.style.userSelect = 'none'
+            }}
+            onDoubleClick={() => setLeveUi((l) => ({ ...l, larghezza: 340 }))}
+            className={`absolute inset-y-0 -right-3.5 w-2 cursor-col-resize rounded-full transition-colors ${
+              trascinando ? 'bg-brand-400/50' : 'hover:bg-brand-400/30'
+            }`}
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setLeveUi((l) => ({ ...l, aperte: true }))}
+          className="sticky top-0 flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-ink-700 bg-ink-850 text-xs text-ink-300 hover:border-brand-400/50 hover:text-brand-200"
+          title="Apri le leve dello scenario"
+        >
+          <Icona nome="doppia-destra" className="h-4 w-4" />
+          <span className="[writing-mode:vertical-rl]">Leve dello scenario</span>
+        </button>
+      )}
+      {risultati}
     </div>
   )
 }

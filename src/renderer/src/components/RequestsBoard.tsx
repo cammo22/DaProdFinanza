@@ -6,6 +6,8 @@ import { useImpostazioni } from '../lib/impostazioni'
 import { useAlCambioRichieste } from '../lib/inbox'
 import { Alert, Button, EmptyState } from './ui'
 import { NewRequestDialog } from './NewRequestDialog'
+import { Icona } from './icone'
+import { useAzione } from '../lib/comandi'
 import { quandoBreve, RequestDetail, StatoRichiesta } from './RequestDetail'
 import { UploadDialog } from './UploadDialog'
 
@@ -16,7 +18,7 @@ import { UploadDialog } from './UploadDialog'
  * vista dallo studio, e la casella dello studio con tutte le aziende.
  */
 
-const ICONA: Record<RequestKind, string> = { chiamata: '📞', domanda: '💬', documenti: '📎' }
+const ICONA = { chiamata: 'telefono', domanda: 'messaggio', documenti: 'graffetta' } as const satisfies Record<RequestKind, string>
 
 export function RequestsBoard({
   companyUuid,
@@ -35,6 +37,10 @@ export function RequestsBoard({
   const [scelta, setScelta] = useState<{ companyUuid: string; requestUuid: string } | null>(selezioneIniziale ?? null)
   const [nuova, setNuova] = useState<RequestKind | null>(null)
   const [documenti, setDocumenti] = useState(false)
+  // Dai comandi rapidi (Ctrl+K o il pulsante "Nuovo").
+  useAzione('nuova-richiesta', () => setNuova(studio ? 'documenti' : 'domanda'), Boolean(companyUuid))
+  useAzione('nuova-chiamata', () => setNuova('chiamata'), Boolean(companyUuid) && !studio)
+  useAzione('nuova-domanda', () => setNuova('domanda'), Boolean(companyUuid))
 
   useEffect(() => {
     if (selezioneIniziale) setScelta(selezioneIniziale)
@@ -88,17 +94,17 @@ export function RequestsBoard({
               <>
                 {permessi?.richiedereChiamate && (
                   <Button variant="primary" className="px-3 py-1.5 text-xs" onClick={() => setNuova('chiamata')}>
-                    📞 Chiedi una chiamata
+                    <Icona nome="telefono" className="h-3.5 w-3.5" /> Chiedi una chiamata
                   </Button>
                 )}
                 {permessi?.scrivereMessaggi && (
                   <Button className="px-3 py-1.5 text-xs" onClick={() => setNuova('domanda')}>
-                    💬 Scrivi una domanda
+                    <Icona nome="messaggio" className="h-3.5 w-3.5" /> Scrivi una domanda
                   </Button>
                 )}
                 {permessi?.inviareDocumenti && (
                   <Button className="px-3 py-1.5 text-xs" onClick={() => setDocumenti(true)}>
-                    📎 Manda documenti
+                    <Icona nome="graffetta" className="h-3.5 w-3.5" /> Manda documenti
                   </Button>
                 )}
               </>
@@ -147,7 +153,9 @@ export function RequestsBoard({
                       onClick={() => setScelta({ companyUuid: r.company_uuid, requestUuid: r.uuid })}
                       className={`flex w-full items-start gap-3 px-4 py-3 text-left ${attiva ? 'bg-brand-500/10' : 'hover:bg-ink-800/60'}`}
                     >
-                      <span className="mt-0.5 text-base">{ICONA[r.kind]}</span>
+                      <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${r.kind === 'chiamata' ? 'bg-brand-500/15 text-brand-300' : 'bg-ink-800 text-ink-300'}`}>
+                        <Icona nome={ICONA[r.kind]} className="h-3.5 w-3.5" />
+                      </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
                           {nonLetta(r) && <span className="h-2 w-2 shrink-0 rounded-full bg-brand-400" aria-label="novità" />}
