@@ -218,7 +218,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
         ? [
             { id: 'analisi', titolo: 'Analisi', icona: 'grafico', voci: GRUPPI_CONSULENTE[0]!.voci },
             { id: 'cassa', titolo: 'Cassa', icona: 'cassa', voci: ['tesoreria', 'banche'] },
-            { id: 'piani', titolo: 'Piani', icona: 'andamento', voci: ['simulazioni', 'personale'] },
+            { id: 'piani', titolo: 'Piani', icona: 'andamento', voci: ['simulazioni', 'personale', 'fiscale'] },
             {
               id: 'lavoro',
               titolo: 'Lavoro',

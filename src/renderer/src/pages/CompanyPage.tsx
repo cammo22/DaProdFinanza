@@ -25,6 +25,7 @@ const CompanySettingsView = lazy(() =>
   import('./business/CompanySettingsView').then((m) => ({ default: m.CompanySettingsView }))
 )
 const DocumentsView = lazy(() => import('./business/DocumentsView').then((m) => ({ default: m.DocumentsView })))
+const FiscaleView = lazy(() => import('./business/FiscaleView').then((m) => ({ default: m.FiscaleView })))
 const PersonaleView = lazy(() => import('./business/PersonaleView').then((m) => ({ default: m.PersonaleView })))
 const TreasuryView = lazy(() => import('./business/TreasuryView').then((m) => ({ default: m.TreasuryView })))
 import { ActivitiesView } from './business/ActivitiesView'
@@ -64,7 +65,8 @@ const SENZA_PERIODO: Vista[] = [
   'riepilogo',
   'documenti',
   'richieste',
-  'personale'
+  'personale',
+  'fiscale'
 ]
 
 /** Viste senza pannelli spostabili: il menu "Pannelli" non ha niente da fare. */
@@ -513,6 +515,8 @@ export function CompanyPage({
         {vista === 'riepilogo' && <CompanyHome company={company} onVista={onVista} />}
 
         {vista === 'personale' && <PersonaleView company={company} canEdit={canImport} />}
+
+        {vista === 'fiscale' && <FiscaleView company={company} canEdit={canImport} />}
 
         {vista === 'documenti' && <DocumentsView company={company} />}
 

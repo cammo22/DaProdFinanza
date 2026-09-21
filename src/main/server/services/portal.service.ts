@@ -7,7 +7,8 @@ import { getCompany } from './companies.service'
 import { newForCompany } from './documents.service'
 import { descriviStato, listRequests } from './requests.service'
 import { getAppSettings, getPortalSettings } from './settings.service'
-import { treasuryView } from './treasury.service'
+import { todayLocal, treasuryView } from './treasury.service'
+import { fiscaleCalcolo } from './fiscale.service'
 
 /**
  * Il riepilogo dell'azienda — la prima pagina che vede chi entra con
@@ -38,6 +39,12 @@ export interface CompanySummary {
     ebitda: number
     utile: number
     ytd: { label: string; ricavi: number; utile: number } | null
+  } | null
+  /** Area fiscale (se condivisa): quanto mettere da parte e la prossima scadenza. */
+  fiscale: {
+    accantonamentoMensile: number
+    totaleAnno: number
+    prossima: { data: string; descrizione: string; importo: number } | null
   } | null
   richieste: (RequestItem & { descrizione: string })[]
   documentiNuovi: DocumentItem[]
@@ -89,6 +96,19 @@ export function companySummary(companyUuid: string): CompanySummary {
     }
   }
 
+  let fiscale: CompanySummary['fiscale'] = null
+  if (vede('fiscale')) {
+    const f = fiscaleCalcolo(companyUuid, todayLocal())
+    if (f.stima) {
+      const p = f.scadenze[0]
+      fiscale = {
+        accantonamentoMensile: f.stima.accantonamentoMensile,
+        totaleAnno: f.stima.totale,
+        prossima: p ? { data: p.data, descrizione: p.descrizione, importo: p.importo } : null
+      }
+    }
+  }
+
   const consulenti = getDatabase()
     .prepare(
       `SELECT full_name AS name, phone, email FROM users
@@ -105,6 +125,7 @@ export function companySummary(companyUuid: string): CompanySummary {
     liquidita,
     scadenze,
     periodo,
+    fiscale,
     richieste: permessi.richieste
       ? listRequests(companyUuid)
           .slice(0, 6)

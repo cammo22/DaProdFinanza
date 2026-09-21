@@ -34,6 +34,7 @@ export type Vista =
   | 'banche'
   | 'simulazioni'
   | 'personale'
+  | 'fiscale'
   | 'dati'
   | 'attivita'
   | 'impostazioni-azienda'
@@ -147,6 +148,13 @@ export const V: Record<Exclude<Vista, 'anagrafica' | 'impostazioni' | 'profilo' 
     icona: <Icona nome="utenti" className="h-full w-full" />,
     modulo: 'personale'
   },
+  fiscale: {
+    id: 'fiscale',
+    label: 'Area fiscale e contributi',
+    breve: 'Fiscale',
+    icona: <Icona nome="euro" className="h-full w-full" />,
+    modulo: 'fiscale'
+  },
   attivita: {
     id: 'attivita',
     label: 'Attività e Tempi',
@@ -173,7 +181,7 @@ export const GRUPPI_CONSULENTE: { titolo: string; voci: Vista[] }[] = [
   { titolo: 'Analisi', voci: ['panoramica', 'conto-economico', 'stato-patrimoniale', 'capitale-circolante'] },
   { titolo: 'Cassa e banche', voci: ['tesoreria', 'banche'] },
   { titolo: 'Pianificazione', voci: ['simulazioni'] },
-  { titolo: 'Costi e margini', voci: ['personale'] },
+  { titolo: 'Costi, margini e tasse', voci: ['personale', 'fiscale'] },
   { titolo: "Lavoro con l'azienda", voci: ['documenti', 'richieste', 'attivita'] },
   { titolo: 'Dati e impostazioni', voci: ['dati', 'impostazioni-azienda'] }
 ]
@@ -187,7 +195,8 @@ export const VISTE_AZIENDA_ORDINE: Extract<VistaCondivisibile, Vista>[] = [
   'tesoreria',
   'banche',
   'simulazioni',
-  'personale'
+  'personale',
+  'fiscale'
 ]
 
 export function voceDi(v: Vista): Voce {
