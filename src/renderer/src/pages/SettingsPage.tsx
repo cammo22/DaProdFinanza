@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import {
+  ACCENTI,
+  ACCENTO_LABELS,
   BACKUP_MAX,
   BACKUP_MIN,
   MODULI,
   MODULO_INFO,
+  type Accento,
   type AppSettings,
   type Tema,
   type UserSettings
@@ -12,7 +15,7 @@ import type { Profile, UserListItem } from '@shared/types'
 import { api } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { useImpostazioni } from '../lib/impostazioni'
-import { Alert, Button, Card, Field, Interruttore, Modal, Schede, Select, TextInput } from '../components/ui'
+import { Alert, Button, Card, Field, Interruttore, Modal, Schede, Segmentato, Select, TextInput } from '../components/ui'
 import { CREDITI_OPEN_SOURCE } from '../lib/open-source'
 
 /**
@@ -46,7 +49,7 @@ export function SettingsPage({ soloProfilo = false }: { soloProfilo?: boolean })
         <h1 className="text-lg font-semibold text-ink-100">{soloProfilo ? 'Profilo' : 'Impostazioni'}</h1>
         <p className="mt-0.5 mb-3 text-xs text-ink-400">
           {soloProfilo
-            ? 'I tuoi recapiti, la password e il tema.'
+            ? 'I tuoi recapiti, la password, il tema e il colore.'
             : 'Si salvano da sole a ogni modifica e valgono per chiunque entri da questo computer.'}
         </p>
         <Schede schede={schede} attiva={scheda} onChange={setScheda} />
@@ -99,24 +102,56 @@ const TEMI: { id: Tema; label: string }[] = [
   { id: 'sistema', label: 'Come il sistema' }
 ]
 
-function SceltaTema({ utente, onSalva }: { utente: UserSettings; onSalva: (t: Tema) => void }): React.JSX.Element {
+/** I colori d'accento come si vedono: un pallino per scelta. */
+const CAMPIONI: Record<Accento, string> = {
+  blu: '#3b82f6',
+  turchese: '#0d9488',
+  viola: '#7c3aed',
+  indaco: '#4f46e5'
+}
+
+function SceltaTema({
+  utente,
+  onSalva
+}: {
+  utente: UserSettings
+  onSalva: (p: Partial<UserSettings>) => void
+}): React.JSX.Element {
   return (
-    <div className="py-3">
-      <p className="text-sm text-ink-100">Tema</p>
-      <p className="mt-0.5 text-xs text-ink-400">Vale per il tuo accesso, anche sugli altri computer dello studio.</p>
-      <div className="mt-2 inline-flex overflow-hidden rounded-lg border border-ink-700">
-        {TEMI.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => onSalva(t.id)}
-            className={`px-4 py-1.5 text-sm ${
-              utente.tema === t.id ? 'bg-brand-500 text-white' : 'bg-ink-800 text-ink-300 hover:bg-ink-700'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="flex flex-col gap-4 py-3">
+      <div>
+        <p className="text-sm text-ink-100">Tema</p>
+        <p className="mt-0.5 text-xs text-ink-400">Vale per il tuo accesso, anche sugli altri computer dello studio.</p>
+        <Segmentato
+          className="mt-2"
+          valore={utente.tema}
+          onChange={(tema) => onSalva({ tema })}
+          opzioni={TEMI.map((t) => ({ id: t.id, label: t.label }))}
+        />
+      </div>
+      <div>
+        <p className="text-sm text-ink-100">Colore d'accento</p>
+        <p className="mt-0.5 text-xs text-ink-400">Pulsanti, evidenze e sezione aperta nel menu.</p>
+        <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Colore d'accento">
+          {ACCENTI.map((a) => (
+            <button
+              key={a}
+              type="button"
+              role="radio"
+              aria-checked={utente.accento === a}
+              onClick={() => onSalva({ accento: a })}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${
+                utente.accento === a ? 'border-ink-400 bg-ink-800 text-ink-100' : 'border-ink-700 text-ink-300 hover:bg-ink-800'
+              }`}
+            >
+              <span
+                className={`h-4 w-4 rounded-full ring-offset-2 ring-offset-ink-850 ${utente.accento === a ? 'ring-2 ring-ink-200' : ''}`}
+                style={{ background: CAMPIONI[a] }}
+              />
+              {ACCENTO_LABELS[a]}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -136,7 +171,7 @@ function Generale(): React.JSX.Element {
       <Esito stato={stato} errore={errore} />
       <Card title="Aspetto e avvisi">
         <div className="divide-y divide-ink-800 px-5">
-          <SceltaTema utente={utente} onSalva={(tema) => cambiaUtente({ tema })} />
+          <SceltaTema utente={utente} onSalva={cambiaUtente} />
           <Interruttore
             label="Avvisi sul desktop"
             descrizione="Un avviso di sistema quando un'azienda manda una richiesta o risponde."
@@ -614,7 +649,7 @@ function MioProfilo(): React.JSX.Element {
 
       <Card title="Aspetto">
         <div className="px-5">
-          <SceltaTema utente={utente} onSalva={(tema) => void esegui(() => salvaUtente({ tema }))} />
+          <SceltaTema utente={utente} onSalva={(p) => void esegui(() => salvaUtente(p))} />
         </div>
       </Card>
     </>

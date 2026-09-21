@@ -52,7 +52,7 @@ export function Tendina({
   const chiudi = (): void => setAperto(false)
   const ref = useChiusura(aperto, chiudi)
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative min-w-0">
       <button type="button" className={classeBottone} onClick={() => setAperto((a) => !a)} title={titolo} aria-expanded={aperto}>
         {etichetta}
       </button>
@@ -283,7 +283,7 @@ export function SceltaAzienda({
   const nome = corrente?.name ?? titolo
   // L'azienda vede solo la sua: niente menu.
   if (!consulente) {
-    return <span className="min-w-0 truncate text-sm font-semibold text-ink-100">{nome}</span>
+    return <span className="min-w-0 truncate px-1 text-sm font-semibold text-ink-100">{nome}</span>
   }
   const altre = recenti.filter((a) => a.uuid !== corrente?.uuid)
   return (
@@ -291,7 +291,7 @@ export function SceltaAzienda({
       destra={false}
       larghezza="w-80"
       titolo="Cambia azienda"
-      classeBottone="flex min-w-0 max-w-[55vw] items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-ink-800 md:max-w-xs"
+      classeBottone="flex min-w-0 max-w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-ink-800 md:max-w-xs"
       etichetta={
         <>
           {corrente && (

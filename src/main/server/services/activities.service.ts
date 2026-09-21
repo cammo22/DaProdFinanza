@@ -307,6 +307,50 @@ export function addTimeEntry(
   return getEntry(companyUuid, uuid)
 }
 
+/**
+ * Corregge una voce già registrata: attività, descrizione, giorno, durata,
+ * fatturabile. Quella del timer ancora acceso non si tocca: prima si ferma.
+ */
+export function updateTimeEntry(
+  companyUuid: string,
+  uuid: string,
+  input: {
+    task_uuid?: unknown
+    description?: unknown
+    work_date?: unknown
+    minutes?: unknown
+    billable?: unknown
+  }
+): TimeEntry {
+  const voce = getEntry(companyUuid, uuid)
+  if (voce.started_at && !voce.ended_at) {
+    throw new HttpError(409, 'Il timer sta ancora contando su questa voce: fermalo prima di correggerla.')
+  }
+  let taskUuid = voce.task_uuid
+  if (input.task_uuid !== undefined) {
+    taskUuid = typeof input.task_uuid === 'string' && input.task_uuid ? input.task_uuid : null
+    if (taskUuid) getTask(companyUuid, taskUuid)
+  }
+  const workDate = input.work_date !== undefined ? (data(input.work_date, 'Giorno') ?? voce.work_date) : voce.work_date
+  let minutes = voce.minutes
+  if (input.minutes !== undefined) {
+    minutes = minuti(input.minutes, 'Durata')
+    if (!minutes) throw new HttpError(400, 'Quanto tempo? Scrivi la durata in ore e minuti.')
+    if (minutes > MINUTI_MAX_VOCE) throw new HttpError(400, 'Una voce non può superare le 24 ore.')
+  }
+  const description =
+    input.description !== undefined ? testo(input.description, 'Descrizione', 300) : voce.description
+  const billable = input.billable !== undefined ? (input.billable === false ? 0 : 1) : voce.billable
+  getDatabase()
+    .prepare(
+      `UPDATE time_entries SET task_uuid = ?, description = ?, work_date = ?, minutes = ?, billable = ?,
+              updated_at = ?, synced = 0
+        WHERE uuid = ?`
+    )
+    .run(taskUuid, description, workDate, minutes, billable, nowIso(), uuid)
+  return getEntry(companyUuid, uuid)
+}
+
 export function deleteTimeEntry(companyUuid: string, uuid: string): { uuid: string } {
   getEntry(companyUuid, uuid)
   getDatabase()

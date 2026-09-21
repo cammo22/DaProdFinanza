@@ -138,7 +138,7 @@ export function RoleGate({
               : 'text-ink-400 underline-offset-4 hover:text-ink-200 hover:underline'
           }
         >
-          {nuova ? `⬆ Nuova versione ${updates?.latest}` : 'Cerca aggiornamenti'}
+          {nuova ? `Nuova versione ${updates?.latest}` : 'Cerca aggiornamenti'}
         </button>
       </div>
       {showUpdates && updates && <UpdateDialog state={updates} onClose={() => setShowUpdates(false)} />}

@@ -9,7 +9,8 @@ import {
   saveTask,
   setHourlyRate,
   startTimer,
-  stopTimer
+  stopTimer,
+  updateTimeEntry
 } from '../services/activities.service'
 
 /**
@@ -52,6 +53,10 @@ activitiesRouter.delete('/tasks/:id', soloConsulente, (req, res) => {
 
 activitiesRouter.post('/time-entries', soloConsulente, (req, res) => {
   res.status(201).json(addTimeEntry(param(req, 'uuid'), req.body ?? {}))
+})
+
+activitiesRouter.put('/time-entries/:id', soloConsulente, (req, res) => {
+  res.json(updateTimeEntry(param(req, 'uuid'), param(req, 'id'), req.body ?? {}))
 })
 
 activitiesRouter.delete('/time-entries/:id', soloConsulente, (req, res) => {

@@ -55,7 +55,7 @@ export function TimerBar({ onApri }: { onApri: (companyUuid: string) => void }):
   const tempo = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-brand-500/40 bg-brand-500/10 py-0.5 pl-2.5 pr-1 text-xs">
+    <div className="flex min-w-0 shrink items-center gap-1.5 rounded-lg border border-brand-500/40 bg-brand-500/10 py-0.5 pr-0.5 pl-2 text-xs md:gap-2 md:pl-2.5">
       <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-brand-400" />
       <button
         type="button"

@@ -11,11 +11,13 @@ import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { useImpostazioni } from '../../lib/impostazioni'
 import { segnalaAzione, useAlCambioRichieste } from '../../lib/inbox'
-import { Alert, Button, Card, EmptyState, Field, Interruttore, Modal, Select, TextInput } from '../../components/ui'
+import { Alert, Button, Card, EmptyState, Field, Interruttore, Modal, Scheletro, Select, TextInput } from '../../components/ui'
 import { UploadDialog } from '../../components/UploadDialog'
 import { useAzione } from '../../lib/comandi'
 import { DocumentViewer } from '../../components/viewer/DocumentViewer'
 import { quandoBreve } from '../../components/RequestDetail'
+import { Separatore, Tendina, VoceMenu } from '../../components/Guscio'
+import { Icona } from '../../components/icone'
 
 /**
  * Il cassetto documenti di un'azienda — AGENTS.md §10.13.
@@ -25,20 +27,31 @@ import { quandoBreve } from '../../components/RequestDetail'
  * sa, per ognuno di quelli che ha mandato, se e quando lo studio l'ha aperto.
  */
 
-const ICONE: Record<string, string> = {
-  pdf: '📕',
-  foglio: '📗',
-  word: '📘',
-  presentazione: '📙',
-  immagine: '🖼',
-  testo: '📄',
-  audio: '🎧',
-  video: '🎬'
+/** Il colore del tipo di file, come le icone di Office: si riconosce a colpo d'occhio. */
+const COLORI_TIPO: Record<string, string> = {
+  pdf: 'bg-red-500/15 text-red-300 border-red-500/30',
+  foglio: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  word: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+  presentazione: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
+  immagine: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
+  testo: 'bg-ink-700 text-ink-200 border-ink-600',
+  audio: 'bg-pink-500/15 text-pink-300 border-pink-500/30',
+  video: 'bg-pink-500/15 text-pink-300 border-pink-500/30'
 }
 
-function icona(nome: string): string {
+export function BadgeFile({ nome }: { nome: string }): React.JSX.Element {
   const t = tipoAnteprima(nome)
-  return t ? ICONE[t] : '📦'
+  const ext = (estensione(nome) || '?').slice(0, 4).toUpperCase()
+  return (
+    <span
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border font-mono text-[9px] font-bold tracking-tight ${
+        t ? COLORI_TIPO[t] : 'border-ink-600 bg-ink-800 text-ink-300'
+      }`}
+      aria-hidden="true"
+    >
+      {ext}
+    </span>
+  )
 }
 
 export function DocumentsView({ company }: { company: Company }): React.JSX.Element {
@@ -141,14 +154,15 @@ export function DocumentsView({ company }: { company: Company }): React.JSX.Elem
         </div>
         {puoInviare && (
           <Button variant="primary" onClick={() => setCarica([])}>
-            {studio ? '+ Carica file' : 'Manda documenti allo studio'}
+            <Icona nome="carica" className="h-4 w-4" />
+            {studio ? 'Carica file' : 'Manda documenti allo studio'}
           </Button>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <TextInput value={cerca} onChange={(e) => setCerca(e.target.value)} placeholder="Cerca per nome…" className="w-full md:w-64" />
-        <Select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="w-auto">
+      <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+        <TextInput value={cerca} onChange={(e) => setCerca(e.target.value)} placeholder="Cerca per nome…" className="col-span-2 md:w-64" />
+        <Select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="md:w-auto">
           <option value="">Tutte le categorie</option>
           {categorie.map((c) => (
             <option key={c} value={c}>
@@ -156,7 +170,7 @@ export function DocumentsView({ company }: { company: Company }): React.JSX.Elem
             </option>
           ))}
         </Select>
-        <Select value={origine} onChange={(e) => setOrigine(e.target.value as typeof origine)} className="w-auto">
+        <Select value={origine} onChange={(e) => setOrigine(e.target.value as typeof origine)} className="md:w-auto">
           <option value="">Da tutti</option>
           <option value="azienda">{studio ? 'Mandati dall’azienda' : 'Mandati da me'}</option>
           <option value="studio">Dallo studio</option>
@@ -166,7 +180,17 @@ export function DocumentsView({ company }: { company: Company }): React.JSX.Elem
 
       <Card>
         {documenti === null ? (
-          <p className="px-5 py-6 text-sm text-ink-400">Caricamento…</p>
+          <div className="flex flex-col gap-3 p-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Scheletro className="h-9 w-9" />
+                <div className="flex-1">
+                  <Scheletro className="h-3.5 w-1/2" />
+                  <Scheletro className="mt-2 h-3 w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : filtrati.length === 0 ? (
           <EmptyState
             title={documenti.length ? 'Nessun documento per questa ricerca' : 'Il cassetto è vuoto'}
@@ -181,44 +205,65 @@ export function DocumentsView({ company }: { company: Company }): React.JSX.Elem
         ) : (
           <ul className="divide-y divide-ink-800">
             {filtrati.map((d) => (
-              <li key={d.uuid} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-ink-800/40">
-                <button type="button" onClick={() => setAperto(d)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                  <span className="text-xl" aria-hidden="true">
-                    {icona(d.name)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium text-ink-100">{d.name}</span>
-                      {nuovo(d) && <span className="shrink-0 rounded bg-warning/15 px-1.5 text-[10px] font-semibold text-warning">NUOVO</span>}
-                      {!d.shared && <span className="shrink-0 rounded bg-ink-700 px-1.5 text-[10px] text-ink-300">solo studio</span>}
-                    </span>
-                    <span className="block truncate text-xs text-ink-400">
-                      {d.category} · {dimensione(d.size_bytes)} · {d.uploaded_by_role === 'company' ? '↑' : '↓'} {d.uploaded_by_name},{' '}
-                      {quandoBreve(d.created_at)}
-                      {d.note ? ` · ${d.note}` : ''}
-                    </span>
-                  </span>
-                </button>
-                {d.uploaded_by_role === 'company' && (
-                  <span className={`shrink-0 text-[11px] ${d.opened_by_studio_at ? 'text-positive' : 'text-ink-400'}`}>
-                    {d.opened_by_studio_at ? `✓ aperto dallo studio ${quandoBreve(d.opened_by_studio_at)}` : 'non ancora aperto dallo studio'}
-                  </span>
-                )}
-                <div className="flex shrink-0 gap-1.5">
-                  <Button className="px-2.5 py-1 text-xs" onClick={() => setAperto(d)}>
-                    Apri
-                  </Button>
-                  {(studio || d.uploaded_by_role === 'company') && (
-                    <Button className="px-2.5 py-1 text-xs" onClick={() => setModifica(d)}>
-                      Modifica
-                    </Button>
-                  )}
-                  {(studio || (d.uploaded_by_role === 'company' && !d.opened_by_studio_at)) && (
-                    <Button variant="danger" className="px-2.5 py-1 text-xs" onClick={() => void elimina(d)}>
-                      Togli
-                    </Button>
+              <li
+                key={d.uuid}
+                className="group flex cursor-pointer items-center gap-3 px-3 py-3 hover:bg-ink-800/40 md:px-4"
+                onClick={(e) => {
+                  // I pulsanti fanno la loro cosa; il resto della riga apre il file.
+                  if (!(e.target as HTMLElement).closest('button')) setAperto(d)
+                }}
+              >
+                <BadgeFile nome={d.name} />
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-ink-100 group-hover:text-brand-200">{d.name}</span>
+                    {nuovo(d) && <span className="shrink-0 rounded bg-warning/15 px-1.5 text-[10px] font-semibold text-warning">NUOVO</span>}
+                    {!d.shared && <span className="shrink-0 rounded bg-ink-700 px-1.5 text-[10px] text-ink-300">solo studio</span>}
+                  </p>
+                  <p className="truncate text-xs text-ink-400">
+                    {d.category} · {dimensione(d.size_bytes)} · {d.uploaded_by_role === 'company' ? '↑' : '↓'} {d.uploaded_by_name},{' '}
+                    {quandoBreve(d.created_at)}
+                    {d.note ? ` · ${d.note}` : ''}
+                  </p>
+                  {d.uploaded_by_role === 'company' && (
+                    <p className={`mt-0.5 flex items-center gap-1 text-[11px] ${d.opened_by_studio_at ? 'text-positive' : 'text-ink-500'}`}>
+                      {d.opened_by_studio_at && <Icona nome="spunta" className="h-3 w-3" />}
+                      {d.opened_by_studio_at ? `aperto dallo studio ${quandoBreve(d.opened_by_studio_at)}` : 'non ancora aperto dallo studio'}
+                    </p>
                   )}
                 </div>
+                <Button className="shrink-0 px-2.5 py-1 text-xs max-sm:hidden" onClick={() => setAperto(d)}>
+                  Apri
+                </Button>
+                {(studio || d.uploaded_by_role === 'company') && (
+                  <Tendina
+                    titolo="Altre azioni sul file"
+                    larghezza="w-52"
+                    classeBottone="rounded-lg border border-ink-700 bg-ink-800 p-1.5 text-ink-300 hover:bg-ink-700"
+                    etichetta={<Icona nome="altro" className="h-4 w-4" />}
+                  >
+                    {(chiudi) => (
+                      <>
+                        <VoceMenu icona="occhio" onClick={() => { chiudi(); setAperto(d) }}>
+                          Apri
+                        </VoceMenu>
+                        {(studio || d.uploaded_by_role === 'company') && (
+                          <VoceMenu icona="matita" onClick={() => { chiudi(); setModifica(d) }}>
+                            Nome, categoria, nota
+                          </VoceMenu>
+                        )}
+                        {(studio || (d.uploaded_by_role === 'company' && !d.opened_by_studio_at)) && (
+                          <>
+                            <Separatore />
+                            <VoceMenu icona="cestino" pericolo onClick={() => { chiudi(); void elimina(d) }}>
+                              Togli dal cassetto
+                            </VoceMenu>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Tendina>
+                )}
               </li>
             ))}
           </ul>

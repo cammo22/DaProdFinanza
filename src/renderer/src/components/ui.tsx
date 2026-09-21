@@ -219,7 +219,7 @@ export function Schede<T extends string>({
           role="tab"
           aria-selected={attiva === s.id}
           onClick={() => onChange(s.id)}
-          className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm transition-colors ${
+          className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-2 text-sm transition-colors ${
             attiva === s.id
               ? 'border-brand-400 font-medium text-brand-300'
               : 'border-transparent text-ink-300 hover:text-ink-100'

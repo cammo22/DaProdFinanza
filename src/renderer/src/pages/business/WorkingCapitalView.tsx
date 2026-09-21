@@ -169,7 +169,7 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
         ]}
       />
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {CARD.map((c) => {
           const valore = current[c.key] as number
           const prima = previousYearEnd ? (previousYearEnd.snapshot[c.key] as number) : null
@@ -212,62 +212,64 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
       </Card>
 
       <Card title="Ciclo del circolante">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-ink-700 text-xs text-ink-400">
-              <th className="px-5 py-2.5 text-left font-medium">Indicatore</th>
-              <th className="px-5 py-2.5 text-right font-medium">{vista.period.label}</th>
-              <th className="px-5 py-2.5 text-right font-medium">
-                {previousYear?.label ?? 'Anno precedente'}
-              </th>
-              <th className="px-5 py-2.5 text-right font-medium">Variazione</th>
-              <th className="px-5 py-2.5 text-right font-medium">Var. %</th>
-              <th className="px-5 py-2.5 text-right font-medium">Ultimi 12 mesi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {INDICI.map((i) => {
-              const ora = current[i.key]
-              const prima = previousYear?.snapshot[i.key] ?? null
-              return (
-                <tr key={i.key} className="border-b border-ink-800 last:border-0">
-                  <td className="px-5 py-3">
-                    <p className="font-medium text-ink-100">
-                      <span className="mr-2 font-mono text-xs" style={{ color: i.colore }}>
-                        {i.sigla}
-                      </span>
-                      {i.nome}
-                    </p>
-                    <p className="mt-0.5 text-xs text-ink-500">{i.definizione}</p>
-                  </td>
-                  <td className="px-5 py-3 text-right font-semibold tabular-nums text-ink-100">
-                    {days(ora)}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums text-ink-300">{days(prima)}</td>
-                  <td className="px-5 py-3 text-right">
-                    <Variazione valore={delta(ora, prima)} suffisso="giorni" altoEBuono={i.altoEBuono} />
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <Variazione
-                      valore={deltaPercent(ora, prima)}
-                      suffisso="percento"
-                      altoEBuono={i.altoEBuono}
-                    />
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex justify-end">
-                      {ultimi12.length > 1 ? (
-                        <Sparkline valori={ultimi12.map((p) => p[i.key])} colore={i.colore} />
-                      ) : (
-                        <span className="text-xs text-ink-500">—</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-ink-700 text-xs text-ink-400">
+                <th className="px-5 py-2.5 text-left font-medium">Indicatore</th>
+                <th className="px-5 py-2.5 text-right font-medium">{vista.period.label}</th>
+                <th className="px-5 py-2.5 text-right font-medium">
+                  {previousYear?.label ?? 'Anno precedente'}
+                </th>
+                <th className="px-5 py-2.5 text-right font-medium">Variazione</th>
+                <th className="px-5 py-2.5 text-right font-medium">Var. %</th>
+                <th className="px-5 py-2.5 text-right font-medium">Ultimi 12 mesi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {INDICI.map((i) => {
+                const ora = current[i.key]
+                const prima = previousYear?.snapshot[i.key] ?? null
+                return (
+                  <tr key={i.key} className="border-b border-ink-800 last:border-0">
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-ink-100">
+                        <span className="mr-2 font-mono text-xs" style={{ color: i.colore }}>
+                          {i.sigla}
+                        </span>
+                        {i.nome}
+                      </p>
+                      <p className="mt-0.5 text-xs text-ink-500">{i.definizione}</p>
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold tabular-nums text-ink-100">
+                      {days(ora)}
+                    </td>
+                    <td className="px-5 py-3 text-right tabular-nums text-ink-300">{days(prima)}</td>
+                    <td className="px-5 py-3 text-right">
+                      <Variazione valore={delta(ora, prima)} suffisso="giorni" altoEBuono={i.altoEBuono} />
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <Variazione
+                        valore={deltaPercent(ora, prima)}
+                        suffisso="percento"
+                        altoEBuono={i.altoEBuono}
+                      />
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex justify-end">
+                        {ultimi12.length > 1 ? (
+                          <Sparkline valori={ultimi12.map((p) => p[i.key])} colore={i.colore} />
+                        ) : (
+                          <span className="text-xs text-ink-500">—</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {series.length > 1 ? (
@@ -292,81 +294,83 @@ export function WorkingCapitalView({ vista }: { vista: Vista }): React.JSX.Eleme
       )}
 
       <Card title="Componenti del capitale circolante">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-ink-700 text-xs text-ink-400">
-              <th className="px-5 py-2.5 text-left font-medium">Voce</th>
-              <th className="px-5 py-2.5 text-right font-medium">{vista.period.label}</th>
-              <th className="px-5 py-2.5 text-right font-medium">
-                {previousYear?.label ?? 'Anno precedente'}
-              </th>
-              <th className="px-5 py-2.5 text-right font-medium">Variazione</th>
-              <th className="px-5 py-2.5 text-right font-medium">Var. %</th>
-              <th className="px-5 py-2.5 text-left font-medium">Nota</th>
-            </tr>
-          </thead>
-          <tbody>
-            {COMPONENTI.map((c) => {
-              const ora = current[c.key] as number
-              const prima = previousYear ? (previousYear.snapshot[c.key] as number) : null
-              const nota = notaDi(c.key)
-              return (
-                <tr key={c.key} className="border-b border-ink-800">
-                  <td className="px-5 py-2.5 text-ink-200">
-                    {c.segno < 0 && <span className="mr-1 text-ink-500">−</span>}
-                    {c.label}
-                  </td>
-                  <td className="px-5 py-2.5 text-right tabular-nums text-ink-100">{euro(ora)}</td>
-                  <td className="px-5 py-2.5 text-right tabular-nums text-ink-300">{euro(prima)}</td>
-                  <td className="px-5 py-2.5 text-right">
-                    <Variazione valore={delta(ora, prima)} suffisso="euro" altoEBuono={null} />
-                  </td>
-                  <td className="px-5 py-2.5 text-right">
-                    <Variazione valore={deltaPercent(ora, prima)} suffisso="percento" altoEBuono={null} />
-                  </td>
-                  <td className="max-w-xs px-5 py-2.5 text-xs text-ink-400">
-                    {nota ? motivo(nota.text) : ''}
-                    {c.key === 'creditiCommerciali' && aging.overdueCents > 0 && (
-                      <span className="block text-negative">
-                        Scaduti oltre 60 gg: {euro(aging.overdueCents)}
-                      </span>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-ink-700 text-xs text-ink-400">
+                <th className="px-5 py-2.5 text-left font-medium">Voce</th>
+                <th className="px-5 py-2.5 text-right font-medium">{vista.period.label}</th>
+                <th className="px-5 py-2.5 text-right font-medium">
+                  {previousYear?.label ?? 'Anno precedente'}
+                </th>
+                <th className="px-5 py-2.5 text-right font-medium">Variazione</th>
+                <th className="px-5 py-2.5 text-right font-medium">Var. %</th>
+                <th className="px-5 py-2.5 text-left font-medium">Nota</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPONENTI.map((c) => {
+                const ora = current[c.key] as number
+                const prima = previousYear ? (previousYear.snapshot[c.key] as number) : null
+                const nota = notaDi(c.key)
+                return (
+                  <tr key={c.key} className="border-b border-ink-800">
+                    <td className="px-5 py-2.5 text-ink-200">
+                      {c.segno < 0 && <span className="mr-1 text-ink-500">−</span>}
+                      {c.label}
+                    </td>
+                    <td className="px-5 py-2.5 text-right tabular-nums text-ink-100">{euro(ora)}</td>
+                    <td className="px-5 py-2.5 text-right tabular-nums text-ink-300">{euro(prima)}</td>
+                    <td className="px-5 py-2.5 text-right">
+                      <Variazione valore={delta(ora, prima)} suffisso="euro" altoEBuono={null} />
+                    </td>
+                    <td className="px-5 py-2.5 text-right">
+                      <Variazione valore={deltaPercent(ora, prima)} suffisso="percento" altoEBuono={null} />
+                    </td>
+                    <td className="max-w-xs px-5 py-2.5 text-xs text-ink-400">
+                      {nota ? motivo(nota.text) : ''}
+                      {c.key === 'creditiCommerciali' && aging.overdueCents > 0 && (
+                        <span className="block text-negative">
+                          Scaduti oltre 60 gg: {euro(aging.overdueCents)}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+              <tr className="bg-ink-900/60 font-semibold">
+                <td className="px-5 py-3 text-ink-100">Capitale circolante netto</td>
+                <td className="px-5 py-3 text-right tabular-nums text-ink-100">
+                  {euro(current.capitaleCircolanteNetto)}
+                </td>
+                <td className="px-5 py-3 text-right tabular-nums text-ink-300">
+                  {euro(previousYear?.snapshot.capitaleCircolanteNetto ?? null)}
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <Variazione
+                    valore={delta(
+                      current.capitaleCircolanteNetto,
+                      previousYear?.snapshot.capitaleCircolanteNetto ?? null
                     )}
-                  </td>
-                </tr>
-              )
-            })}
-            <tr className="bg-ink-900/60 font-semibold">
-              <td className="px-5 py-3 text-ink-100">Capitale circolante netto</td>
-              <td className="px-5 py-3 text-right tabular-nums text-ink-100">
-                {euro(current.capitaleCircolanteNetto)}
-              </td>
-              <td className="px-5 py-3 text-right tabular-nums text-ink-300">
-                {euro(previousYear?.snapshot.capitaleCircolanteNetto ?? null)}
-              </td>
-              <td className="px-5 py-3 text-right">
-                <Variazione
-                  valore={delta(
-                    current.capitaleCircolanteNetto,
-                    previousYear?.snapshot.capitaleCircolanteNetto ?? null
-                  )}
-                  suffisso="euro"
-                  altoEBuono={false}
-                />
-              </td>
-              <td className="px-5 py-3 text-right">
-                <Variazione
-                  valore={deltaPercent(
-                    current.capitaleCircolanteNetto,
-                    previousYear?.snapshot.capitaleCircolanteNetto ?? null
-                  )}
-                  suffisso="percento"
-                  altoEBuono={false}
-                />
-              </td>
-              <td />
-            </tr>
-          </tbody>
-        </table>
+                    suffisso="euro"
+                    altoEBuono={false}
+                  />
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <Variazione
+                    valore={deltaPercent(
+                      current.capitaleCircolanteNetto,
+                      previousYear?.snapshot.capitaleCircolanteNetto ?? null
+                    )}
+                    suffisso="percento"
+                    altoEBuono={false}
+                  />
+                </td>
+                <td />
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </Card>
     </Pannelli>
   )

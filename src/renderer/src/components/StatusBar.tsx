@@ -99,7 +99,7 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
           className="px-3 py-1 text-xs"
           title="Cerca e installa la nuova versione da GitHub"
         >
-          {nuova ? `⬆ Nuova versione ${updates?.latest}` : 'Aggiornamenti'}
+          {nuova ? `Nuova versione ${updates?.latest}` : 'Aggiornamenti'}
         </Button>
       </span>
       {showUpdates && updates && <UpdateDialog state={updates} onClose={() => setShowUpdates(false)} />}

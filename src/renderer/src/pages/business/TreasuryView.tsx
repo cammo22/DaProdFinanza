@@ -173,7 +173,7 @@ export function TreasuryView({
 
       {error && <Alert>{error}</Alert>}
 
-      <div className="grid grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi
           label="Liquidità oggi"
           valore={euro(vista.liquiditaOggi)}
@@ -223,13 +223,13 @@ export function TreasuryView({
         </div>
       )}
 
-      <div className="flex items-center gap-1 border-b border-ink-700">
+      <div className="flex items-center gap-1 overflow-x-auto border-b border-ink-700">
         {SCHEDE.map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => setScheda(s.id)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm transition-colors ${
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-2 text-sm transition-colors ${
               scheda === s.id
                 ? 'border-brand-400 font-medium text-brand-300'
                 : 'border-transparent text-ink-400 hover:text-ink-100'
@@ -360,51 +360,53 @@ export function TreasuryView({
               description="Aggiungi i movimenti che non sono ancora fatture: stipendi, affitto, versamenti degli incassi di cassa, imposte."
             />
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-ink-700 text-xs text-ink-400">
-                  <th className="px-5 py-2.5 text-left font-medium">Data</th>
-                  <th className="px-5 py-2.5 text-left font-medium">Descrizione</th>
-                  <th className="px-5 py-2.5 text-left font-medium">Categoria</th>
-                  <th className="px-5 py-2.5 text-left font-medium">Tipo</th>
-                  <th className="px-5 py-2.5 text-right font-medium">Importo</th>
-                  <th className="px-5 py-2.5 text-left font-medium">Ricorrenza</th>
-                  {canEdit && <th className="px-5 py-2.5" />}
-                </tr>
-              </thead>
-              <tbody>
-                {vista.items
-                  .filter((i) => i.source === 'manuale')
-                  .map((item) => (
-                    <tr key={item.uuid} className="border-b border-ink-800 last:border-0">
-                      <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-ink-300">{dataIt(item.due_date)}</td>
-                      <td className="px-5 py-2.5 text-ink-100">{item.description}</td>
-                      <td className="px-5 py-2.5 text-ink-300">{item.category}</td>
-                      <td className={`px-5 py-2.5 ${item.direction === 'in' ? 'text-positive' : 'text-negative'}`}>
-                        {item.direction === 'in' ? 'Entrata' : 'Uscita'}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-2.5 text-right tabular-nums text-ink-100">{euro(item.amount_cents)}</td>
-                      <td className="px-5 py-2.5 text-xs text-ink-400">
-                        {item.recurrence === 'monthly'
-                          ? `Ogni mese${item.recurrence_until ? ` fino al ${dataIt(item.recurrence_until)}` : ''}`
-                          : item.due_date < vista.today
-                            ? 'Una volta · superata'
-                            : 'Una volta'}
-                      </td>
-                      {canEdit && (
-                        <td className="whitespace-nowrap px-5 py-2.5 text-right">
-                          <Azione onClick={() => setModulo({ tipo: 'item', source: 'manuale', item })}>
-                            Modifica
-                          </Azione>
-                          <Azione onClick={() => elimina(item)} pericolo>
-                            Elimina
-                          </Azione>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ink-700 text-xs text-ink-400">
+                    <th className="px-5 py-2.5 text-left font-medium">Data</th>
+                    <th className="px-5 py-2.5 text-left font-medium">Descrizione</th>
+                    <th className="px-5 py-2.5 text-left font-medium">Categoria</th>
+                    <th className="px-5 py-2.5 text-left font-medium">Tipo</th>
+                    <th className="px-5 py-2.5 text-right font-medium">Importo</th>
+                    <th className="px-5 py-2.5 text-left font-medium">Ricorrenza</th>
+                    {canEdit && <th className="px-5 py-2.5" />}
+                  </tr>
+                </thead>
+                <tbody>
+                  {vista.items
+                    .filter((i) => i.source === 'manuale')
+                    .map((item) => (
+                      <tr key={item.uuid} className="border-b border-ink-800 last:border-0">
+                        <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-ink-300">{dataIt(item.due_date)}</td>
+                        <td className="px-5 py-2.5 text-ink-100">{item.description}</td>
+                        <td className="px-5 py-2.5 text-ink-300">{item.category}</td>
+                        <td className={`px-5 py-2.5 ${item.direction === 'in' ? 'text-positive' : 'text-negative'}`}>
+                          {item.direction === 'in' ? 'Entrata' : 'Uscita'}
                         </td>
-                      )}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                        <td className="whitespace-nowrap px-5 py-2.5 text-right tabular-nums text-ink-100">{euro(item.amount_cents)}</td>
+                        <td className="px-5 py-2.5 text-xs text-ink-400">
+                          {item.recurrence === 'monthly'
+                            ? `Ogni mese${item.recurrence_until ? ` fino al ${dataIt(item.recurrence_until)}` : ''}`
+                            : item.due_date < vista.today
+                              ? 'Una volta · superata'
+                              : 'Una volta'}
+                        </td>
+                        {canEdit && (
+                          <td className="whitespace-nowrap px-5 py-2.5 text-right">
+                            <Azione onClick={() => setModulo({ tipo: 'item', source: 'manuale', item })}>
+                              Modifica
+                            </Azione>
+                            <Azione onClick={() => elimina(item)} pericolo>
+                              Elimina
+                            </Azione>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </Card>
       )}
@@ -567,61 +569,63 @@ function Scadenziario({
           description="Inserisci le fatture da incassare e da pagare: la previsione di cassa le usa alla loro data."
         />
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-ink-700 text-xs text-ink-400">
-              <th className="px-5 py-2.5 text-left font-medium">Scadenza</th>
-              <th className="px-5 py-2.5 text-left font-medium">Controparte</th>
-              <th className="px-5 py-2.5 text-left font-medium">Descrizione</th>
-              <th className="px-5 py-2.5 text-left font-medium">Documento</th>
-              <th className="px-5 py-2.5 text-right font-medium">Importo</th>
-              <th className="px-5 py-2.5 text-right font-medium">Residuo</th>
-              <th className="px-5 py-2.5 text-left font-medium">Stato</th>
-              {canEdit && <th className="px-5 py-2.5" />}
-            </tr>
-          </thead>
-          <tbody>
-            {righe.map((item) => {
-              const s = stato(item, vista.today)
-              const residuo = residual(item)
-              return (
-                <tr key={item.uuid} className="border-b border-ink-800 last:border-0">
-                  <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-ink-300">{dataIt(item.due_date)}</td>
-                  <td className="px-5 py-2.5 text-ink-100">
-                    <span
-                      className={`mr-2 inline-block h-1.5 w-1.5 rounded-full ${
-                        item.direction === 'in' ? 'bg-positive' : 'bg-negative'
-                      }`}
-                      title={item.direction === 'in' ? 'Da incassare' : 'Da pagare'}
-                    />
-                    {item.counterparty ?? '—'}
-                  </td>
-                  <td className="px-5 py-2.5 text-ink-300">{item.description}</td>
-                  <td className="whitespace-nowrap px-5 py-2.5 text-xs text-ink-400">
-                    {item.document_ref ?? '—'}
-                    {item.payment_method && <span className="block text-ink-500">{item.payment_method}</span>}
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-2.5 text-right tabular-nums text-ink-300">{euro(item.amount_cents)}</td>
-                  <td className="whitespace-nowrap px-5 py-2.5 text-right font-medium tabular-nums text-ink-100">{euro(residuo)}</td>
-                  <td className={`whitespace-nowrap px-5 py-2.5 text-xs ${s.classe}`}>{s.testo}</td>
-                  {canEdit && (
-                    <td className="whitespace-nowrap px-5 py-2.5 text-right">
-                      {residuo > 0 && (
-                        <Azione onClick={() => onPaga(item)}>
-                          {item.direction === 'in' ? 'Incassa' : 'Paga'}
-                        </Azione>
-                      )}
-                      <Azione onClick={() => onModifica(item)}>Modifica</Azione>
-                      <Azione onClick={() => onElimina(item)} pericolo>
-                        Elimina
-                      </Azione>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-ink-700 text-xs text-ink-400">
+                <th className="px-5 py-2.5 text-left font-medium">Scadenza</th>
+                <th className="px-5 py-2.5 text-left font-medium">Controparte</th>
+                <th className="px-5 py-2.5 text-left font-medium">Descrizione</th>
+                <th className="px-5 py-2.5 text-left font-medium">Documento</th>
+                <th className="px-5 py-2.5 text-right font-medium">Importo</th>
+                <th className="px-5 py-2.5 text-right font-medium">Residuo</th>
+                <th className="px-5 py-2.5 text-left font-medium">Stato</th>
+                {canEdit && <th className="px-5 py-2.5" />}
+              </tr>
+            </thead>
+            <tbody>
+              {righe.map((item) => {
+                const s = stato(item, vista.today)
+                const residuo = residual(item)
+                return (
+                  <tr key={item.uuid} className="border-b border-ink-800 last:border-0">
+                    <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-ink-300">{dataIt(item.due_date)}</td>
+                    <td className="px-5 py-2.5 text-ink-100">
+                      <span
+                        className={`mr-2 inline-block h-1.5 w-1.5 rounded-full ${
+                          item.direction === 'in' ? 'bg-positive' : 'bg-negative'
+                        }`}
+                        title={item.direction === 'in' ? 'Da incassare' : 'Da pagare'}
+                      />
+                      {item.counterparty ?? '—'}
                     </td>
-                  )}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                    <td className="px-5 py-2.5 text-ink-300">{item.description}</td>
+                    <td className="whitespace-nowrap px-5 py-2.5 text-xs text-ink-400">
+                      {item.document_ref ?? '—'}
+                      {item.payment_method && <span className="block text-ink-500">{item.payment_method}</span>}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-2.5 text-right tabular-nums text-ink-300">{euro(item.amount_cents)}</td>
+                    <td className="whitespace-nowrap px-5 py-2.5 text-right font-medium tabular-nums text-ink-100">{euro(residuo)}</td>
+                    <td className={`whitespace-nowrap px-5 py-2.5 text-xs ${s.classe}`}>{s.testo}</td>
+                    {canEdit && (
+                      <td className="whitespace-nowrap px-5 py-2.5 text-right">
+                        {residuo > 0 && (
+                          <Azione onClick={() => onPaga(item)}>
+                            {item.direction === 'in' ? 'Incassa' : 'Paga'}
+                          </Azione>
+                        )}
+                        <Azione onClick={() => onModifica(item)}>Modifica</Azione>
+                        <Azione onClick={() => onElimina(item)} pericolo>
+                          Elimina
+                        </Azione>
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   )

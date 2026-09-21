@@ -131,45 +131,51 @@ export function BalanceSheetView({ analysis }: { analysis: Analysis }): React.JS
 
       <Griglia colonne={2}>
         <Card title="Attivo">
-          <table className="w-full text-sm">
-            <tbody>
-              <Riga label="Immobilizzazioni immateriali" cents={b.immobilizzazioniImmateriali} totale={b.totaleAttivo} indent />
-              <Riga label="Immobilizzazioni materiali" cents={b.immobilizzazioniMateriali} totale={b.totaleAttivo} indent />
-              <Riga label="Immobilizzazioni finanziarie" cents={b.immobilizzazioniFinanziarie} totale={b.totaleAttivo} indent />
-              <Riga label="Attivo fisso netto" cents={b.attivoFissoNetto} totale={b.totaleAttivo} forte />
-              <Riga label="Magazzino" cents={b.magazzino} totale={b.totaleAttivo} indent />
-              <Riga label="Liquidità differite" cents={b.liquiditaDifferite} totale={b.totaleAttivo} indent />
-              <Riga label="Liquidità immediate" cents={b.liquiditaImmediate} totale={b.totaleAttivo} indent />
-              <Riga label="Attivo circolante" cents={b.attivoCircolante} totale={b.totaleAttivo} forte />
-              <Riga label="TOTALE ATTIVO" cents={b.totaleAttivo} totale={b.totaleAttivo} forte />
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody>
+                <Riga label="Immobilizzazioni immateriali" cents={b.immobilizzazioniImmateriali} totale={b.totaleAttivo} indent />
+                <Riga label="Immobilizzazioni materiali" cents={b.immobilizzazioniMateriali} totale={b.totaleAttivo} indent />
+                <Riga label="Immobilizzazioni finanziarie" cents={b.immobilizzazioniFinanziarie} totale={b.totaleAttivo} indent />
+                <Riga label="Attivo fisso netto" cents={b.attivoFissoNetto} totale={b.totaleAttivo} forte />
+                <Riga label="Magazzino" cents={b.magazzino} totale={b.totaleAttivo} indent />
+                <Riga label="Liquidità differite" cents={b.liquiditaDifferite} totale={b.totaleAttivo} indent />
+                <Riga label="Liquidità immediate" cents={b.liquiditaImmediate} totale={b.totaleAttivo} indent />
+                <Riga label="Attivo circolante" cents={b.attivoCircolante} totale={b.totaleAttivo} forte />
+                <Riga label="TOTALE ATTIVO" cents={b.totaleAttivo} totale={b.totaleAttivo} forte />
+              </tbody>
+            </table>
+          </div>
         </Card>
 
         <Card title="Passivo e patrimonio netto">
-          <table className="w-full text-sm">
-            <tbody>
-              <Riga label="Patrimonio netto" cents={b.patrimonioNetto} totale={b.totalePassivo} indent />
-              <Riga label="Debiti a medio/lungo termine" cents={b.debitiMedioLungo} totale={b.totalePassivo} indent />
-              <Riga label="Debiti a breve termine" cents={b.debitiBreve} totale={b.totalePassivo} indent />
-              <Riga label="TOTALE PASSIVO" cents={b.totalePassivo} totale={b.totalePassivo} forte />
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody>
+                <Riga label="Patrimonio netto" cents={b.patrimonioNetto} totale={b.totalePassivo} indent />
+                <Riga label="Debiti a medio/lungo termine" cents={b.debitiMedioLungo} totale={b.totalePassivo} indent />
+                <Riga label="Debiti a breve termine" cents={b.debitiBreve} totale={b.totalePassivo} indent />
+                <Riga label="TOTALE PASSIVO" cents={b.totalePassivo} totale={b.totalePassivo} forte />
+              </tbody>
+            </table>
+          </div>
 
           <div className="border-t border-ink-700 px-5 py-4">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
               Capitale circolante netto
             </h3>
-            <table className="w-full text-sm">
-              <tbody>
-                <Riga label="Crediti commerciali" cents={b.creditiCommerciali} indent />
-                <Riga label="Magazzino" cents={b.magazzino} indent />
-                <Riga label="Altri crediti" cents={b.altriCrediti} indent />
-                <Riga label="− Debiti verso fornitori" cents={b.debitiFornitori} indent />
-                <Riga label="− Altri debiti correnti" cents={b.altriDebitiCorrenti} indent />
-                <Riga label="CCN" cents={b.capitaleCircolanteNetto} forte />
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  <Riga label="Crediti commerciali" cents={b.creditiCommerciali} indent />
+                  <Riga label="Magazzino" cents={b.magazzino} indent />
+                  <Riga label="Altri crediti" cents={b.altriCrediti} indent />
+                  <Riga label="− Debiti verso fornitori" cents={b.debitiFornitori} indent />
+                  <Riga label="− Altri debiti correnti" cents={b.altriDebitiCorrenti} indent />
+                  <Riga label="CCN" cents={b.capitaleCircolanteNetto} forte />
+                </tbody>
+              </table>
+            </div>
           </div>
         </Card>
       </Griglia>

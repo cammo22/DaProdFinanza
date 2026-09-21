@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import type {
   Analysis,
   BankingView as BankingPayload,
@@ -15,19 +15,24 @@ import { FoglioBasso } from '../components/Guscio'
 import { Icona } from '../components/icone'
 import { mostraAvviso } from '../components/Avvisi'
 import { useRegistraComandi } from '../lib/comandi'
+import { ricorda, ricordato } from '../lib/memoria'
+
+// Le sezioni più pesanti si caricano la prima volta che si aprono: il programma parte prima.
+const BanksView = lazy(() => import('./business/BanksView').then((m) => ({ default: m.BanksView })))
+const SimulationView = lazy(() => import('./business/SimulationView').then((m) => ({ default: m.SimulationView })))
+const DataView = lazy(() => import('./business/DataView').then((m) => ({ default: m.DataView })))
+const CompanySettingsView = lazy(() =>
+  import('./business/CompanySettingsView').then((m) => ({ default: m.CompanySettingsView }))
+)
+const DocumentsView = lazy(() => import('./business/DocumentsView').then((m) => ({ default: m.DocumentsView })))
+const TreasuryView = lazy(() => import('./business/TreasuryView').then((m) => ({ default: m.TreasuryView })))
 import { ActivitiesView } from './business/ActivitiesView'
 import { BalanceSheetView } from './business/BalanceSheetView'
-import { BanksView } from './business/BanksView'
-import { SimulationView } from './business/SimulationView'
-import { DataView } from './business/DataView'
 import { BloccoPannelli, EVENTO_RIPRISTINA, MenuPannelli } from '../components/Pannelli'
-import { CompanySettingsView } from './business/CompanySettingsView'
 import { CompanyHome } from './business/CompanyHome'
-import { DocumentsView } from './business/DocumentsView'
 import { RequestsBoard } from '../components/RequestsBoard'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
-import { TreasuryView } from './business/TreasuryView'
 import { WorkingCapitalView } from './business/WorkingCapitalView'
 
 /**
@@ -86,15 +91,16 @@ export function CompanyPage({
   // Solo le viste sui bilanci chiedono i periodi: all'operatore Azienda che
   // vede, per esempio, soltanto la tesoreria il server li rifiuterebbe (§10.12).
   const servonoPeriodi = !SENZA_PERIODO.includes(vista) || vista === 'dati'
-  const [periods, setPeriods] = useState<FiscalPeriod[]>([])
+  const u = company.uuid
+  const [periods, setPeriods] = useState<FiscalPeriod[]>(() => ricordato(`${u}|periodi`) ?? [])
   const [periodUuid, setPeriodUuid] = useState<string>('')
   const [scenario, setScenario] = useState<Scenario>('actual')
   const [scheme, setScheme] = useState<Scheme>(DEFAULT_SCHEME)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [serie, setSerie] = useState<SeriesPoint[]>([])
-  const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(null)
+  const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(() => ricordato(`${u}|tesoreria`))
   const [circolante, setCircolante] = useState<WorkingCapitalPayload | null>(null)
-  const [banche, setBanche] = useState<BankingPayload | null>(null)
+  const [banche, setBanche] = useState<BankingPayload | null>(() => ricordato(`${u}|banche`))
   const [simBase, setSimBase] = useState<{
     key: string
     base: SimulationBase | null
@@ -102,13 +108,13 @@ export function CompanyPage({
   } | null>(null)
   const [scenari, setScenari] = useState<SimulationScenario[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => ricordato(`${u}|periodi`) === null)
   // Cresce a ogni "Aggiorna" del cruscotto: fa ricaricare l'analisi.
   const [giro, setGiro] = useState(0)
 
   const caricaPeriodi = useCallback(async () => {
     try {
-      const result = await api.get<FiscalPeriod[]>(`/api/companies/${company.uuid}/periods`)
+      const result = ricorda(`${company.uuid}|periodi`, await api.get<FiscalPeriod[]>(`/api/companies/${company.uuid}/periods`))
       setPeriods(result)
       // Si apre sul periodo più recente con dati a consuntivo: il più recente in
       // assoluto può essere un mese di solo budget, e la prima schermata
@@ -143,13 +149,15 @@ export function CompanyPage({
       return
     }
     let annullato = false
+    const url = `/api/companies/${company.uuid}/periods/${periodUuid}/analysis?scenario=${scenario}&scheme=${scheme}`
+    // Già visto: si mostra subito, e intanto si rilegge.
+    const visto = ricordato<Analysis>(url)
+    if (visto) setAnalysis(visto)
     api
-      .get<Analysis>(
-        `/api/companies/${company.uuid}/periods/${periodUuid}/analysis?scenario=${scenario}&scheme=${scheme}`
-      )
+      .get<Analysis>(url)
       .then((result) => {
         if (!annullato) {
-          setAnalysis(result)
+          setAnalysis(ricorda(url, result))
           setError(null)
         }
       })
@@ -165,7 +173,7 @@ export function CompanyPage({
   const caricaTesoreria = useCallback(
     async (silenzioso = false) => {
       try {
-        setTesoreria(await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`))
+        setTesoreria(ricorda(`${company.uuid}|tesoreria`, await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`)))
       } catch (err) {
         if (!silenzioso) setError(err instanceof Error ? err.message : 'Tesoreria non disponibile.')
       }
@@ -182,7 +190,7 @@ export function CompanyPage({
 
   const caricaBanche = useCallback(async () => {
     try {
-      setBanche(await api.get<BankingPayload>(`/api/companies/${company.uuid}/banking`))
+      setBanche(ricorda(`${company.uuid}|banche`, await api.get<BankingPayload>(`/api/companies/${company.uuid}/banking`)))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Banche non disponibili.')
     }
@@ -474,8 +482,8 @@ export function CompanyPage({
 
       {/* Le richieste hanno elenco e dettaglio che scorrono ognuno per conto suo. */}
       <div
-        className={`min-h-0 flex-1 px-3 py-4 md:px-8 md:py-6 ${
-          vista === 'richieste' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+        className={`min-h-0 flex-1 px-3 pt-4 md:px-8 md:py-6 ${
+          vista === 'richieste' ? 'flex flex-col overflow-hidden pb-4' : 'overflow-y-auto pb-24'
         }`}
       >
         {report && (
@@ -489,6 +497,7 @@ export function CompanyPage({
           </div>
         )}
 
+        <Suspense fallback={<CaricamentoPagina />}>
         {vista === 'dati' && canImport && (
           <DataView company={company} periods={periods} canEdit={canImport} onChanged={caricaPeriodi} />
         )}
@@ -614,6 +623,7 @@ export function CompanyPage({
           ) : (
             <BalanceSheetView analysis={analysis} />
           ))}
+        </Suspense>
       </div>
     </div>
   )

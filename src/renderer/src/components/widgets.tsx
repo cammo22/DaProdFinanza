@@ -62,9 +62,9 @@ export function StrisciaIndicatori({ indicatori }: { indicatori: Indicatore[] })
   return (
     <section className={`grid grid-cols-2 rounded-xl border border-ink-700 bg-ink-850 lg:divide-x lg:divide-ink-700 ${colonne}`}>
       {indicatori.map((k) => (
-        <div key={k.label} className="px-5 py-4">
-          <p className="text-xs text-ink-300">{k.label}</p>
-          <p className="mt-1.5 font-mono text-2xl font-semibold tracking-tight text-ink-100 tabular-nums">{k.valore}</p>
+        <div key={k.label} className="min-w-0 px-4 py-3 md:px-5 md:py-4">
+          <p className="truncate text-xs text-ink-300">{k.label}</p>
+          <p className="mt-1 truncate font-mono text-xl font-semibold tracking-tight text-ink-100 tabular-nums md:mt-1.5 md:text-2xl">{k.valore}</p>
           {k.quota !== undefined && k.quota !== null &&
             (k.stile === 'barra' ? (
               <Barra quota={k.quota} soglia={k.soglia} colore={k.colore} />

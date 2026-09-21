@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ROLE_LABELS, type Role } from '@shared/enums'
 import type { ClientWithCompanies, Company } from '@shared/types'
 import { api } from './lib/api'
@@ -40,7 +40,9 @@ import { LoginScreen, SetupScreen } from './pages/AuthScreen'
 import { CompanyPage } from './pages/CompanyPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { RoleGate } from './pages/RoleGate'
-import { SettingsPage } from './pages/SettingsPage'
+import { dimentica } from './lib/memoria'
+
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 
 /**
  * Guscio dell'applicazione: menu laterale, intestazione, contenuto, barra di
@@ -496,10 +498,10 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
               onApri={(uuid) => apriAziendaUuid(uuid)}
               onTutte={anagrafica}
             />
-            <div className="flex min-w-0 flex-1 justify-end md:justify-center">
+            <div className="flex flex-1 justify-end md:min-w-0 md:justify-center">
               <CercaComandi />
             </div>
-            <div className="flex shrink-0 items-center gap-1 md:gap-2">
+            <div className="flex min-w-0 shrink-0 items-center gap-0.5 md:gap-2">
               <AzioniRapide />
               {consulente && <TimerBar onApri={(uuid) => apriAziendaUuid(uuid, 'attivita')} />}
               <Campanello onClick={() => vai(consulente ? 'richieste-studio' : 'richieste')} />
@@ -519,6 +521,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
           </header>
 
           <main className="min-h-0 flex-1 overflow-hidden">
+            <Suspense fallback={<p className="p-8 text-sm text-ink-400">Caricamento…</p>}>
             {error ? (
               <div className="p-4 md:p-8">
                 <Alert>{error}</Alert>
@@ -543,6 +546,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
               <p className="p-8 text-sm text-ink-400">Caricamento…</p>
             ) : company ? (
               <CompanyPage
+                key={company.uuid}
                 company={company}
                 vista={vista}
                 onVista={vai}
@@ -556,6 +560,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
             ) : (
               <p className="p-8 text-sm text-ink-400">Caricamento…</p>
             )}
+            </Suspense>
           </main>
         </div>
       </div>
@@ -614,6 +619,8 @@ function Root(): React.JSX.Element {
         <ComandiProvider>
           <Workspace
             onLogout={() => {
+              // Chi entra dopo non deve trovare i numeri di chi è uscito.
+              dimentica()
               logout()
               setRole(null)
             }}

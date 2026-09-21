@@ -118,6 +118,12 @@ textarea:focus-visible {
   outline: none;
 }
 
+/* Gli importi nelle tabelle non vanno mai a capo ("15.000" sopra, "€" sotto). */
+td.text-right,
+th.text-right {
+  white-space: nowrap;
+}
+
 /* Scheletri di caricamento: una luce che scorre al posto di "Caricamento…". */
 @keyframes scheletro {
   from {

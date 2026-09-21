@@ -18,6 +18,7 @@ import { segnalaAzione, useAlCambioRichieste } from '../lib/inbox'
 import { Alert, Button, TextArea, TextInput } from './ui'
 import { UploadDialog } from './UploadDialog'
 import { DocumentViewer } from './viewer/DocumentViewer'
+import { Icona, type NomeIcona } from './icone'
 
 /**
  * Una richiesta aperta: la storia, i documenti, la risposta — e per lo studio i
@@ -53,15 +54,15 @@ export function quandoBreve(iso: string): string {
   return `${d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })} ${ora}`
 }
 
-const ICONE: Record<RequestEvent['kind'], string> = {
-  creata: '✉️',
-  vista: '👁',
-  messaggio: '💬',
-  stato: '•',
-  documento: '📎',
-  chiamata: '📞',
-  richiamo: '🕒',
-  assegnata: '👤'
+const ICONE: Record<RequestEvent['kind'], NomeIcona> = {
+  creata: 'piu',
+  vista: 'occhio',
+  messaggio: 'messaggio',
+  stato: 'destra',
+  documento: 'graffetta',
+  chiamata: 'telefono',
+  richiamo: 'orologio',
+  assegnata: 'utente'
 }
 
 /** Il numero di telefono come link: sul telefono chiama, sul computer lo passa all'app che gestisce le chiamate. */
@@ -210,7 +211,7 @@ export function RequestDetail({
         {chiamata && (
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm">
             <span className="text-ink-300">
-              📞 <span className="font-mono text-ink-100">{r.phone}</span>
+              <Icona nome="telefono" className="h-3.5 w-3.5" /> <span className="font-mono text-ink-100">{r.phone}</span>
             </span>
             {r.preferred_time && <span className="text-xs text-ink-400">preferisce: {preferredTimeLabel(r.preferred_time)}</span>}
             {r.callback_at && aperta && (
@@ -231,34 +232,34 @@ export function RequestDetail({
                     void azione('chiamo_ora')
                   }}
                 >
-                  📞 Chiamo ora
+                  <Icona nome="telefono" className="h-3.5 w-3.5" /> Chiamo ora
                 </Button>
                 <Button className="px-3 py-1.5 text-xs" onClick={() => setPannello(pannello === 'richiamo' ? null : 'richiamo')}>
-                  🕒 Richiamo…
+                  <Icona nome="orologio" className="h-3.5 w-3.5" /> Richiamo…
                 </Button>
                 <Button className="px-3 py-1.5 text-xs" onClick={() => setPannello(pannello === 'fatta' ? null : 'fatta')}>
-                  ✔ Chiamata fatta
+                  <Icona nome="spunta" className="h-3.5 w-3.5" /> Chiamata fatta
                 </Button>
                 <Button className="px-3 py-1.5 text-xs" onClick={() => void azione('non_risponde')}>
-                  📵 Non risponde
+                  <Icona nome="chiudi" className="h-3.5 w-3.5" /> Non risponde
                 </Button>
               </>
             )}
             {r.assigned_uuid !== user?.uuid && (
               <Button className="px-3 py-1.5 text-xs" onClick={() => void azione('prendi_in_carico')}>
-                ✋ Prendo in carico
+                <Icona nome="utente" className="h-3.5 w-3.5" /> Prendo in carico
               </Button>
             )}
             <Button className="px-3 py-1.5 text-xs" onClick={() => setPannello(pannello === 'attesa' ? null : 'attesa')}>
-              ⏳ Aspetto l’azienda
+              <Icona nome="storico" className="h-3.5 w-3.5" /> Aspetto l’azienda
             </Button>
             {!chiamata && (
               <Button className="px-3 py-1.5 text-xs" onClick={() => void azione('risolvi')}>
-                ✔ Risolta
+                <Icona nome="spunta" className="h-3.5 w-3.5" /> Risolta
               </Button>
             )}
             <Button className="px-3 py-1.5 text-xs" onClick={() => void apriAssegna()}>
-              👤 Affida a…
+              <Icona nome="utenti" className="h-3.5 w-3.5" /> Affida a…
             </Button>
             <Button variant="danger" className="px-3 py-1.5 text-xs" onClick={() => confirm('Annullare la richiesta?') && void azione('annulla')}>
               Annulla
@@ -368,7 +369,7 @@ export function RequestDetail({
             }
             return (
               <li key={e.uuid} className="flex items-start gap-2 text-xs text-ink-300">
-                <span className="w-5 shrink-0 text-center">{ICONE[e.kind]}</span>
+                <span className="flex w-5 shrink-0 justify-center pt-0.5 text-ink-400"><Icona nome={ICONE[e.kind]} className="h-3.5 w-3.5" /></span>
                 <span className="flex-1">
                   {e.kind === 'creata'
                     ? `${e.author_name} ha aperto la richiesta.`
@@ -400,7 +401,7 @@ export function RequestDetail({
                   onClick={() => setAperto(d)}
                   className="rounded-lg border border-ink-700 bg-ink-850 px-3 py-1.5 text-left text-xs text-ink-100 hover:border-brand-400/60"
                 >
-                  📄 {d.name}
+                  <Icona nome="documento" className="h-3.5 w-3.5" /> {d.name}
                   {studio && d.uploaded_by_role === 'company' && !d.opened_by_studio_at && (
                     <span className="ml-2 rounded bg-warning/15 px-1 text-[10px] text-warning">nuovo</span>
                   )}
@@ -426,7 +427,7 @@ export function RequestDetail({
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {puoAllegare && (
               <Button className="px-3 py-1 text-xs" onClick={() => setAllega(true)}>
-                📎 Allega file
+                <Icona nome="graffetta" className="h-3.5 w-3.5" /> Allega file
               </Button>
             )}
             <span className="hidden text-[11px] text-ink-500 md:inline">Ctrl+Invio per mandare</span>

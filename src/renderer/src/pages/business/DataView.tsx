@@ -62,13 +62,13 @@ export function DataView({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-1 border-b border-ink-700">
+      <div className="flex items-center gap-1 overflow-x-auto border-b border-ink-700">
         {SCHEDE.filter((s) => s.id !== 'excel' || canEdit).map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => setScheda(s.id)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm transition-colors ${
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-2 text-sm transition-colors ${
               scheda === s.id
                 ? 'border-brand-500 font-medium text-brand-300'
                 : 'border-transparent text-ink-400 hover:text-ink-100'
