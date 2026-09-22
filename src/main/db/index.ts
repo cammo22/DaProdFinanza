@@ -23,6 +23,9 @@ export function openDatabase(): Database.Database {
 
   db.pragma(`cipher = 'sqlcipher'`)
   db.pragma(`key = "x'${databaseKey()}'"`)
+  // Subito dopo la chiave: se un'altra copia sta ancora chiudendo il file,
+  // anche la prima lettura e le migrazioni aspettano invece di fallire.
+  db.pragma('busy_timeout = 10000')
 
   // Prima lettura: fallisce subito e con un errore chiaro se la chiave non apre il file.
   try {
@@ -39,7 +42,6 @@ export function openDatabase(): Database.Database {
 
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
-  db.pragma('busy_timeout = 5000')
 
   const version = runMigrations(db)
   console.log(`[db] aperto ${file} — schema v${version}`)

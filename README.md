@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/versione-1.3.0-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.3.1-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 ![demo mac](https://img.shields.io/badge/demo-macOS-3ddbff)
 ![demo android](https://img.shields.io/badge/demo-Android-3ddbff)
@@ -130,6 +130,14 @@ che i numeri di un'azienda escano dal computer di chi ha il diritto di vederli.
 I due programmi si parlano su una rete privata (Tailscale, con un collegamento di
 riserva per quando un'azienda non riesce a configurarlo). Nessun server pubblico,
 nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
+
+## Novità della 1.3.1
+
+- **Avvio più sicuro.** Il programma si apre una volta sola: un secondo doppio clic
+  riporta davanti la finestra già aperta invece di aprire un'altra copia sullo stesso
+  database. Quando si chiude, si chiude davvero (niente processi rimasti in
+  background), e dopo un aggiornamento la versione nuova aspetta che la vecchia abbia
+  finito.
 
 ## Novità della 1.3.0
 
@@ -300,7 +308,7 @@ due programmi.
 | 1.0 | Aggiornamenti automatici, dati nel programma, report PDF, cruscotto, riquadri spostabili | ✅ Versione 1.0.0 |
 | 1.1 | Pannelli liberi e ridimensionabili, zoom, scenari pronti, demo per Mac | ✅ Versione 1.1.0 |
 | 1.2 | Attività e Tempi (bacheca, timer, ore), demo per Android | ✅ Versione 1.2.0 |
-| 1.3 | Interfaccia più semplice (Ctrl+K, telefono), impostazioni, documenti, richieste e chiamate, Personale, Area fiscale, Marginalità | ✅ Versione 1.3.0 |
+| 1.3 | Interfaccia più semplice (Ctrl+K, telefono), impostazioni, documenti, richieste e chiamate, Personale, Area fiscale, Marginalità | ✅ Versione 1.3.1 |
 | 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ Prossima |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 

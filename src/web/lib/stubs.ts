@@ -26,3 +26,4 @@ export const jwtSecret = (): string => ''
 // `lib/auto-backup.ts`: sul telefono non ci sono backup (sono dati di esempio).
 export const applicaBackupAutomatico = (): null => null
 export const avviaBackupAutomatico = (): void => undefined
+export const fermaBackupAutomatico = (): void => undefined

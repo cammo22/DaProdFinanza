@@ -758,6 +758,17 @@ esistono.
 - **Provarla senza telefono**: `npm run android:web` e `npm run android:preview`, poi
   il browser su `http://localhost:4173` (ridotto a larghezza di telefono).
 
+### Versione 1.3.1 — avvio e chiusura
+
+Fix dell'avvio (una PR). Prima c'erano problemi all'apertura: nessun blocco d'istanza, quindi un secondo doppio clic, o la versione nuova lanciata dall'aggiornamento mentre la vecchia si chiudeva, apriva lo stesso database cifrato in due processi (migrazioni e seed demo in parallelo, `database is locked`, copie rimaste in background).
+
+- `index.ts`: `app.requestSingleInstanceLock()` per cartella dati (demo e versione vera hanno cartelle diverse, quindi convivono); `second-instance` riporta davanti la finestra. Con `--daprod-aggiornato` (`ARG_AGGIORNATO`, passato dall'aggiornamento dei portable) la nuova copia riprova il blocco per 15 s.
+- La finestra si mostra comunque dopo 10 s anche senza `ready-to-show`; se il renderer muore si ricarica.
+- Chiusura in `will-quit`: si fermano i timer (backup automatico, controllo aggiornamenti), poi il server (`closeAllConnections`), poi il database.
+- `busy_timeout` 10 s impostato subito dopo la chiave, prima della prima lettura e delle migrazioni.
+
+Provato sull'app compilata: seconda copia esce subito (codice 0) e resta un solo processo principale; dopo la chiusura zero processi; con `--daprod-aggiornato` la nuova copia prende il posto della vecchia.
+
 ### Versione 1.3.0 — interfaccia più semplice, portale dell'azienda, costi, margini e tasse
 
 Quattro pezzi, una PR ciascuno (#21, #22, #40, #41), roadmap su GitHub nell'issue fissata #39.
