@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/versione-1.2.2-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.3.0-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 ![demo mac](https://img.shields.io/badge/demo-macOS-3ddbff)
 ![demo android](https://img.shields.io/badge/demo-Android-3ddbff)
@@ -131,7 +131,31 @@ I due programmi si parlano su una rete privata (Tailscale, con un collegamento d
 riserva per quando un'azienda non riesce a configurarlo). Nessun server pubblico,
 nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 
-## Le sette viste
+## Novità della 1.3.0
+
+- **Più semplice, su Windows e sul telefono.** Da qualsiasi schermata **Ctrl+K** (o la
+  lente in alto) cerca un'azienda, una sezione o un'azione e la esegue: "carica un
+  documento", "registra ore", "report PDF", "nuova azienda". Il pulsante **Nuovo** ha
+  le azioni della schermata in cui si è; l'azienda si cambia dall'intestazione, fra
+  le recenti. Il menu laterale si richiude a icone (Ctrl+B) e si allarga trascinando
+  il bordo; ogni pannello si comprime o si nasconde. Colore d'accento a scelta.
+- **Sul telefono** una barra delle sezioni in basso come le app, le sezioni vicine a
+  portata di pollice, periodo e scenario in un foglio che sale dal basso, le
+  simulazioni in due schede (Leve e Risultati) con il riassunto sempre in vista.
+- **Personale**, **Area fiscale e contributi**, **Marginalità**: tre sezioni nuove,
+  qui sotto.
+- **Cassetto documenti**: studio e azienda ci mettono file e li aprono al volo dentro
+  il programma — PDF, Excel, Word, PowerPoint — anche dove Office non c'è.
+- **Richieste e chiamate**: l'azienda chiede una chiamata, fa una domanda o manda
+  documenti e vede se lo studio l'ha presa in carico; lo studio risponde anche solo
+  per scritto e ha i pulsanti per la chiamata (*Chiamo ora*, *Richiamo*, *Chiamata
+  fatta*…).
+- **L'azienda come utente**: entra su un riepilogo con i suoi numeri principali, chi
+  la segue e le sue richieste, e vede solo le sezioni che il consulente le ha
+  condiviso. I consulenti sono gli amministratori: **Impostazioni** con interruttori
+  per moduli, accessi, backup automatico, aggiornamenti, tema.
+
+## Le viste
 
 - **Panoramica** — la situazione del mese in un colpo d'occhio, con gli avvisi che si
   accendono da soli quando qualcosa peggiora
@@ -143,8 +167,16 @@ nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
 - **Tesoreria** — quanti soldi ci saranno in banca fra una settimana, un mese, tre mesi
 - **Banche e Finanziamenti** — fidi, mutui e leasing, e quanto pesano sulla cassa futura
 - **Analisi & Simulazioni** — "cosa succede se": assumo, investo, alzo i prezzi
-- **Attività e Tempi** *(nuova nella 1.2.0)* — il lavoro del consulente su ogni
-  azienda: le cose da fare, il tempo che ci si spende e quanto vale
+- **Marginalità** *(1.3.0)* — quanto costa fare ciò che si vende e quanto resta: il
+  food cost delle ricette, la distinta base dei prodotti, il costo di una commessa a
+  preventivo e a consuntivo
+- **Personale** *(1.3.0)* — quanto costa davvero ogni persona e un'ora del suo lavoro
+- **Area fiscale e contributi** *(1.3.0)* — imposte e contributi dell'anno, quanto
+  mettere da parte ogni mese, quando si paga
+- **Documenti** e **Richieste e chiamate** *(1.3.0)* — il cassetto dei file e il filo
+  diretto fra azienda e studio
+- **Attività e Tempi** *(1.2.0)* — il lavoro del consulente su ogni azienda: le cose
+  da fare, il tempo che ci si spende e quanto vale
 
 In più, su ogni schermata:
 
@@ -165,6 +197,28 @@ In più, su ogni schermata:
 - **Aggiornamenti con un clic**: il programma controlla da solo se su GitHub c'è una
   versione nuova, la scarica, la verifica e si aggiorna.
 
+## Marginalità, Personale, Area fiscale
+
+**Marginalità** prende la forma dell'attività. Per un ristorante sono **ricette e
+ingredienti**: ogni pizza con i suoi grammi di farina e mozzarella (con lo scarto), i
+minuti del pizzaiolo, e subito il **food cost**, quanto resta, il **prezzo consigliato**
+per stare nell'obiettivo; il **menu engineering** divide il menu in stelle, cavalli da
+lavoro, enigmi e cani, con cosa fare per ognuno. Per chi lavora **a commessa**
+(edilizia, impianti, servizi) sono commesse con **preventivo e consuntivo** di
+materiali, ore e lavorazioni esterne, e lo scostamento fra i due. Per produzione e
+commercio, **distinta base** e **ricarico**.
+
+**Personale**: per ogni persona contratto, ore, retribuzione annua lorda e mensilità;
+il programma calcola il **costo aziendale** (retribuzione, contributi, INAIL, TFR, altri
+costi) e il **costo di un'ora di lavoro** — che è la manodopera usata dalla
+Marginalità. Per reparto, diretti e indiretti, e il confronto col costo del personale
+scritto nel bilancio. Stipendi, F24 e INAIL possono entrare nella previsione di cassa.
+
+**Area fiscale e contributi**: una **stima** (non la dichiarazione) di IRES, IRAP,
+IRPEF, addizionali e contributi INPS — o dell'imposta sostitutiva del forfettario —
+partendo dall'utile degli ultimi dodici mesi. Dice **quanto mettere da parte ogni
+mese** e le **scadenze** di acconti e saldi, che possono entrare nella tesoreria.
+
 ## Attività e Tempi
 
 Una schermata per il lavoro **del consulente**, non per i conti dell'azienda: la vede
@@ -172,12 +226,14 @@ solo lui. L'idea viene da [Ever Teams](https://github.com/ever-co/ever-teams), u
 programma open source per organizzare il lavoro di un gruppo; qui è ridotta a quello
 che serve a uno studio.
 
+- **Timer** — un tasto grande per partire, l'attività si sceglie a pastiglie; resta
+  visibile in alto in ogni schermata e se ne avvii un altro, il primo si ferma da solo.
+- **Registra ore** — oggi o ieri, 15 minuti, mezz'ora, un'ora, due: due tocchi. Le voci
+  del registro si correggono con un clic.
 - **Bacheca a colonne** — *Da fare, In corso, Da verificare, Fatto*: ogni attività ha
   priorità, scadenza (rossa quando è passata), una stima e il tempo già speso. Si
-  sposta trascinandola, o con le frecce.
-- **Timer** — si avvia su un'attività con un clic e resta visibile in alto in ogni
-  schermata; se ne avvii un altro, il primo si ferma da solo. Le ore si possono anche
-  scrivere a mano ("1:30", "1,5").
+  sposta trascinandola o con i pulsanti *Inizia / Da rivedere / Fatta*; sul telefono
+  una colonna alla volta.
 - **Quanto vale** — con la tariffa oraria dell'azienda, le ore fatturabili del mese
   diventano un importo. Più il grafico delle ultime otto settimane e il registro giorno
   per giorno.
@@ -226,7 +282,9 @@ finanziamento) e si vede subito l'effetto su utile, cassa e debito, scenario sal
 ed esportabile in Excel. Tutte e sette le viste esistono. Dalla versione 1.0.0 i dati si
 inseriscono direttamente nel programma, c'è il report PDF, il cruscotto a widget con i
 riquadri spostabili e l'aggiornamento automatico da GitHub. Con la 1.2.0 arrivano
-**Attività e Tempi** e la **demo per telefoni Android**. Manca il collegamento fra i
+**Attività e Tempi** e la **demo per telefoni Android**; con la 1.3.0 un'interfaccia
+più semplice, le impostazioni, il cassetto documenti, richieste e chiamate fra azienda
+e studio, **Personale**, **Area fiscale** e **Marginalità**. Manca il collegamento fra i
 due programmi.
 
 | | Fase | Stato |
@@ -242,18 +300,21 @@ due programmi.
 | 1.0 | Aggiornamenti automatici, dati nel programma, report PDF, cruscotto, riquadri spostabili | ✅ Versione 1.0.0 |
 | 1.1 | Pannelli liberi e ridimensionabili, zoom, scenari pronti, demo per Mac | ✅ Versione 1.1.0 |
 | 1.2 | Attività e Tempi (bacheca, timer, ore), demo per Android | ✅ Versione 1.2.0 |
+| 1.3 | Interfaccia più semplice (Ctrl+K, telefono), impostazioni, documenti, richieste e chiamate, Personale, Area fiscale, Marginalità | ✅ Versione 1.3.0 |
 | 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ Prossima |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
-La roadmap completa, con il dettaglio di cosa c'è dentro ogni fase, è in
-[`AGENTS.md` §13](./AGENTS.md).
+La roadmap viva sta su GitHub, nell'issue fissata
+**[Roadmap](https://github.com/cammo22/DaProdFinanza/issues/39)**; il dettaglio di
+cosa c'è dentro ogni fase è in [`AGENTS.md` §13](./AGENTS.md).
 
 ## Provarlo
 
 Il modo più rapido per vederlo all'opera è la **versione demo**:
 `DaProdFinanza-Demo-x.y.z-portable.exe`. Si lancia senza installare niente e parte
 già con una pizzeria di esempio, due anni di bilanci, lo scadenziario, le previsioni
-di cassa, le banche e i finanziamenti. Si entra come
+di cassa, le banche e i finanziamenti, il personale, le ricette col food cost, i
+documenti e una chiamata in arrivo. Si entra come
 consulente con **`cammo` / `1234`**, oppure come azienda con **`Pizzeria DaProd` /
 `1234`**. I suoi dati restano in una cartella a parte e non si mescolano mai con
 quelli di un'installazione vera.
@@ -279,12 +340,13 @@ il pulsante *Aggiornamenti* apre la pagina da cui scaricare il DMG nuovo.
 **Su Android c'è solo la demo.** Si scarica l'APK dal telefono e lo si apre: Android
 chiede il permesso di installare app da quella fonte (il browser o *File*), si
 concede e si installa. È lo stesso programma, con gli stessi dati di esempio, lo
-stesso accesso (`cammo` / `1234`) e il menu che si apre dal tasto ☰. In ogni schermata
-l'intestazione dell'azienda è richiusa in una riga (▾ per aprire periodo, scenario e
-report), e l'avviso della demo si chiude con la ×. I pannelli partono **bloccati**,
-così scorrendo col dito non si ridimensionano per sbaglio: il lucchetto 🔒/🔓 in alto li
-sblocca e li blocca con un tocco. Sul telefono non
-ci sono import/export Excel, report PDF e backup. Per aggiornarla si installa l'APK
+stesso accesso (`cammo` / `1234`), le sezioni nella barra in basso e il resto nel
+menu. Periodo, scenario e report si aprono dal pulsante col calendario in alto; il
+tondo in basso a destra ha le azioni rapide; l'avviso della demo si chiude con la ×. I
+pannelli partono **bloccati**, così scorrendo col dito non si ridimensionano per
+sbaglio: il lucchetto in alto li sblocca con un tocco. Sul telefono non ci sono
+import/export Excel, report PDF e backup, e i documenti si aprono solo dentro il
+programma. Per aggiornarla si installa l'APK
 nuovo sopra quello vecchio: i dati di esempio restano.
 
 Dalla 1.0.0 non serve più scaricarli a mano: il pulsante **Aggiornamenti** (in basso
@@ -353,6 +415,10 @@ src/
 ├── web/             versione Android: backend in pagina, sql.js, sostituti di Node/Electron
 └── shared/
     ├── engine/      il motore di calcolo: funzioni pure, zero dipendenze
+    │                (bilancio, indici, tesoreria, finanziamenti, simulazioni,
+    │                attività, personale, fiscale, marginalità)
+    ├── settings.ts  impostazioni di programma, utente e azienda
+    ├── documents.ts documenti e richieste
     └── types.ts     tipi condivisi
 ```
 
@@ -395,6 +461,21 @@ e le chiamate `fetch` all'indirizzo del backend restano nella pagina
 (`.github/workflows/android-demo.yml`), a ogni release. Dettagli in
 [`AGENTS.md`](./AGENTS.md), versione 1.2.0.
 
+### L'interfaccia (1.3.0)
+
+- **Comandi rapidi** (`renderer/src/lib/comandi.tsx`): chi sa fare qualcosa lo
+  dichiara con `useRegistraComandi`; la tavolozza (Ctrl+K) e il pulsante *Nuovo* li
+  leggono. Un'azione che vive in una schermata non ancora aperta si chiede con
+  `richiediAzione` e la schermata la raccoglie con `useAzione`.
+- **Guscio** (`components/Guscio.tsx`, `Sidebar.tsx`): menu richiudibile e
+  ridimensionabile, cambio d'azienda con le recenti, barra delle sezioni del telefono.
+- **Pannelli**: nascosti e compressi per schermata, in `localStorage`.
+- **Anteprime dei documenti** (`components/viewer/`): PDF.js, ExcelJS, docx-preview in
+  un iframe senza script, pptx-glimpse con i caratteri Carlito e Arimo inclusi.
+  Caricate solo quando servono.
+- Le sezioni pesanti si caricano alla prima apertura (`React.lazy`); i dati già letti
+  si mostrano subito mentre si aggiornano (`lib/memoria.ts`).
+
 ## Comandi
 
 ```bash
@@ -420,6 +501,10 @@ I test più importanti non verificano che il codice giri, ma che i conti tornino
 principale: **i tre schemi di riclassificazione devono arrivare allo stesso EBIT e allo
 stesso utile**, perché sono tre presentazioni dello stesso risultato. Se una formula
 viene trascritta male, lì si spacca.
+
+Lo stesso vale per le sezioni della 1.3.0: costo aziendale e orario del personale,
+imposte e contributi di ogni regime, acconti e saldi, food cost e menu engineering
+sono verificati su **conti fatti a mano** (`src/shared/engine/*.test.ts`).
 
 Due test girano sul file Excel reale del consulente quando è presente nella cartella di
 lavoro; in CI vengono saltati, perché quel file non sta nella repo.
