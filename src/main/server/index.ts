@@ -93,7 +93,10 @@ export function apiBaseUrl(): string {
 }
 
 export function stopServer(): void {
+  // Le connessioni keep-alive del renderer terrebbero il server in piedi:
+  // si chiudono subito, così il processo esce davvero.
   server?.close()
+  server?.closeAllConnections()
   server = null
   port = 0
 }

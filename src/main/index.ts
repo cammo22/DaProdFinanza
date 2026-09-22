@@ -8,13 +8,50 @@ import { basename, join, resolve, sep } from 'node:path'
 import { eseguibile } from '@shared/documents'
 import { backupDatabase, closeDatabase, openDatabase } from './db'
 import { seedDemoData } from './db/seed'
-import { avviaBackupAutomatico } from './lib/auto-backup'
+import { avviaBackupAutomatico, fermaBackupAutomatico } from './lib/auto-backup'
 import { companiesRoot, dataRoot } from './lib/paths'
 import { apiBaseUrl, startServer, stopServer } from './server'
 import { registerReportIpc } from './report'
-import { checkForUpdates, downloadUpdate, initUpdates, installUpdate, updateState } from './updates'
+import {
+  ARG_AGGIORNATO,
+  checkForUpdates,
+  downloadUpdate,
+  fermaUpdates,
+  initUpdates,
+  installUpdate,
+  updateState
+} from './updates'
 
 let mainWindow: BrowserWindow | null = null
+const SHOW_FALLBACK_MS = 10_000
+
+/** Riporta davanti la finestra già aperta (secondo doppio clic sull'icona). */
+function mettiDavanti(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  if (!mainWindow.isVisible()) mainWindow.show()
+  mainWindow.focus()
+}
+
+/**
+ * Una sola copia per cartella dati. Senza questo blocco un secondo doppio clic
+ * (o la versione nuova lanciata dall'aggiornamento mentre la vecchia si chiude)
+ * apriva lo stesso database cifrato in due processi: migrazioni e dati demo
+ * scritti due volte, "database is locked" e copie rimaste in background.
+ * La demo ha la sua cartella dati (build-flags), quindi convive con la versione vera.
+ *
+ * Dopo un aggiornamento la copia vecchia può metterci qualche secondo a
+ * chiudersi: la nuova riprova per un po' invece di arrendersi subito.
+ */
+async function prendiIstanzaUnica(): Promise<boolean> {
+  if (app.requestSingleInstanceLock()) return true
+  if (!process.argv.includes(ARG_AGGIORNATO)) return false
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 500))
+    if (app.requestSingleInstanceLock()) return true
+  }
+  return false
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -38,7 +75,20 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow?.show())
+  // Se la pagina non dice mai "pronta" (un errore nel renderer) la finestra si
+  // mostra lo stesso: mai un programma che gira nascosto senza finestra.
+  const mostra = (): void => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) mainWindow.show()
+  }
+  mainWindow.on('ready-to-show', mostra)
+  setTimeout(mostra, SHOW_FALLBACK_MS)
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('[finestra] renderer terminato:', details.reason)
+    if (details.reason !== 'clean-exit' && mainWindow && !mainWindow.isDestroyed()) mainWindow.reload()
+  })
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
   // Il lampeggio per una chiamata in arrivo si ferma quando si torna sulla finestra.
   mainWindow.on('focus', () => mainWindow?.flashFrame(false))
 
@@ -148,7 +198,14 @@ function registerIpc(): void {
   registerReportIpc()
 }
 
+app.on('second-instance', () => mettiDavanti())
+
 app.whenReady().then(async () => {
+  if (!(await prendiIstanzaUnica())) {
+    // C'è già una copia aperta: le ha pensato 'second-instance', qui si esce e basta.
+    app.exit(0)
+    return
+  }
   electronApp.setAppUserModelId('com.daprodproduzioni.daprodfinanza')
 
   app.on('browser-window-created', (_event, window) => optimizer.watchWindowShortcuts(window))
@@ -181,7 +238,14 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-app.on('before-quit', () => {
+// In chiusura si fermano prima i controlli periodici, poi il server e per
+// ultimo il database: niente timer che scrivono su un database già chiuso.
+let chiuso = false
+app.on('will-quit', () => {
+  if (chiuso) return
+  chiuso = true
+  fermaBackupAutomatico()
+  fermaUpdates()
   stopServer()
   closeDatabase()
 })

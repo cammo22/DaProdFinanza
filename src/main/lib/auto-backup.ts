@@ -59,3 +59,8 @@ export function avviaBackupAutomatico(): void {
   applicaBackupAutomatico()
   if (!timer) timer = setInterval(applicaBackupAutomatico, OGNI_ORA_MS)
 }
+
+export function fermaBackupAutomatico(): void {
+  if (timer) clearInterval(timer)
+  timer = null
+}

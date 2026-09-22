@@ -41,6 +41,8 @@ const CHECK_EVERY_MS = 6 * 60 * 60 * 1000
 const FIRST_CHECK_DELAY_MS = 8_000
 /** File che dice alla versione nuova quale copia portable ha sostituito. */
 const CLEANUP_FILE = 'aggiornamento-portable.json'
+/** Con questo argomento la versione nuova aspetta che la vecchia si chiuda (index.ts). */
+export const ARG_AGGIORNATO = '--daprod-aggiornato'
 
 let state: UpdateState
 let offer: UpdateOffer | null = null
@@ -221,7 +223,7 @@ export function installUpdate(): void {
     const customData =
       app.commandLine.hasSwitch('user-data-dir') ||
       process.argv.some((arg) => arg.startsWith('--user-data-dir'))
-    const args = customData ? [`--user-data-dir=${app.getPath('userData')}`] : []
+    const args = customData ? [`--user-data-dir=${app.getPath('userData')}`, ARG_AGGIORNATO] : [ARG_AGGIORNATO]
     spawn(downloaded, args, { detached: true, stdio: 'ignore', cwd: dirname(downloaded) }).unref()
   }
   app.quit()
@@ -283,10 +285,24 @@ export function initUpdates(): void {
   // L'impostazione si rilegge a ogni giro: spenta o riaccesa dalle Impostazioni
   // vale subito, senza riavviare. Il pulsante "Aggiornamenti" funziona sempre.
   const automatico = (): void => {
-    if (getAppSettings().aggiornamentiAutomatici) void checkForUpdates()
+    try {
+      if (getAppSettings().aggiornamentiAutomatici) void checkForUpdates()
+    } catch (err) {
+      // Database non disponibile (programma in chiusura): si salta il giro.
+      console.error('[aggiornamenti] controllo automatico saltato:', err)
+    }
   }
-  setTimeout(automatico, FIRST_CHECK_DELAY_MS)
-  setInterval(automatico, CHECK_EVERY_MS)
+  primoControllo = setTimeout(automatico, FIRST_CHECK_DELAY_MS)
+  controlloPeriodico = setInterval(automatico, CHECK_EVERY_MS)
+}
+
+let primoControllo: ReturnType<typeof setTimeout> | null = null
+let controlloPeriodico: ReturnType<typeof setInterval> | null = null
+
+export function fermaUpdates(): void {
+  if (primoControllo) clearTimeout(primoControllo)
+  if (controlloPeriodico) clearInterval(controlloPeriodico)
+  primoControllo = controlloPeriodico = null
 }
 
 function messageOf(error: unknown, fallback: string): string {
