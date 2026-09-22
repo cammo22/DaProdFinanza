@@ -25,6 +25,9 @@ const CompanySettingsView = lazy(() =>
   import('./business/CompanySettingsView').then((m) => ({ default: m.CompanySettingsView }))
 )
 const DocumentsView = lazy(() => import('./business/DocumentsView').then((m) => ({ default: m.DocumentsView })))
+const MarginalitaView = lazy(() => import('./business/MarginalitaView').then((m) => ({ default: m.MarginalitaView })))
+const FiscaleView = lazy(() => import('./business/FiscaleView').then((m) => ({ default: m.FiscaleView })))
+const PersonaleView = lazy(() => import('./business/PersonaleView').then((m) => ({ default: m.PersonaleView })))
 const TreasuryView = lazy(() => import('./business/TreasuryView').then((m) => ({ default: m.TreasuryView })))
 import { ActivitiesView } from './business/ActivitiesView'
 import { BalanceSheetView } from './business/BalanceSheetView'
@@ -62,11 +65,14 @@ const SENZA_PERIODO: Vista[] = [
   'impostazioni-azienda',
   'riepilogo',
   'documenti',
-  'richieste'
+  'richieste',
+  'personale',
+  'fiscale',
+  'marginalita'
 ]
 
 /** Viste senza pannelli spostabili: il menu "Pannelli" non ha niente da fare. */
-const SENZA_PANNELLI: Vista[] = ['dati', 'impostazioni-azienda', 'riepilogo', 'documenti', 'richieste']
+const SENZA_PANNELLI: Vista[] = ['dati', 'impostazioni-azienda', 'riepilogo', 'documenti', 'richieste', 'marginalita']
 
 export function CompanyPage({
   company,
@@ -509,6 +515,12 @@ export function CompanyPage({
         )}
 
         {vista === 'riepilogo' && <CompanyHome company={company} onVista={onVista} />}
+
+        {vista === 'personale' && <PersonaleView company={company} canEdit={canImport} />}
+
+        {vista === 'fiscale' && <FiscaleView company={company} canEdit={canImport} />}
+
+        {vista === 'marginalita' && <MarginalitaView company={company} canEdit={canImport} />}
 
         {vista === 'documenti' && <DocumentsView company={company} />}
 

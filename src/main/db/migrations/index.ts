@@ -8,6 +8,8 @@ import { up as up006 } from './006_simulation_scenarios'
 import { up as up007 } from './007_activities'
 import { up as up008 } from './008_settings_users'
 import { up as up009 } from './009_documents_requests'
+import { up as up010 } from './010_employees'
+import { up as up011 } from './011_margins'
 
 export interface Migration {
   version: number
@@ -29,7 +31,9 @@ export const MIGRATIONS: Migration[] = [
   { version: 6, name: '006_simulation_scenarios', up: up006 },
   { version: 7, name: '007_activities', up: up007 },
   { version: 8, name: '008_settings_users', up: up008 },
-  { version: 9, name: '009_documents_requests', up: up009 }
+  { version: 9, name: '009_documents_requests', up: up009 },
+  { version: 10, name: '010_employees', up: up010 },
+  { version: 11, name: '011_margins', up: up011 }
 ]
 
 export function runMigrations(db: Database): number {

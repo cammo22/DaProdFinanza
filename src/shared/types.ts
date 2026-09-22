@@ -268,7 +268,7 @@ export interface ImportDocument extends BaseRecord {
 export interface TreasuryItem extends BaseRecord {
   company_uuid: string
   direction: 'in' | 'out'
-  source: 'scadenziario' | 'manuale' | 'finanziamento'
+  source: 'scadenziario' | 'manuale' | 'finanziamento' | 'personale' | 'fiscale'
   category: string
   description: string
   counterparty: string | null
@@ -391,4 +391,74 @@ export interface ActivitiesPayload {
   entries: TimeEntry[]
   hourly_rate_cents: number | null
   running: RunningTimer | null
+}
+
+// --- Personale (1.3.0) ------------------------------------------------------
+
+/** Una persona dell'azienda (§10.16). Costo aziendale e orario li calcola il motore. */
+export interface Employee extends BaseRecord {
+  company_uuid: string
+  name: string
+  role: string | null
+  department: string | null
+  contract: 'indeterminato' | 'determinato' | 'apprendistato' | 'collaborazione' | 'altro'
+  ccnl_level: string | null
+  hours_week: number
+  gross_annual_cents: number
+  monthly_payments: number
+  employer_contrib_pct: number | null
+  inail_pct: number | null
+  other_costs_cents: number
+  direct: 0 | 1
+  start_date: string | null
+  end_date: string | null
+  notes: string | null
+}
+
+export type EmployeeInput = Partial<Omit<Employee, keyof BaseRecord | 'company_uuid'>>
+
+// --- Marginalità (1.3.0) ----------------------------------------------------
+
+export interface MarginMaterial extends BaseRecord {
+  company_uuid: string
+  name: string
+  unit: string
+  unit_cost_cents: number
+  waste_pct: number
+  category: string | null
+  supplier: string | null
+  notes: string | null
+}
+
+export interface MarginLine extends BaseRecord {
+  item_uuid: string
+  company_uuid: string
+  phase: 'preventivo' | 'consuntivo'
+  kind: 'materiale' | 'manodopera' | 'esterno' | 'altro'
+  material_uuid: string | null
+  employee_uuid: string | null
+  description: string | null
+  qty: number
+  unit: string | null
+  unit_cost_cents: number | null
+  position: number
+}
+
+export interface MarginItem extends BaseRecord {
+  company_uuid: string
+  kind: 'ricetta' | 'prodotto' | 'commessa' | 'servizio'
+  name: string
+  code: string | null
+  category: string | null
+  price_cents: number
+  vat_pct: number
+  yield_qty: number
+  monthly_volume: number | null
+  overhead_pct: number | null
+  status: 'attiva' | 'preventivo' | 'in_corso' | 'chiusa' | 'archiviata'
+  customer: string | null
+  start_date: string | null
+  end_date: string | null
+  notes: string | null
+  lines: MarginLine[]
 }

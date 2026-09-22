@@ -345,6 +345,57 @@ app.whenReady().then(() => {
     check("documento dell'azienda", () => insertDocument('company', 1), 'accettato')
     check("documento dell'azienda nascosto all'azienda", () => insertDocument('company', 0), 'rifiutato')
     check('documento riservato dello studio', () => insertDocument('consultant', 0), 'accettato')
+
+    console.log('\n Personale (migrazione 010)')
+    const insertEmployee = (fields) => {
+      const e = { contract: 'indeterminato', hours: 40, ral: 2_600_000, mens: 13, contrib: null, start: null, end: null, ...fields }
+      const uuid = randomUUID()
+      db.prepare(
+        `INSERT INTO employees (uuid, company_uuid, name, contract, hours_week, gross_annual_cents, monthly_payments,
+                                employer_contrib_pct, start_date, end_date, created_at, updated_at)
+         VALUES (?, ?, 'Verifica', ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(uuid, tempCompany, e.contract, e.hours, e.ral, e.mens, e.contrib, e.start, e.end, now, now)
+      return uuid
+    }
+    let persona = null
+    check('persona valida', () => (persona = insertEmployee({})), 'accettato')
+    check('contratto inventato', () => insertEmployee({ contract: 'a chiamata' }), 'rifiutato')
+    check('15 mensilità', () => insertEmployee({ mens: 15 }), 'rifiutato')
+    check('RAL negativa', () => insertEmployee({ ral: -1 }), 'rifiutato')
+    check('contributi oltre il 60%', () => insertEmployee({ contrib: 75 }), 'rifiutato')
+    check('fine prima dell’assunzione', () => insertEmployee({ start: '2026-05-01', end: '2026-01-01' }), 'rifiutato')
+
+    console.log('\n Marginalità (migrazione 011)')
+    const materiale = randomUUID()
+    check('voce del listino', () =>
+      db.prepare(
+        `INSERT INTO margin_materials (uuid, company_uuid, name, unit, unit_cost_cents, waste_pct, created_at, updated_at)
+         VALUES (?, ?, 'Farina', 'kg', 110, 5, ?, ?)`
+      ).run(materiale, tempCompany, now, now), 'accettato')
+    check('scarto oltre il 95%', () =>
+      db.prepare(
+        `INSERT INTO margin_materials (uuid, company_uuid, name, unit_cost_cents, waste_pct, created_at, updated_at)
+         VALUES (?, ?, 'Sbagliato', 100, 99, ?, ?)`
+      ).run(randomUUID(), tempCompany, now, now), 'rifiutato')
+    const voce = randomUUID()
+    const insertMarginItem = (uuid, kind, resa) =>
+      db.prepare(
+        `INSERT INTO margin_items (uuid, company_uuid, kind, name, price_cents, yield_qty, created_at, updated_at)
+         VALUES (?, ?, ?, 'Verifica', 636, ?, ?, ?)`
+      ).run(uuid, tempCompany, kind, resa, now, now)
+    check('ricetta', () => insertMarginItem(voce, 'ricetta', 1), 'accettato')
+    check('tipo di voce inventato', () => insertMarginItem(randomUUID(), 'menu', 1), 'rifiutato')
+    check('resa zero', () => insertMarginItem(randomUUID(), 'ricetta', 0), 'rifiutato')
+    const insertMarginLine = (kind, material, employee) =>
+      db.prepare(
+        `INSERT INTO margin_lines (uuid, item_uuid, company_uuid, kind, material_uuid, employee_uuid, qty, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 0.2, ?, ?)`
+      ).run(randomUUID(), voce, tempCompany, kind, material, employee, now, now)
+    check('riga di materiale dal listino', () => insertMarginLine('materiale', materiale, null), 'accettato')
+    check('manodopera di una persona', () => insertMarginLine('manodopera', null, persona), 'accettato')
+    check('manodopera che punta al listino', () => insertMarginLine('manodopera', materiale, null), 'rifiutato')
+    check('materiale che punta a una persona', () => insertMarginLine('materiale', null, persona), 'rifiutato')
+    check('materiale inesistente', () => insertMarginLine('materiale', randomUUID(), null), 'rifiutato')
   } finally {
     db.exec('ROLLBACK')
     db.close()

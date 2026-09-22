@@ -6,7 +6,7 @@ import { useAuth } from '../../lib/auth'
 import { dataIt, euro } from '../../lib/format'
 import { useAlCambioRichieste } from '../../lib/inbox'
 import type { Vista } from '../../components/Sidebar'
-import { Alert, Button, Card } from '../../components/ui'
+import { Alert, Button, CaricamentoPagina, Card } from '../../components/ui'
 import { NewRequestDialog } from '../../components/NewRequestDialog'
 import { StatoRichiesta, quandoBreve } from '../../components/RequestDetail'
 import { UploadDialog } from '../../components/UploadDialog'
@@ -30,6 +30,7 @@ interface Riepilogo {
   liquidita: { oggi: number; tra30: number; soglia: number | null; tensione: { date: string; days: number } | null } | null
   scadenze: { date: string; description: string; cents: number; direction: 'in' | 'out'; overdue: boolean }[] | null
   periodo: { label: string; ricavi: number; ebitda: number; utile: number; ytd: { label: string; ricavi: number; utile: number } | null } | null
+  fiscale: { accantonamentoMensile: number; totaleAnno: number; prossima: { data: string; descrizione: string; importo: number } | null } | null
   richieste: (RequestItem & { descrizione: string })[]
   documentiNuovi: DocumentItem[]
 }
@@ -65,7 +66,7 @@ export function CompanyHome({ company, onVista }: { company: Company; onVista: (
   useAlCambioRichieste(ricarica)
 
   if (errore) return <Alert>{errore}</Alert>
-  if (!r) return <p className="text-sm text-ink-400">Caricamento…</p>
+  if (!r) return <CaricamentoPagina />
 
   const ora = new Date().getHours()
   const saluto = ora < 13 ? 'Buongiorno' : ora < 18 ? 'Buon pomeriggio' : 'Buonasera'
@@ -121,6 +122,34 @@ export function CompanyHome({ company, onVista }: { company: Company; onVista: (
             </>
           )}
         </section>
+      )}
+
+      {r.fiscale && (
+        <button
+          type="button"
+          onClick={() => onVista('fiscale')}
+          className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-warning/30 bg-warning/5 px-5 py-4 text-left hover:border-warning/50"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warning/15 text-warning">
+            <Icona nome="euro" className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs text-ink-400">Tasse e contributi da mettere da parte</span>
+            <span className="block font-mono text-xl font-semibold tabular-nums text-ink-100">
+              {euro(r.fiscale.accantonamentoMensile)} <span className="text-sm font-normal text-ink-400">al mese</span>
+            </span>
+          </span>
+          {r.fiscale.prossima && (
+            <span className="text-sm">
+              <span className="block text-xs text-ink-400">Prossima scadenza</span>
+              <span className="block text-ink-100">
+                {new Date(`${r.fiscale.prossima.data}T12:00:00`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })} ·{' '}
+                <span className="tabular-nums">{euro(r.fiscale.prossima.importo)}</span>
+              </span>
+              <span className="block text-[11px] text-ink-500">{r.fiscale.prossima.descrizione}</span>
+            </span>
+          )}
+        </button>
       )}
 
       <div className="grid gap-5 lg:grid-cols-2">

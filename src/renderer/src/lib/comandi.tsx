@@ -104,7 +104,7 @@ export function useRegistraComandi(sorgente: string, comandi: Comando[], firma: 
     // Le azioni chiamano sempre la versione più recente delle funzioni.
     registra(
       sorgente,
-      ultimi.current.map((c, i) => ({ ...c, esegui: () => ultimi.current[i]?.esegui() }))
+      ultimi.current.map((c) => ({ ...c, esegui: () => (ultimi.current.find((x) => x.id === c.id) ?? c).esegui() }))
     )
   }, [sorgente, firma, registra])
   useEffect(() => () => togli(sorgente), [sorgente, togli])
@@ -126,6 +126,8 @@ export type AzioneSchermata =
   | 'nuova-attivita'
   | 'nuova-azienda'
   | 'nuovo-cliente'
+  | 'nuova-persona'
+  | 'nuova-voce-margine'
 
 export function richiediAzione(nome: AzioneSchermata): void {
   inAttesa.set(nome, Date.now())

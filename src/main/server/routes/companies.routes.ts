@@ -17,6 +17,9 @@ import { analysisRouter } from './analysis.routes'
 import { banksRouter } from './banks.routes'
 import { documentsRouter } from './documents.routes'
 import { ledgerRouter } from './ledger.routes'
+import { personaleRouter } from './personale.routes'
+import { fiscaleRouter } from './fiscale.routes'
+import { marginalitaRouter } from './marginalita.routes'
 import { requestsRouter } from './requests.routes'
 import { simulationRouter } from './simulation.routes'
 import { treasuryRouter } from './treasury.routes'
@@ -35,6 +38,9 @@ companiesRouter.use('/:uuid', ledgerRouter)
 companiesRouter.use('/:uuid', activitiesRouter)
 companiesRouter.use('/:uuid', documentsRouter)
 companiesRouter.use('/:uuid', requestsRouter)
+companiesRouter.use('/:uuid', personaleRouter)
+companiesRouter.use('/:uuid', fiscaleRouter)
+companiesRouter.use('/:uuid', marginalitaRouter)
 
 function uuidParam(req: Request): string {
   const value = req.params['uuid']

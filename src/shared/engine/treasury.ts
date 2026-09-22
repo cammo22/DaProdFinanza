@@ -23,7 +23,8 @@
  */
 
 export type Direction = 'in' | 'out'
-export type TreasurySource = 'scadenziario' | 'manuale' | 'finanziamento'
+/** `personale` e `fiscale` sono calcolati (stipendi, F24, imposte): mai scritti nello scadenziario. */
+export type TreasurySource = 'scadenziario' | 'manuale' | 'finanziamento' | 'personale' | 'fiscale'
 export type Recurrence = 'none' | 'monthly'
 
 export interface TreasuryItemInput {

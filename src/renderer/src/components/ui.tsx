@@ -96,12 +96,15 @@ export function Modal({
   title,
   subtitle,
   onClose,
-  children
+  children,
+  larga = false
 }: {
   title: string
   subtitle?: string
   onClose: () => void
   children: ReactNode
+  /** Finestra larga, per gli editor con il riepilogo di fianco. */
+  larga?: boolean
 }): React.JSX.Element {
   // Esc chiude, come ogni finestra.
   useEffect(() => {
@@ -114,7 +117,7 @@ export function Modal({
   return (
     // Sul telefono la finestra sale dal basso e occupa quasi tutto lo schermo.
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 md:items-center md:p-6">
-      <div className="sale md:compare flex max-h-[94vh] w-full max-w-2xl flex-col rounded-t-2xl border border-ink-700 bg-ink-850 shadow-2xl md:max-h-[90vh] md:rounded-xl">
+      <div className={`sale md:compare flex max-h-[94vh] w-full ${larga ? 'max-w-5xl' : 'max-w-2xl'} flex-col rounded-t-2xl border border-ink-700 bg-ink-850 shadow-2xl md:max-h-[90vh] md:rounded-xl`}>
         <header className="flex shrink-0 items-start justify-between border-b border-ink-700 px-5 py-4 md:px-6">
           <div className="min-w-0">
             <h2 className="text-base font-semibold text-ink-100">{title}</h2>
