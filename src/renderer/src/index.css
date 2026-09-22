@@ -66,6 +66,121 @@
   color-scheme: dark;
 }
 
+/*
+ * Colore d'accento (Impostazioni → Il mio profilo). Il blu è quello di
+ * partenza, definito in @theme; gli altri ridefiniscono le quattro sfumature
+ * "brand", in versione scura e chiara. Il 500 è il fondo dei pulsanti col
+ * testo bianco: resta abbastanza scuro da leggerlo.
+ */
+:root[data-accent='turchese'] {
+  --color-brand-500: #0d9488;
+  --color-brand-400: #14b8a6;
+  --color-brand-300: #2dd4bf;
+  --color-brand-200: #99f6e4;
+}
+:root[data-accent='viola'] {
+  --color-brand-500: #7c3aed;
+  --color-brand-400: #8b5cf6;
+  --color-brand-300: #c4b5fd;
+  --color-brand-200: #ddd6fe;
+}
+:root[data-accent='indaco'] {
+  --color-brand-500: #4f46e5;
+  --color-brand-400: #6366f1;
+  --color-brand-300: #a5b4fc;
+  --color-brand-200: #c7d2fe;
+}
+:root[data-theme='light'][data-accent='turchese'] {
+  --color-brand-300: #0f766e;
+  --color-brand-200: #115e59;
+}
+:root[data-theme='light'][data-accent='viola'] {
+  --color-brand-300: #6d28d9;
+  --color-brand-200: #5b21b6;
+}
+:root[data-theme='light'][data-accent='indaco'] {
+  --color-brand-300: #4338ca;
+  --color-brand-200: #3730a3;
+}
+
+/* Da tastiera si vede sempre dove si è; col mouse no. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+/* I campi hanno già il loro bordo acceso quando sono attivi. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* Gli importi nelle tabelle non vanno mai a capo ("15.000" sopra, "€" sotto). */
+td.text-right,
+th.text-right {
+  white-space: nowrap;
+}
+
+/* Scheletri di caricamento: una luce che scorre al posto di "Caricamento…". */
+@keyframes scheletro {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.scheletro {
+  background: linear-gradient(
+    90deg,
+    var(--color-ink-800) 25%,
+    var(--color-ink-700) 50%,
+    var(--color-ink-800) 75%
+  );
+  background-size: 200% 100%;
+  animation: scheletro 1.4s ease-in-out infinite;
+}
+
+/* Comparse leggere per menu, fogli e finestre. */
+@keyframes compare {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sale {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+/* Come utility: così funzionano anche con i prefissi (md:compare). */
+@utility compare {
+  animation: compare 0.14s ease-out;
+}
+@utility sale {
+  animation: sale 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Sul telefono lo spazio sotto la barra dei gesti. */
+@utility fondo-sicuro {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 html,
 body,
 #root {

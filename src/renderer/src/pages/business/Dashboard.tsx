@@ -6,6 +6,7 @@ import { dataIt, days, euro, percent, times } from '../../lib/format'
 import type { Vista } from '../../components/Sidebar'
 import { Barra, Segmenti } from '../../components/widgets'
 import { Griglia } from '../../components/Pannelli'
+import { Icona } from '../../components/icone'
 
 /**
  * Cruscotto in cima alla Panoramica: a colpo d'occhio, a widget.
@@ -223,19 +224,13 @@ export function useCruscotto({
   return {
     intestazione: (
       <div className="flex flex-col gap-2">
-      {/* Intestazione del cruscotto: percorso, titolo, comandi. */}
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <p className="text-[11px] text-ink-400">
-            ⌂ <span className="mx-1 text-ink-600">›</span> {company.name}
-            <span className="mx-1 text-ink-600">›</span> <span className="text-ink-300">Panoramica</span>
-          </p>
-          <h2 className="mt-1 text-lg font-semibold text-ink-100">
-            Cruscotto di {analysis.period.label}{' '}
-            <span className="font-normal text-ink-400">per {company.name}</span>
-          </h2>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
+      {/* Intestazione del cruscotto: titolo e comandi (dove si è lo dice già la testata). */}
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="text-base font-semibold text-ink-100 md:text-lg">
+          Cruscotto di {analysis.period.label}{' '}
+          <span className="font-normal text-ink-400 max-md:hidden">per {company.name}</span>
+        </h2>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <label className="flex cursor-pointer items-center gap-2 text-xs text-brand-300">
             <span
               role="switch"
@@ -253,17 +248,17 @@ export function useCruscotto({
             type="button"
             onClick={aggiorna}
             title={`Ultimo aggiornamento ${aggiornato.toLocaleTimeString('it-IT')}`}
-            className="rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-xs text-ink-200 hover:bg-ink-700"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-xs text-ink-200 hover:bg-ink-700"
           >
-            ↻ Aggiorna
+            <Icona nome="aggiorna" className="h-3.5 w-3.5" /> Aggiorna
           </button>
           <div className="relative">
             <button
               type="button"
               onClick={() => setGestisci((g) => !g)}
-              className="rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-xs text-ink-200 hover:bg-ink-700"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-xs text-ink-200 hover:bg-ink-700"
             >
-              Gestisci widget ⋮
+              <Icona nome="pannelli" className="h-3.5 w-3.5" /> Widget
             </button>
             {gestisci && (
               <div className="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-ink-700 bg-ink-850 p-2 text-xs shadow-xl">

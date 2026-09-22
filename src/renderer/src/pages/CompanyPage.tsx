@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import type {
   Analysis,
   BankingView as BankingPayload,
@@ -9,21 +9,30 @@ import type {
 import { DEFAULT_SCHEME, type Scheme, type SimulationBase } from '@shared/engine'
 import type { Company, FiscalPeriod, Scenario, SimulationScenario } from '@shared/types'
 import { api, getToken } from '../lib/api'
-import type { Vista } from '../components/Sidebar'
-import { Alert, Button, Card, EmptyState, Select } from '../components/ui'
+import { nomeVista, type Vista, type Voce } from '../components/Sidebar'
+import { Alert, Button, CaricamentoPagina, Card, EmptyState, Segmentato, Select } from '../components/ui'
+import { FoglioBasso } from '../components/Guscio'
+import { Icona } from '../components/icone'
+import { mostraAvviso } from '../components/Avvisi'
+import { useRegistraComandi } from '../lib/comandi'
+import { ricorda, ricordato } from '../lib/memoria'
+
+// Le sezioni più pesanti si caricano la prima volta che si aprono: il programma parte prima.
+const BanksView = lazy(() => import('./business/BanksView').then((m) => ({ default: m.BanksView })))
+const SimulationView = lazy(() => import('./business/SimulationView').then((m) => ({ default: m.SimulationView })))
+const DataView = lazy(() => import('./business/DataView').then((m) => ({ default: m.DataView })))
+const CompanySettingsView = lazy(() =>
+  import('./business/CompanySettingsView').then((m) => ({ default: m.CompanySettingsView }))
+)
+const DocumentsView = lazy(() => import('./business/DocumentsView').then((m) => ({ default: m.DocumentsView })))
+const TreasuryView = lazy(() => import('./business/TreasuryView').then((m) => ({ default: m.TreasuryView })))
 import { ActivitiesView } from './business/ActivitiesView'
 import { BalanceSheetView } from './business/BalanceSheetView'
-import { BanksView } from './business/BanksView'
-import { SimulationView } from './business/SimulationView'
-import { DataView } from './business/DataView'
-import { BloccoPannelli, MenuPannelli } from '../components/Pannelli'
-import { CompanySettingsView } from './business/CompanySettingsView'
+import { BloccoPannelli, EVENTO_RIPRISTINA, MenuPannelli } from '../components/Pannelli'
 import { CompanyHome } from './business/CompanyHome'
-import { DocumentsView } from './business/DocumentsView'
 import { RequestsBoard } from '../components/RequestsBoard'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
-import { TreasuryView } from './business/TreasuryView'
 import { WorkingCapitalView } from './business/WorkingCapitalView'
 
 /**
@@ -33,17 +42,6 @@ import { WorkingCapitalView } from './business/WorkingCapitalView'
  * tutte le viste: periodo e scenario. Le viste leggono tutte lo stesso payload
  * di analisi — un solo calcolo per periodo, tre modi di guardarlo.
  */
-
-const CHIAVE_INTESTAZIONE = 'daprodfinanza.intestazione-aperta'
-
-/** Sul telefono l'intestazione parte richiusa, poi resta come la si lascia. */
-function leggiIntestazioneAperta(): boolean {
-  try {
-    return localStorage.getItem(CHIAVE_INTESTAZIONE) === '1'
-  } catch {
-    return false
-  }
-}
 
 const SCENARI: { id: Scenario; label: string }[] = [
   { id: 'actual', label: 'Consuntivo' },
@@ -76,7 +74,8 @@ export function CompanyPage({
   onVista,
   canImport,
   onCompanyChanged,
-  richiestaScelta = null
+  richiestaScelta = null,
+  schede = []
 }: {
   company: Company
   vista: Vista
@@ -86,19 +85,22 @@ export function CompanyPage({
   onCompanyChanged?: (company: Company) => void
   /** Una richiesta da aprire subito (dal campanello). */
   richiestaScelta?: { companyUuid: string; requestUuid: string } | null
+  /** Sul telefono: le sezioni vicine (stesso gruppo), come schede sotto il titolo. */
+  schede?: Voce[]
 }): React.JSX.Element {
   // Solo le viste sui bilanci chiedono i periodi: all'operatore Azienda che
   // vede, per esempio, soltanto la tesoreria il server li rifiuterebbe (§10.12).
   const servonoPeriodi = !SENZA_PERIODO.includes(vista) || vista === 'dati'
-  const [periods, setPeriods] = useState<FiscalPeriod[]>([])
+  const u = company.uuid
+  const [periods, setPeriods] = useState<FiscalPeriod[]>(() => ricordato(`${u}|periodi`) ?? [])
   const [periodUuid, setPeriodUuid] = useState<string>('')
   const [scenario, setScenario] = useState<Scenario>('actual')
   const [scheme, setScheme] = useState<Scheme>(DEFAULT_SCHEME)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [serie, setSerie] = useState<SeriesPoint[]>([])
-  const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(null)
+  const [tesoreria, setTesoreria] = useState<TreasuryPayload | null>(() => ricordato(`${u}|tesoreria`))
   const [circolante, setCircolante] = useState<WorkingCapitalPayload | null>(null)
-  const [banche, setBanche] = useState<BankingPayload | null>(null)
+  const [banche, setBanche] = useState<BankingPayload | null>(() => ricordato(`${u}|banche`))
   const [simBase, setSimBase] = useState<{
     key: string
     base: SimulationBase | null
@@ -106,13 +108,13 @@ export function CompanyPage({
   } | null>(null)
   const [scenari, setScenari] = useState<SimulationScenario[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => ricordato(`${u}|periodi`) === null)
   // Cresce a ogni "Aggiorna" del cruscotto: fa ricaricare l'analisi.
   const [giro, setGiro] = useState(0)
 
   const caricaPeriodi = useCallback(async () => {
     try {
-      const result = await api.get<FiscalPeriod[]>(`/api/companies/${company.uuid}/periods`)
+      const result = ricorda(`${company.uuid}|periodi`, await api.get<FiscalPeriod[]>(`/api/companies/${company.uuid}/periods`))
       setPeriods(result)
       // Si apre sul periodo più recente con dati a consuntivo: il più recente in
       // assoluto può essere un mese di solo budget, e la prima schermata
@@ -147,13 +149,15 @@ export function CompanyPage({
       return
     }
     let annullato = false
+    const url = `/api/companies/${company.uuid}/periods/${periodUuid}/analysis?scenario=${scenario}&scheme=${scheme}`
+    // Già visto: si mostra subito, e intanto si rilegge.
+    const visto = ricordato<Analysis>(url)
+    if (visto) setAnalysis(visto)
     api
-      .get<Analysis>(
-        `/api/companies/${company.uuid}/periods/${periodUuid}/analysis?scenario=${scenario}&scheme=${scheme}`
-      )
+      .get<Analysis>(url)
       .then((result) => {
         if (!annullato) {
-          setAnalysis(result)
+          setAnalysis(ricorda(url, result))
           setError(null)
         }
       })
@@ -169,7 +173,7 @@ export function CompanyPage({
   const caricaTesoreria = useCallback(
     async (silenzioso = false) => {
       try {
-        setTesoreria(await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`))
+        setTesoreria(ricorda(`${company.uuid}|tesoreria`, await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`)))
       } catch (err) {
         if (!silenzioso) setError(err instanceof Error ? err.message : 'Tesoreria non disponibile.')
       }
@@ -186,7 +190,7 @@ export function CompanyPage({
 
   const caricaBanche = useCallback(async () => {
     try {
-      setBanche(await api.get<BankingPayload>(`/api/companies/${company.uuid}/banking`))
+      setBanche(ricorda(`${company.uuid}|banche`, await api.get<BankingPayload>(`/api/companies/${company.uuid}/banking`)))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Banche non disponibili.')
     }
@@ -270,120 +274,216 @@ export function CompanyPage({
         scheme,
         token
       })
-      setReport(path ? `Report salvato: ${path.split(/[\/]/).pop()}` : null)
+      setReport(null)
+      if (path) mostraAvviso(`Report salvato: ${path.split(/[\\/]/).pop()}`)
     } catch (err) {
-      setReport(err instanceof Error ? err.message : 'Report non riuscito.')
-    } finally {
-      setTimeout(() => setReport(null), 8000)
+      setReport(null)
+      mostraAvviso(err instanceof Error ? err.message : 'Report non riuscito.', 'errore')
     }
   }
   const senzaPeriodo = SENZA_PERIODO.includes(vista)
   const conSelettori = periods.length > 0 && !senzaPeriodo
-  // Sul telefono l'intestazione si richiude in una riga: sotto resta tutto lo
-  // schermo per i numeri. Sul computer è sempre aperta (le classi md: la mostrano).
-  const [intestazione, setIntestazione] = useState(leggiIntestazioneAperta)
-  const apriIntestazione = (aperta: boolean): void => {
-    setIntestazione(aperta)
-    try {
-      localStorage.setItem(CHIAVE_INTESTAZIONE, aperta ? '1' : '0')
-    } catch {
-      // resta per questa sessione
-    }
-  }
-  const nascosta = intestazione ? '' : 'max-md:hidden'
+  const conPannelli = !SENZA_PANNELLI.includes(vista)
+  const periodo = periods.find((p) => p.uuid === periodUuid)
+  const scenarioLabel = SCENARI.find((x) => x.id === scenario)?.label ?? ''
+  // Sul telefono periodo, scenario e report stanno in un foglio che sale dal basso.
+  const [foglio, setFoglio] = useState(false)
+
+  // Comandi rapidi di questa schermata (Ctrl+K e pulsante "Nuovo").
+  useRegistraComandi(
+    'azienda',
+    [
+      ...(conSelettori && conDati
+        ? [
+            {
+              id: 'report-pdf',
+              titolo: 'Report PDF del periodo',
+              gruppo: 'Azioni' as const,
+              icona: 'report' as const,
+              parole: 'stampa esporta pdf bilancio',
+              dettaglio: `${periodo?.label ?? ''} · ${scenarioLabel}`,
+              rapido: true,
+              esegui: () => void esportaReport()
+            }
+          ]
+        : []),
+      ...(conPannelli
+        ? [
+            {
+              id: 'pannelli-ripristina',
+              titolo: 'Ripristina la disposizione dei pannelli',
+              gruppo: 'Programma' as const,
+              icona: 'pannelli' as const,
+              parole: 'layout riquadri',
+              esegui: () => window.dispatchEvent(new CustomEvent(EVENTO_RIPRISTINA, { detail: vista }))
+            }
+          ]
+        : []),
+      ...SCENARI.filter((x) => x.id !== scenario && conSelettori).map((x) => ({
+        id: `scenario-${x.id}`,
+        titolo: `Guarda il ${x.label.toLowerCase()}`,
+        gruppo: 'Programma' as const,
+        icona: 'andamento' as const,
+        parole: 'scenario',
+        esegui: () => setScenario(x.id)
+      }))
+    ],
+    [vista, conSelettori, conDati, periodUuid, scenario, conPannelli].join('|')
+  )
+
+  const selettorePeriodo = (
+    <Select
+      value={periodUuid}
+      onChange={(e) => setPeriodUuid(e.target.value)}
+      className="min-w-0 py-1.5 text-xs md:w-56"
+      aria-label="Periodo"
+    >
+      {periods.map((p) => {
+        // Un periodo senza lo scenario scelto lo dichiara già nel menu,
+        // invece di farlo scoprire aprendolo.
+        const altri =
+          p.scenarios && p.scenarios.length > 0 && !p.scenarios.includes(scenario)
+            ? ` · solo ${p.scenarios
+                .map((s) => SCENARI.find((x) => x.id === s)?.label.toLowerCase())
+                .join(', ')}`
+            : ''
+        return (
+          <option key={p.uuid} value={p.uuid}>
+            {p.label}
+            {altri}
+          </option>
+        )
+      })}
+    </Select>
+  )
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <header
-        className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-ink-700 px-4 md:px-8 md:py-4 ${
-          intestazione ? 'py-3' : 'py-2'
-        }`}
-      >
-        <div className="min-w-0 flex-1">
-          <h1 className={`truncate font-semibold text-ink-100 md:text-lg ${intestazione ? 'text-lg' : 'text-sm'}`}>
-            {company.name}
-          </h1>
-          {!intestazione && conSelettori && (
-            <p className="truncate text-xs text-ink-400 md:hidden">
-              {periods.find((p) => p.uuid === periodUuid)?.label ?? ''} ·{' '}
-              {SCENARI.find((x) => x.id === scenario)?.label}
+      <header className="shrink-0 border-b border-ink-700">
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2 md:gap-x-3 md:px-8 md:py-3">
+          <div className="min-w-0 flex-1 md:min-w-[14rem]">
+            <h1 className="truncate text-base font-semibold text-ink-100 md:text-lg">{nomeVista(vista)}</h1>
+            <p className="truncate text-xs text-ink-400">
+              <span className="md:hidden">{company.name}</span>
+              <span className="font-mono max-md:hidden">
+                {company.name} · {company.code}
+                {company.vat_number ? ` · P.IVA ${company.vat_number}` : ''}
+                {company.business_type ? ` · ${company.business_type}` : ''}
+              </span>
             </p>
+          </div>
+
+          {conSelettori && (
+            <div className="hidden flex-wrap items-center gap-2 md:flex">
+              {selettorePeriodo}
+              <Segmentato
+                piccolo
+                valore={scenario}
+                onChange={setScenario}
+                opzioni={SCENARI.map((x) => ({ id: x.id, label: x.label }))}
+              />
+              <Button
+                variant="primary"
+                className="shrink-0 whitespace-nowrap px-3 py-1.5 text-xs"
+                disabled={!conDati || report !== null}
+                onClick={esportaReport}
+                title="Report completo del periodo scelto, da stampare o consegnare al cliente"
+              >
+                <Icona nome="report" className="h-4 w-4" />
+                {report ? 'Preparo…' : 'Report PDF'}
+              </Button>
+            </div>
           )}
-          <p className={`mt-0.5 font-mono text-xs text-ink-400 ${nascosta}`}>
-            {company.code}
-            {company.vat_number ? ` · P.IVA ${company.vat_number}` : ''}
-            {company.business_type ? ` · ${company.business_type}` : ''}
-          </p>
+          {conPannelli && (
+            <div className="max-md:hidden">
+              <MenuPannelli vista={vista} />
+            </div>
+          )}
+          {conPannelli && <BloccoPannelli className="md:hidden" />}
+          {conSelettori && (
+            <button
+              type="button"
+              onClick={() => setFoglio(true)}
+              className="flex max-w-[45%] shrink-0 items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-xs text-ink-200 md:hidden"
+              aria-label="Periodo, scenario e report"
+            >
+              <Icona nome="calendario" className="h-3.5 w-3.5 text-ink-400" />
+              <span className="truncate">
+                {periodo?.label ?? '—'}
+                {scenario !== 'actual' ? ` · ${scenarioLabel}` : ''}
+              </span>
+              <Icona nome="giu" className="h-3 w-3 text-ink-400" />
+            </button>
+          )}
         </div>
 
-        {!SENZA_PANNELLI.includes(vista) && (
-          <div className={nascosta}>
-            <MenuPannelli vista={vista} />
-          </div>
-        )}
-        {!SENZA_PANNELLI.includes(vista) && <BloccoPannelli className="md:hidden" />}
-        <button
-          type="button"
-          onClick={() => apriIntestazione(!intestazione)}
-          className="shrink-0 rounded-lg border border-ink-700 bg-ink-800 px-2.5 py-1 text-xs text-ink-300 md:hidden"
-          aria-expanded={intestazione}
-          aria-label={intestazione ? 'Richiudi i comandi' : 'Mostra i comandi'}
-        >
-          {intestazione ? '▴' : '▾'}
-        </button>
-        {conSelettori && (
-          <div className={`flex w-full flex-wrap items-center gap-2 md:w-auto ${nascosta}`}>
-            <span className="hidden text-xs text-ink-400 sm:inline">Periodo</span>
-            <Select
-              value={periodUuid}
-              onChange={(e) => setPeriodUuid(e.target.value)}
-              className="min-w-0 flex-1 py-1.5 text-xs md:w-60 md:flex-none"
-            >
-              {periods.map((p) => {
-                // Un periodo senza lo scenario scelto lo dichiara già nel menu,
-                // invece di farlo scoprire aprendolo.
-                const altri =
-                  p.scenarios && p.scenarios.length > 0 && !p.scenarios.includes(scenario)
-                    ? ` · solo ${p.scenarios
-                        .map((s) => SCENARI.find((x) => x.id === s)?.label.toLowerCase())
-                        .join(', ')}`
-                    : ''
-                return (
-                  <option key={p.uuid} value={p.uuid}>
-                    {p.label}
-                    {altri}
-                  </option>
-                )
-              })}
-            </Select>
-            <Select
-              value={scenario}
-              onChange={(e) => setScenario(e.target.value as Scenario)}
-              className="w-32 py-1.5 text-xs md:w-40"
-            >
-              {SCENARI.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
-              ))}
-            </Select>
-            <Button
-              variant="primary"
-              className="shrink-0 whitespace-nowrap px-3 py-1.5 text-xs"
-              disabled={!conDati || report === 'Preparo il report…'}
-              onClick={esportaReport}
-              title="Report completo del periodo scelto, da stampare o consegnare al cliente"
-            >
-              Report PDF
-            </Button>
-          </div>
+        {schede.length > 1 && (
+          <nav className="flex gap-1.5 overflow-x-auto px-3 pb-2 md:hidden" aria-label="Sezioni vicine">
+            {schede.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => onVista(v.id)}
+                aria-current={v.id === vista ? 'page' : undefined}
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs ${
+                  v.id === vista
+                    ? 'border-brand-400/60 bg-brand-500/15 font-medium text-brand-200'
+                    : 'border-ink-700 bg-ink-900 text-ink-300'
+                }`}
+              >
+                {v.breve ?? v.label}
+              </button>
+            ))}
+          </nav>
         )}
       </header>
 
+      {foglio && (
+        <FoglioBasso titolo="Periodo e scenario" onChiudi={() => setFoglio(false)}>
+          <div className="flex flex-col gap-4 px-4 py-2">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-ink-300">Periodo</span>
+              {selettorePeriodo}
+            </label>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-ink-300">Scenario</span>
+              <Segmentato
+                valore={scenario}
+                onChange={setScenario}
+                className="w-full"
+                opzioni={SCENARI.map((x) => ({ id: x.id, label: x.label }))}
+              />
+            </div>
+            <Button
+              variant="primary"
+              disabled={!conDati || report !== null}
+              onClick={() => {
+                setFoglio(false)
+                void esportaReport()
+              }}
+            >
+              <Icona nome="report" className="h-4 w-4" />
+              Report PDF del periodo
+            </Button>
+            {conPannelli && (
+              <Button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent(EVENTO_RIPRISTINA, { detail: vista }))
+                  setFoglio(false)
+                }}
+              >
+                <Icona nome="pannelli" className="h-4 w-4" />
+                Ripristina la disposizione dei pannelli
+              </Button>
+            )}
+          </div>
+        </FoglioBasso>
+      )}
+
       {/* Le richieste hanno elenco e dettaglio che scorrono ognuno per conto suo. */}
       <div
-        className={`min-h-0 flex-1 px-3 py-4 md:px-8 md:py-6 ${
-          vista === 'richieste' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+        className={`min-h-0 flex-1 px-3 pt-4 md:px-8 md:py-6 ${
+          vista === 'richieste' ? 'flex flex-col overflow-hidden pb-4' : 'overflow-y-auto pb-24'
         }`}
       >
         {report && (
@@ -397,6 +497,7 @@ export function CompanyPage({
           </div>
         )}
 
+        <Suspense fallback={<CaricamentoPagina />}>
         {vista === 'dati' && canImport && (
           <DataView company={company} periods={periods} canEdit={canImport} onChanged={caricaPeriodi} />
         )}
@@ -429,7 +530,7 @@ export function CompanyPage({
               onChanged={caricaTesoreria}
             />
           ) : (
-            <p className="text-sm text-ink-400">Caricamento…</p>
+            <CaricamentoPagina />
           ))}
 
         {vista === 'banche' &&
@@ -441,12 +542,12 @@ export function CompanyPage({
               onChanged={caricaBanche}
             />
           ) : (
-            <p className="text-sm text-ink-400">Caricamento…</p>
+            <CaricamentoPagina />
           ))}
 
         {!senzaPeriodo &&
           (loading ? (
-            <p className="text-sm text-ink-400">Caricamento…</p>
+            <CaricamentoPagina />
           ) : !conDati ? (
             <Card>
               <EmptyState
@@ -494,7 +595,7 @@ export function CompanyPage({
             />
           ) : vista === 'simulazioni' ? (
             !simBase || simBase.key !== `${periodUuid}|${scenario}` ? (
-              <p className="text-sm text-ink-400">Caricamento…</p>
+              <CaricamentoPagina />
             ) : simBase.base ? (
               <SimulationView
                 key={simBase.key}
@@ -517,11 +618,12 @@ export function CompanyPage({
             circolante && circolante.period.uuid === periodUuid ? (
               <WorkingCapitalView vista={circolante} />
             ) : (
-              <p className="text-sm text-ink-400">Caricamento…</p>
+              <CaricamentoPagina />
             )
           ) : (
             <BalanceSheetView analysis={analysis} />
           ))}
+        </Suspense>
       </div>
     </div>
   )

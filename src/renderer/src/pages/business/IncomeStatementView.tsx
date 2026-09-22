@@ -124,7 +124,7 @@ export function IncomeStatementView({
       })()}
 
       <Card title="Indicatori del periodo">
-        <div className="grid grid-cols-6 gap-px bg-ink-700">
+        <div className="grid grid-cols-2 gap-px bg-ink-700 md:grid-cols-3 xl:grid-cols-6">
           <Kpi label="Ricavi totali" value={euro(a.ricaviNetti)} />
           <Kpi
             label="Margine di contribuzione"
@@ -294,24 +294,26 @@ export function IncomeStatementView({
       </Card>
 
       <Card title="Gli altri due schemi — stessi conti, stesso utile">
-        <div className="grid grid-cols-2 gap-px bg-ink-700">
+        <div className="grid grid-cols-1 gap-px bg-ink-700 md:grid-cols-2">
           {analysis.alternativeSchemes.map((alt) => (
             <div key={alt.scheme} className="bg-ink-850 px-5 py-4">
               <h3 className="text-sm font-medium text-ink-100">{alt.label}</h3>
-              <table className="mt-3 w-full text-sm">
-                <tbody>
-                  {alt.lines
-                    .filter((l) => l.kind !== 'voce')
-                    .map((l) => (
-                      <tr key={l.key}>
-                        <td className="py-1 text-ink-300">{l.label}</td>
-                        <td className="py-1 text-right tabular-nums text-ink-100">
-                          {euro(l.amount_cents)}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="mt-3 w-full text-sm">
+                  <tbody>
+                    {alt.lines
+                      .filter((l) => l.kind !== 'voce')
+                      .map((l) => (
+                        <tr key={l.key}>
+                          <td className="py-1 text-ink-300">{l.label}</td>
+                          <td className="py-1 text-right tabular-nums text-ink-100">
+                            {euro(l.amount_cents)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ))}
         </div>

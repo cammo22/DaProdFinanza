@@ -11,6 +11,7 @@ import { NewRequestDialog } from '../../components/NewRequestDialog'
 import { StatoRichiesta, quandoBreve } from '../../components/RequestDetail'
 import { UploadDialog } from '../../components/UploadDialog'
 import { DocumentViewer } from '../../components/viewer/DocumentViewer'
+import { Icona } from '../../components/icone'
 
 /**
  * Il riepilogo dell'azienda — AGENTS.md §10.15 (versione 1.3.0).
@@ -87,11 +88,11 @@ export function CompanyHome({ company, onVista }: { company: Company; onVista: (
         <div className="mt-4 flex flex-wrap gap-2">
           {r.permessi.richiedereChiamate && (
             <Button variant="primary" onClick={() => setDialogo('chiamata')}>
-              📞 Chiedi una chiamata
+              <Icona nome="telefono" className="h-4 w-4" /> Chiedi una chiamata
             </Button>
           )}
-          {r.permessi.inviareDocumenti && <Button onClick={() => setDialogo('documenti')}>📎 Manda documenti</Button>}
-          {r.permessi.scrivereMessaggi && <Button onClick={() => setDialogo('domanda')}>💬 Scrivi una domanda</Button>}
+          {r.permessi.inviareDocumenti && <Button onClick={() => setDialogo('documenti')}><Icona nome="graffetta" className="h-4 w-4" /> Manda documenti</Button>}
+          {r.permessi.scrivereMessaggi && <Button onClick={() => setDialogo('domanda')}><Icona nome="messaggio" className="h-4 w-4" /> Scrivi una domanda</Button>}
         </div>
       </section>
 
@@ -174,7 +175,7 @@ export function CompanyHome({ company, onVista }: { company: Company; onVista: (
                 {r.documentiNuovi.map((d) => (
                   <li key={d.uuid}>
                     <button type="button" className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-ink-800/50" onClick={() => setAperto(d)}>
-                      <span className="min-w-0 flex-1 truncate text-sm text-ink-100">📄 {d.name}</span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm text-ink-100"><Icona nome="documento" className="h-4 w-4 text-ink-400" /> <span className="truncate">{d.name}</span></span>
                       <span className="shrink-0 text-[11px] text-ink-400">
                         {dimensione(d.size_bytes)} · {quandoBreve(d.created_at)}
                       </span>

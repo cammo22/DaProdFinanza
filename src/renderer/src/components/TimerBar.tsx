@@ -2,12 +2,30 @@ import { useCallback, useEffect, useState } from 'react'
 import type { RunningTimer } from '@shared/types'
 import { api } from '../lib/api'
 import { EVENTO_TIMER, avvisaTimer, useSecondi } from '../pages/business/ActivitiesView'
+import { Icona } from './icone'
 
 /**
  * Il timer acceso, sempre in vista nella barra in alto (AGENTS.md §10.11):
  * si vede da qualunque schermata, si ferma con un clic, e un clic sul nome
  * porta alle attività dell'azienda su cui sta contando.
  */
+/** Il timer acceso in tutto il programma (null se spento), sempre aggiornato. */
+export function useTimerAcceso(): RunningTimer | null {
+  const [timer, setTimer] = useState<RunningTimer | null>(null)
+  const carica = useCallback(() => {
+    api
+      .get<RunningTimer | null>('/api/timer')
+      .then(setTimer)
+      .catch(() => setTimer(null))
+  }, [])
+  useEffect(() => {
+    carica()
+    window.addEventListener(EVENTO_TIMER, carica)
+    return () => window.removeEventListener(EVENTO_TIMER, carica)
+  }, [carica])
+  return timer
+}
+
 export function TimerBar({ onApri }: { onApri: (companyUuid: string) => void }): React.JSX.Element | null {
   const [timer, setTimer] = useState<RunningTimer | null>(null)
   const secondi = useSecondi(timer)
@@ -37,7 +55,7 @@ export function TimerBar({ onApri }: { onApri: (companyUuid: string) => void }):
   const tempo = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-brand-500/40 bg-brand-500/10 py-0.5 pl-2.5 pr-1 text-xs">
+    <div className="flex min-w-0 shrink items-center gap-1.5 rounded-lg border border-brand-500/40 bg-brand-500/10 py-0.5 pr-0.5 pl-2 text-xs md:gap-2 md:pl-2.5">
       <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-brand-400" />
       <button
         type="button"
@@ -61,8 +79,9 @@ export function TimerBar({ onApri }: { onApri: (companyUuid: string) => void }):
         }}
         className="shrink-0 rounded-md px-2 py-0.5 text-negative hover:bg-negative/15"
         title="Ferma il timer e registra il tempo"
+        aria-label="Ferma il timer"
       >
-        ■
+        <Icona nome="stop" pieno className="h-3 w-3" />
       </button>
     </div>
   )

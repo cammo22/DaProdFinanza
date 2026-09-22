@@ -1,4 +1,4 @@
-import type { Tema } from '@shared/settings'
+import type { Accento, Tema } from '@shared/settings'
 
 /**
  * Tema dell'interfaccia: scuro (quello dei mockup), chiaro, o come il sistema.
@@ -10,6 +10,7 @@ import type { Tema } from '@shared/settings'
  */
 
 const CHIAVE = 'daprodfinanza.tema'
+const CHIAVE_ACCENTO = 'daprodfinanza.accento'
 const SISTEMA_CHIARO = '(prefers-color-scheme: light)'
 
 let corrente: Tema = 'scuro'
@@ -30,6 +31,16 @@ export function applicaTema(tema: Tema): void {
   }
 }
 
+/** Il colore d'accento: le variabili "brand" cambiano (vedi index.css). */
+export function applicaAccento(accento: Accento): void {
+  document.documentElement.dataset.accent = accento
+  try {
+    localStorage.setItem(CHIAVE_ACCENTO, accento)
+  } catch {
+    // resta per questa sessione
+  }
+}
+
 /** All'avvio: il tema dell'ultima volta, e l'ascolto del sistema per "come il sistema". */
 export function avviaTema(): void {
   let salvato: string | null = null
@@ -40,6 +51,12 @@ export function avviaTema(): void {
   }
   corrente = salvato === 'chiaro' || salvato === 'sistema' ? salvato : 'scuro'
   colora()
+  try {
+    const accento = localStorage.getItem(CHIAVE_ACCENTO)
+    if (accento) document.documentElement.dataset.accent = accento
+  } catch {
+    // resta il blu
+  }
   window.matchMedia(SISTEMA_CHIARO).addEventListener('change', () => {
     if (corrente === 'sistema') colora()
   })

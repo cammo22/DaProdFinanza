@@ -198,7 +198,7 @@ export function BanksView({
 
       {error && <Alert>{error}</Alert>}
 
-      <div className="grid grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Affidamenti accordati" valore={euro(a.accordato)} />
         <Kpi
           label="Affidamenti utilizzati"
@@ -236,45 +236,47 @@ export function BanksView({
             )
           }
         >
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-ink-700 text-xs text-ink-400">
-                <th className={`${TH} text-left`}>Istituto</th>
-                <th className={`${TH} text-right`}>Accordato</th>
-                <th className={`${TH} text-right`}>Utilizzato</th>
-                <th className={`${TH} text-right`}>Disponibile</th>
-                <th className={`${TH} text-right`}>Utilizzo linee</th>
-                {canEdit && <th className={TH} />}
-              </tr>
-            </thead>
-            <tbody>
-              {vista.perBanca.map((b) => {
-                const bank = vista.banks.find((x) => x.uuid === b.bank_uuid)!
-                return (
-                  <tr key={b.bank_uuid} className="border-b border-ink-800 last:border-0">
-                    <td className="px-4 py-2.5 text-ink-100">
-                      {b.name}
-                      {bank.branch && <span className="block text-xs text-ink-500">{bank.branch}</span>}
-                    </td>
-                    <td className={`${TD} text-right tabular-nums text-ink-300`}>{euro(b.accordato)}</td>
-                    <td className={`${TD} text-right tabular-nums text-ink-100`}>{euro(b.utilizzato)}</td>
-                    <td className={`${TD} text-right tabular-nums text-positive`}>{euro(b.disponibile)}</td>
-                    <td className={TD}>
-                      <Utilizzo valore={b.utilizzoPercent} />
-                    </td>
-                    {canEdit && (
-                      <td className={`${TD} text-right`}>
-                        <Azione onClick={() => setModulo({ tipo: 'banca', bank })}>Modifica</Azione>
-                        <Azione pericolo onClick={() => elimina(`banks/${bank.uuid}`, bank.name)}>
-                          Elimina
-                        </Azione>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-ink-700 text-xs text-ink-400">
+                  <th className={`${TH} text-left`}>Istituto</th>
+                  <th className={`${TH} text-right`}>Accordato</th>
+                  <th className={`${TH} text-right`}>Utilizzato</th>
+                  <th className={`${TH} text-right`}>Disponibile</th>
+                  <th className={`${TH} text-right`}>Utilizzo linee</th>
+                  {canEdit && <th className={TH} />}
+                </tr>
+              </thead>
+              <tbody>
+                {vista.perBanca.map((b) => {
+                  const bank = vista.banks.find((x) => x.uuid === b.bank_uuid)!
+                  return (
+                    <tr key={b.bank_uuid} className="border-b border-ink-800 last:border-0">
+                      <td className="px-4 py-2.5 text-ink-100">
+                        {b.name}
+                        {bank.branch && <span className="block text-xs text-ink-500">{bank.branch}</span>}
                       </td>
-                    )}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                      <td className={`${TD} text-right tabular-nums text-ink-300`}>{euro(b.accordato)}</td>
+                      <td className={`${TD} text-right tabular-nums text-ink-100`}>{euro(b.utilizzato)}</td>
+                      <td className={`${TD} text-right tabular-nums text-positive`}>{euro(b.disponibile)}</td>
+                      <td className={TD}>
+                        <Utilizzo valore={b.utilizzoPercent} />
+                      </td>
+                      {canEdit && (
+                        <td className={`${TD} text-right`}>
+                          <Azione onClick={() => setModulo({ tipo: 'banca', bank })}>Modifica</Azione>
+                          <Azione pericolo onClick={() => elimina(`banks/${bank.uuid}`, bank.name)}>
+                            Elimina
+                          </Azione>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
           <p className="border-t border-ink-700 px-4 py-2.5 text-xs text-ink-500">
             Per i finanziamenti accordato e utilizzato coincidono col debito residuo, come nella
             Centrale Rischi. Disponibile e utilizzo si riferiscono alle sole linee a revoca.
@@ -295,13 +297,13 @@ export function BanksView({
         </Card>
       </Griglia>
 
-      <div className="flex items-center gap-1 border-b border-ink-700">
+      <div className="flex items-center gap-1 overflow-x-auto border-b border-ink-700">
         {schede.map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => setScheda(s.id)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm transition-colors ${
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-2 text-sm transition-colors ${
               scheda === s.id
                 ? 'border-brand-400 font-medium text-brand-300'
                 : 'border-transparent text-ink-400 hover:text-ink-100'
@@ -393,53 +395,55 @@ export function BanksView({
           {vista.lines.filter((l) => l.kind === scheda).length === 0 ? (
             <EmptyState title={`Nessuna linea: ${CREDIT_LINE_LABELS[scheda].toLowerCase()}`} description="Aggiungila con il pulsante + Linea di credito." />
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-ink-700 text-xs text-ink-400">
-                  <th className={`${TH} text-left`}>Istituto</th>
-                  <th className={`${TH} text-left`}>Linea</th>
-                  <th className={`${TH} text-right`}>Accordato</th>
-                  <th className={`${TH} text-right`}>Utilizzato</th>
-                  <th className={`${TH} text-right`}>Disponibile</th>
-                  <th className={`${TH} text-right`}>Utilizzo</th>
-                  <th className={`${TH} text-right`}>Tasso</th>
-                  <th className={`${TH} text-left`}>Scadenza</th>
-                  {canEdit && <th className={TH} />}
-                </tr>
-              </thead>
-              <tbody>
-                {vista.lines
-                  .filter((l) => l.kind === scheda)
-                  .map((l) => (
-                    <tr key={l.uuid} className="border-b border-ink-800 last:border-0">
-                      <td className={`${TD} text-ink-100`}>{banca(l.bank_uuid)}</td>
-                      <td className="px-4 py-2.5 text-ink-300">
-                        {l.label}
-                        {l.notes && <span className="block text-xs text-ink-500">{l.notes}</span>}
-                      </td>
-                      <td className={`${TD} text-right tabular-nums text-ink-300`}>{euro(l.granted_cents)}</td>
-                      <td className={`${TD} text-right tabular-nums text-ink-100`}>
-                        {euro(l.used_cents)}
-                        {l.used_as_of && <span className="block text-[11px] text-ink-500">al {dataIt(l.used_as_of)}</span>}
-                      </td>
-                      <td className={`${TD} text-right tabular-nums text-positive`}>{euro(Math.max(0, l.granted_cents - l.used_cents))}</td>
-                      <td className={TD}>
-                        <Utilizzo valore={l.granted_cents > 0 ? (l.used_cents / l.granted_cents) * 100 : null} />
-                      </td>
-                      <td className={`${TD} text-right tabular-nums text-ink-300`}>{percent(l.annual_rate_percent, 2)}</td>
-                      <td className={`${TD} text-ink-300`}>{dataIt(l.expiry_date)}</td>
-                      {canEdit && (
-                        <td className={`${TD} text-right`}>
-                          <Azione onClick={() => setModulo({ tipo: 'linea', line: l })}>Modifica</Azione>
-                          <Azione pericolo onClick={() => elimina(`credit-lines/${l.uuid}`, l.label)}>
-                            Elimina
-                          </Azione>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ink-700 text-xs text-ink-400">
+                    <th className={`${TH} text-left`}>Istituto</th>
+                    <th className={`${TH} text-left`}>Linea</th>
+                    <th className={`${TH} text-right`}>Accordato</th>
+                    <th className={`${TH} text-right`}>Utilizzato</th>
+                    <th className={`${TH} text-right`}>Disponibile</th>
+                    <th className={`${TH} text-right`}>Utilizzo</th>
+                    <th className={`${TH} text-right`}>Tasso</th>
+                    <th className={`${TH} text-left`}>Scadenza</th>
+                    {canEdit && <th className={TH} />}
+                  </tr>
+                </thead>
+                <tbody>
+                  {vista.lines
+                    .filter((l) => l.kind === scheda)
+                    .map((l) => (
+                      <tr key={l.uuid} className="border-b border-ink-800 last:border-0">
+                        <td className={`${TD} text-ink-100`}>{banca(l.bank_uuid)}</td>
+                        <td className="px-4 py-2.5 text-ink-300">
+                          {l.label}
+                          {l.notes && <span className="block text-xs text-ink-500">{l.notes}</span>}
                         </td>
-                      )}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                        <td className={`${TD} text-right tabular-nums text-ink-300`}>{euro(l.granted_cents)}</td>
+                        <td className={`${TD} text-right tabular-nums text-ink-100`}>
+                          {euro(l.used_cents)}
+                          {l.used_as_of && <span className="block text-[11px] text-ink-500">al {dataIt(l.used_as_of)}</span>}
+                        </td>
+                        <td className={`${TD} text-right tabular-nums text-positive`}>{euro(Math.max(0, l.granted_cents - l.used_cents))}</td>
+                        <td className={TD}>
+                          <Utilizzo valore={l.granted_cents > 0 ? (l.used_cents / l.granted_cents) * 100 : null} />
+                        </td>
+                        <td className={`${TD} text-right tabular-nums text-ink-300`}>{percent(l.annual_rate_percent, 2)}</td>
+                        <td className={`${TD} text-ink-300`}>{dataIt(l.expiry_date)}</td>
+                        {canEdit && (
+                          <td className={`${TD} text-right`}>
+                            <Azione onClick={() => setModulo({ tipo: 'linea', line: l })}>Modifica</Azione>
+                            <Azione pericolo onClick={() => elimina(`credit-lines/${l.uuid}`, l.label)}>
+                              Elimina
+                            </Azione>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </Card>
       )}
@@ -467,36 +471,38 @@ function PianoModal({ loan, today, onClose }: { loan: LoanRow; today: string; on
       onClose={onClose}
     >
       <div className="max-h-[60vh] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-ink-850">
-            <tr className="border-b border-ink-700 text-xs text-ink-400">
-              <th className={`${TH} text-right`}>N.</th>
-              <th className={`${TH} text-left`}>Data</th>
-              <th className={`${TH} text-right`}>Quota capitale</th>
-              <th className={`${TH} text-right`}>Interessi</th>
-              <th className={`${TH} text-right`}>Rata</th>
-              <th className={`${TH} text-right`}>Debito residuo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loan.schedule.map((r) => {
-              const pagata = r.date <= today
-              return (
-                <tr key={r.number} className={`border-b border-ink-800 ${pagata ? 'text-ink-500' : 'text-ink-200'}`}>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{r.number}</td>
-                  <td className="px-4 py-1.5 tabular-nums">
-                    {dataIt(r.date)}
-                    {r.grace && <span className="ml-2 text-[10px] text-warning">preammortamento</span>}
-                  </td>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{euro(r.capital, true)}</td>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{euro(r.interest, true)}</td>
-                  <td className="px-4 py-1.5 text-right font-medium tabular-nums">{euro(r.total, true)}</td>
-                  <td className="px-4 py-1.5 text-right tabular-nums">{euro(r.residual, true)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-ink-850">
+              <tr className="border-b border-ink-700 text-xs text-ink-400">
+                <th className={`${TH} text-right`}>N.</th>
+                <th className={`${TH} text-left`}>Data</th>
+                <th className={`${TH} text-right`}>Quota capitale</th>
+                <th className={`${TH} text-right`}>Interessi</th>
+                <th className={`${TH} text-right`}>Rata</th>
+                <th className={`${TH} text-right`}>Debito residuo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loan.schedule.map((r) => {
+                const pagata = r.date <= today
+                return (
+                  <tr key={r.number} className={`border-b border-ink-800 ${pagata ? 'text-ink-500' : 'text-ink-200'}`}>
+                    <td className="px-4 py-1.5 text-right tabular-nums">{r.number}</td>
+                    <td className="px-4 py-1.5 tabular-nums">
+                      {dataIt(r.date)}
+                      {r.grace && <span className="ml-2 text-[10px] text-warning">preammortamento</span>}
+                    </td>
+                    <td className="px-4 py-1.5 text-right tabular-nums">{euro(r.capital, true)}</td>
+                    <td className="px-4 py-1.5 text-right tabular-nums">{euro(r.interest, true)}</td>
+                    <td className="px-4 py-1.5 text-right font-medium tabular-nums">{euro(r.total, true)}</td>
+                    <td className="px-4 py-1.5 text-right tabular-nums">{euro(r.residual, true)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
       <p className="border-t border-ink-700 px-6 py-3 text-xs text-ink-500">
         In grigio le rate già scadute, considerate pagate.

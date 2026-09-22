@@ -7,9 +7,11 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactElement,
   type ReactNode
 } from 'react'
+import { Icona } from './icone'
 
 /**
  * Schermate a pannelli liberi: ogni riquadro è un pannello indipendente su una
@@ -31,6 +33,11 @@ import {
  * figli si scioglie: i suoi figli diventano pannelli affiancati (due o tre per
  * riga). Le chiavi dei pannelli sono quelle che React assegna per posizione
  * nel codice, stabili anche quando un pannello compare solo a volte.
+ *
+ * Dalla 1.3.0 ogni pannello si **nasconde** o si **comprime** (resta solo il
+ * titolo) dal suo angolo in alto a destra; i nascosti si rimettono dal menu
+ * "Pannelli" della schermata. Nascosti e compressi valgono per la schermata,
+ * su qualunque larghezza di schermo.
  */
 
 const COLS = 12
@@ -46,6 +53,82 @@ const PREFIX = 'daprodfinanza.pannelli.'
 export const EVENTO_RIPRISTINA = 'daprod:ripristina-pannelli'
 const CHIAVE_BLOCCO = 'daprodfinanza.pannelli-bloccati'
 export const EVENTO_BLOCCO = 'daprod:blocco-pannelli'
+const PREFIX_STATO = 'daprodfinanza.pannelli-stato.'
+/** Altezza (in righe) di un pannello compresso: la sola barra del titolo. */
+const H_COMPRESSO = 5
+
+// --- nascosti e compressi, per schermata ---------------------------------------------
+
+interface StatoPannelli {
+  nascosti: string[]
+  compressi: string[]
+}
+
+const VUOTO: StatoPannelli = { nascosti: [], compressi: [] }
+const stati = new Map<string, StatoPannelli>()
+const titoli = new Map<string, { i: string; titolo: string }[]>()
+const ascoltatori = new Set<() => void>()
+let versione = 0
+
+function avvisa(): void {
+  versione++
+  ascoltatori.forEach((f) => f())
+}
+
+function statoDi(vista: string): StatoPannelli {
+  let st = stati.get(vista)
+  if (!st) {
+    try {
+      const v = JSON.parse(localStorage.getItem(PREFIX_STATO + vista) ?? 'null')
+      st = {
+        nascosti: Array.isArray(v?.nascosti) ? v.nascosti.filter((x: unknown) => typeof x === 'string') : [],
+        compressi: Array.isArray(v?.compressi) ? v.compressi.filter((x: unknown) => typeof x === 'string') : []
+      }
+    } catch {
+      st = VUOTO
+    }
+    stati.set(vista, st)
+  }
+  return st
+}
+
+function scriviStato(vista: string, st: StatoPannelli): void {
+  stati.set(vista, st)
+  try {
+    localStorage.setItem(PREFIX_STATO + vista, JSON.stringify(st))
+  } catch {
+    // resta per questa sessione
+  }
+  avvisa()
+}
+
+function cambia(vista: string, campo: keyof StatoPannelli, i: string, acceso: boolean): void {
+  const st = statoDi(vista)
+  const lista = st[campo].filter((x) => x !== i)
+  if (acceso) lista.push(i)
+  scriviStato(vista, { ...st, [campo]: lista })
+}
+
+export const nascondiPannello = (vista: string, i: string, nascosto: boolean): void => cambia(vista, 'nascosti', i, nascosto)
+export const comprimiPannello = (vista: string, i: string, compresso: boolean): void => cambia(vista, 'compressi', i, compresso)
+
+/** Si rileggono stato e titoli quando cambiano (in qualunque componente). */
+function useVersionePannelli(): number {
+  return useSyncExternalStore(
+    (f) => {
+      ascoltatori.add(f)
+      return () => ascoltatori.delete(f)
+    },
+    () => versione
+  )
+}
+
+/** Il titolo di un pannello: quello della Card che contiene, se c'è. */
+function titoloDi(nodo: ReactElement, n: number): string {
+  const props = nodo.props as { title?: unknown; titolo?: unknown }
+  const t = props.title ?? props.titolo
+  return typeof t === 'string' && t.trim() ? t : `Pannello ${n + 1}`
+}
 
 interface Item {
   i: string
@@ -169,11 +252,11 @@ export function BloccoPannelli({ className = '' }: { className?: string }): Reac
       aria-pressed={bloccati}
       aria-label={bloccati ? 'Sblocca i pannelli' : 'Blocca i pannelli'}
       title={bloccati ? 'Pannelli bloccati: tocca per poterli spostare e ridimensionare' : 'Pannelli sbloccati: tocca per bloccarli'}
-      className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs ${
+      className={`shrink-0 rounded-lg border p-1.5 text-xs ${
         bloccati ? 'border-ink-700 bg-ink-800 text-ink-300' : 'border-warning/50 bg-warning/10 text-warning'
       } ${className}`}
     >
-      {bloccati ? '🔒' : '🔓'}
+      <Icona nome={bloccati ? 'lucchetto' : 'sbloccato'} className="h-4 w-4" />
     </button>
   )
 }
@@ -244,14 +327,32 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
     return out
   }, [children])
 
+  useVersionePannelli()
+  const stato = statoDi(vista)
+  const compressi = new Set(stato.compressi)
+
+  // Il menu "Pannelli" dell'intestazione elenca i pannelli di questa schermata.
+  useEffect(() => {
+    const elenco = pannelli.map((p, n) => ({ i: p.i, titolo: titoloDi(p.nodo, n) }))
+    const prima = JSON.stringify(titoli.get(vista) ?? [])
+    if (prima !== JSON.stringify(elenco)) {
+      titoli.set(vista, elenco)
+      avvisa()
+    }
+  }, [pannelli, vista])
+
   const griglia = useRef<HTMLDivElement>(null)
   const [larghezza, setLarghezza] = useState(0)
   const chiave = `${PREFIX}${vista}.${fascia(larghezza)}`
   // Su un telefono due pannelli affiancati sarebbero larghi un dito ciascuno.
   const telefono = larghezza > 0 && larghezza < TELEFONO
+  const firmaNascosti = stato.nascosti.join('|')
   const pannelliMostrati = useMemo(
-    () => (telefono ? pannelli.map((p) => ({ ...p, w: COLS })) : pannelli),
-    [pannelli, telefono]
+    () =>
+      (telefono ? pannelli.map((p) => ({ ...p, w: COLS })) : pannelli).filter(
+        (p) => !firmaNascosti.split('|').includes(p.i)
+      ),
+    [pannelli, telefono, firmaNascosti]
   )
   const [salvata, setSalvata] = useState<Item[] | null>(null)
   const [altezze, setAltezze] = useState<Map<string, number>>(new Map())
@@ -307,7 +408,15 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
     return compatta(insieme)
   }, [pannelliMostrati, salvata, altezze])
 
-  const mostrato = anteprima ?? layout
+  // Un pannello compresso occupa solo la barra del titolo (la sua altezza vera resta salvata).
+  const firmaCompressi = stato.compressi.join('|')
+  const layoutMostrato = useMemo(() => {
+    if (!firmaCompressi) return layout
+    const set = new Set(firmaCompressi.split('|'))
+    return compatta(layout.map((it) => (set.has(it.i) ? { ...it, h: H_COMPRESSO, auto: false } : it)))
+  }, [layout, firmaCompressi])
+
+  const mostrato = anteprima ?? layoutMostrato
 
   // --- misure ---
   const colW = larghezza > 0 ? (larghezza - (COLS - 1) * GAP) / COLS : 0
@@ -344,7 +453,7 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
     const cw = (el.clientWidth - (COLS - 1) * GAP) / COLS
     const passoX = cw + GAP
     const { x: cx, y: cy } = pRef.current
-    const base = layout.map((it) => (it.i === o.i ? { ...o.inizio } : it))
+    const base = layoutMostrato.map((it) => (it.i === o.i ? { ...o.inizio } : it))
     let mosso: Item
     if (o.tipo === 'sposta') {
       const left = cx - r.left - o.presaX
@@ -374,7 +483,7 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
     }
     const conMosso = base.map((it) => (it.i === o.i ? mosso : it))
     return compatta(conMosso, new Set([o.i]))
-  }, [layout])
+  }, [layoutMostrato])
 
   const ciclo = useCallback(() => {
     const o = opRef.current
@@ -449,8 +558,13 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
     setAnteprima(null)
     setPuntatore(null)
     if (finale) {
-      scrivi(chiave, finale)
-      setSalvata(finale)
+      const vere = finale.map((it) => {
+        if (!compressi.has(it.i)) return it
+        const prima = layout.find((x) => x.i === it.i)
+        return prima ? { ...it, h: prima.h, auto: prima.auto } : it
+      })
+      scrivi(chiave, vere)
+      setSalvata(vere)
     }
   }
 
@@ -468,6 +582,8 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
   const altezzaGriglia = (fondo + extra) * RIGA
 
   const perId = new Map(pannelli.map((p) => [p.i, p]))
+  // Lo schermo, non la griglia: una griglia stretta su un computer si usa ancora col mouse.
+  const schermoTelefono = window.innerWidth < 768
   const rGriglia = griglia.current?.getBoundingClientRect()
 
   return (
@@ -513,10 +629,51 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
                         : ''
                   } ${it.auto && !attivo ? '' : 'overflow-y-auto overflow-x-hidden'}`}
                 >
-                  <div ref={(el) => misura(it.i, el)} className="[&>*]:min-h-full">
-                    {p.nodo}
-                  </div>
+                  {compressi.has(it.i) ? (
+                    <button
+                      type="button"
+                      onClick={() => comprimiPannello(vista, it.i, false)}
+                      className="flex h-full w-full items-center gap-2 rounded-xl border border-ink-700 bg-ink-850 px-5 text-left text-xs font-semibold uppercase tracking-wider text-ink-300 hover:border-ink-600 hover:text-ink-100"
+                      title="Riapri il pannello"
+                    >
+                      <Icona nome="destra" className="h-3.5 w-3.5" />
+                      <span className="truncate">{titoloDi(p.nodo, pannelli.indexOf(p))}</span>
+                    </button>
+                  ) : (
+                    <div ref={(el) => misura(it.i, el)} className="[&>*]:min-h-full">
+                      {p.nodo}
+                    </div>
+                  )}
                 </div>
+
+                {/* Comprimi e nascondi: nell'angolo, compaiono passandoci sopra (sempre, sul telefono). */}
+                {!compressi.has(it.i) && !op && (
+                  <div
+                    className={`absolute top-2 right-2 z-20 flex gap-0.5 rounded-lg border border-ink-700 bg-ink-900/90 p-0.5 shadow-lg backdrop-blur transition-opacity ${
+                      // Sul telefono si vedono coi pannelli sbloccati (modalità modifica).
+                      schermoTelefono ? (bloccati ? 'hidden' : 'opacity-100') : 'opacity-0 group-hover/pannello:opacity-100 focus-within:opacity-100'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => comprimiPannello(vista, it.i, true)}
+                      className="rounded-md p-1 text-ink-400 hover:bg-ink-800 hover:text-ink-100"
+                      title="Comprimi: resta solo il titolo"
+                      aria-label="Comprimi il pannello"
+                    >
+                      <Icona nome="su" className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nascondiPannello(vista, it.i, true)}
+                      className="rounded-md p-1 text-ink-400 hover:bg-ink-800 hover:text-ink-100"
+                      title="Nascondi: si rimette dal menu Pannelli"
+                      aria-label="Nascondi il pannello"
+                    >
+                      <Icona nome="occhio-chiuso" className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
 
                 {!bloccati && (
                   <>
@@ -584,10 +741,14 @@ export function Pannelli({ vista, children }: { vista: string; children: ReactNo
   )
 }
 
-/** Menu "Pannelli" dell'intestazione: ripristina la disposizione, blocca i pannelli. */
+/** Menu "Pannelli" dell'intestazione: quali pannelli si vedono, ripristino, blocco. */
 export function MenuPannelli({ vista }: { vista: string }): React.JSX.Element {
   const [aperto, setAperto] = useState(false)
   const bloccati = useBloccati()
+  useVersionePannelli()
+  const elenco = titoli.get(vista) ?? []
+  const stato = statoDi(vista)
+  const nascosti = stato.nascosti.filter((i) => elenco.some((p) => p.i === i)).length
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!aperto) return
@@ -597,28 +758,76 @@ export function MenuPannelli({ vista }: { vista: string }): React.JSX.Element {
     document.addEventListener('mousedown', chiudi)
     return () => document.removeEventListener('mousedown', chiudi)
   }, [aperto])
-  const voce = 'block w-full px-3 py-2 text-left text-ink-200 hover:bg-brand-500/20 hover:text-brand-100'
+  const voce = 'flex w-full items-center gap-2.5 px-3 py-2 text-left text-ink-200 hover:bg-brand-500/15 hover:text-ink-100'
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setAperto((a) => !a)}
         className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-xs font-medium text-ink-100 hover:bg-ink-700"
-        title="Disposizione dei pannelli di questa schermata"
+        title="Quali pannelli vedere e come disporli"
+        aria-expanded={aperto}
       >
-        {bloccati ? '🔒' : '▦'} Pannelli
+        <Icona nome={bloccati ? 'lucchetto' : 'pannelli'} className="h-3.5 w-3.5" /> Pannelli
+        {nascosti > 0 && (
+          <span className="rounded-full bg-ink-600 px-1.5 text-[10px] leading-4 text-ink-100" title="Pannelli nascosti">
+            {nascosti}
+          </span>
+        )}
       </button>
       {aperto && (
-        <div className="absolute right-0 z-50 mt-1 w-64 overflow-hidden rounded-lg border border-ink-700 bg-ink-850 py-1 text-xs shadow-2xl">
+        <div className="compare absolute right-0 z-50 mt-1.5 w-72 overflow-hidden rounded-xl border border-ink-600 bg-ink-850 py-1 text-xs shadow-2xl shadow-black/50">
+          {elenco.length > 0 && (
+            <>
+              <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-500">
+                Pannelli di questa schermata
+              </p>
+              <div className="max-h-72 overflow-y-auto">
+                {elenco.map((p) => {
+                  const visibile = !stato.nascosti.includes(p.i)
+                  const compresso = stato.compressi.includes(p.i)
+                  return (
+                    <div key={p.i} className="flex items-center gap-1 pr-2 hover:bg-ink-800/60">
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-1.5 text-left"
+                        onClick={() => nascondiPannello(vista, p.i, visibile)}
+                        title={visibile ? 'Nascondi' : 'Mostra'}
+                      >
+                        <Icona
+                          nome={visibile ? 'occhio' : 'occhio-chiuso'}
+                          className={`h-4 w-4 ${visibile ? 'text-brand-300' : 'text-ink-500'}`}
+                        />
+                        <span className={`truncate ${visibile ? 'text-ink-100' : 'text-ink-500 line-through'}`}>{p.titolo}</span>
+                      </button>
+                      {visibile && (
+                        <button
+                          type="button"
+                          onClick={() => comprimiPannello(vista, p.i, !compresso)}
+                          className="rounded-md p-1 text-ink-400 hover:bg-ink-700 hover:text-ink-100"
+                          title={compresso ? 'Riapri' : 'Comprimi'}
+                        >
+                          <Icona nome={compresso ? 'giu' : 'su'} className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="my-1 border-t border-ink-700" />
+            </>
+          )}
           <button
             type="button"
             className={voce}
             onClick={() => {
               window.dispatchEvent(new CustomEvent(EVENTO_RIPRISTINA, { detail: vista }))
+              scriviStato(vista, VUOTO)
               setAperto(false)
             }}
           >
-            Ripristina la disposizione di questa schermata
+            <Icona nome="aggiorna" className="h-4 w-4 text-ink-400" />
+            Ripristina la disposizione (e mostra tutto)
           </button>
           <button
             type="button"
@@ -628,11 +837,12 @@ export function MenuPannelli({ vista }: { vista: string }): React.JSX.Element {
               setAperto(false)
             }}
           >
-            {bloccati ? 'Sblocca i pannelli' : 'Blocca i pannelli (niente spostamenti per sbaglio)'}
+            <Icona nome={bloccati ? 'sbloccato' : 'lucchetto'} className="h-4 w-4 text-ink-400" />
+            {bloccati ? 'Sblocca: sposta e ridimensiona' : 'Blocca (niente spostamenti per sbaglio)'}
           </button>
           <p className="border-t border-ink-700 px-3 py-2 text-[11px] leading-relaxed text-ink-400">
             Sposta un pannello dalla maniglia in alto; ridimensionalo trascinando i bordi, che si
-            illuminano. La disposizione si ricorda per ogni schermata.
+            illuminano. Passandoci sopra, nell'angolo, lo comprimi o lo nascondi.
           </p>
         </div>
       )}

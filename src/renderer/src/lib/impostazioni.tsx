@@ -10,7 +10,7 @@ import {
 } from '@shared/settings'
 import { api } from './api'
 import { useAuth } from './auth'
-import { applicaTema } from './tema'
+import { applicaAccento, applicaTema } from './tema'
 
 /**
  * Impostazioni lette una volta dopo l'ingresso e condivise da tutte le
@@ -66,6 +66,7 @@ export function ImpostazioniProvider({ children }: { children: ReactNode }): Rea
       setApp(normalizzaApp(a))
       setUtente(u)
       applicaTema(u.tema)
+      applicaAccento(u.accento)
       setPortale(p)
     } catch {
       // Senza impostazioni valgono i predefiniti: il programma resta usabile.
@@ -102,6 +103,7 @@ export function ImpostazioniProvider({ children }: { children: ReactNode }): Rea
     const next = await api.put<UserSettings>('/api/auth/me/settings', parziale)
     setUtente(next)
     applicaTema(next.tema)
+    applicaAccento(next.accento)
     return next
   }, [])
 
