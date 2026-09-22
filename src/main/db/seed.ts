@@ -7,7 +7,9 @@ import { seedDemoActivities } from './demo-activities'
 import { seedDemoFinancials } from './demo-data'
 import { seedDemoBanks } from './demo-banks'
 import { seedDemoTreasury } from './demo-treasury'
+import { seedDemoPortal } from './demo-portal'
 import { getDatabase } from './index'
+import { saveAppSettings } from '../server/services/settings.service'
 
 /**
  * Seed dimostrativo: un cliente, la sua azienda e i due account che servono a
@@ -45,14 +47,14 @@ export function demoDataAvailable(): boolean {
   return row.n > 0
 }
 
-export function seedDemoData(): void {
+export async function seedDemoData(): Promise<void> {
   if (!isDemoMode()) return
 
   const row = getDatabase()
     .prepare('SELECT count(*) AS n FROM users WHERE deleted = 0')
     .get() as { n: number }
   if (row.n > 0) {
-    aggiornaDemoEsistente()
+    await aggiornaDemoEsistente()
     return
   }
 
@@ -82,36 +84,48 @@ export function seedDemoData(): void {
   // Attività e ore del consulente.
   seedDemoActivities(company.uuid)
 
-  insertUser(
+  const consulente = insertUser(
     {
       username: DEMO_ACCOUNTS[0].username,
       password: DEMO_ACCOUNTS[0].password,
       full_name: 'Camillo — Consulente',
       role: 'consultant',
-      company_uuid: null
+      company_uuid: null,
+      phone: '081 000 0000'
     },
     { enforcePasswordPolicy: false }
   )
 
-  insertUser(
+  const operatore = insertUser(
     {
       username: DEMO_ACCOUNTS[1].username,
       password: DEMO_ACCOUNTS[1].password,
       full_name: 'Pizzeria DaProd',
       role: 'company',
-      company_uuid: company.uuid
+      company_uuid: company.uuid,
+      phone: '081 555 1234'
     },
     { enforcePasswordPolicy: false }
+  )
+
+  saveAppSettings({ studio: STUDIO_DEMO })
+  // Documenti e richieste: file veri da aprire e una chiamata in arrivo.
+  await seedDemoPortal(
+    company.uuid,
+    { uuid: consulente.uuid, name: consulente.full_name },
+    { uuid: operatore.uuid, name: operatore.full_name }
   )
 
   console.log('[db] seed dimostrativo creato (cammo / Pizzeria DaProd)')
 }
 
+const STUDIO_DEMO = { nome: 'Studio DaProd (demo)', telefono: '081 000 0000', email: 'studio@daprod.example' }
+
 /**
  * Un database dimostrativo creato da una versione precedente non ha le
  * tabelle arrivate dopo: le si riempie una volta sola, senza toccare il resto.
  */
-function aggiornaDemoEsistente(): void {
+async function aggiornaDemoEsistente(): Promise<void> {
   const db = getDatabase()
   const azienda = db
     .prepare(`SELECT uuid FROM companies WHERE vat_number = '01234567890' AND deleted = 0`)
@@ -150,5 +164,27 @@ function aggiornaDemoEsistente(): void {
   if (attivita.n === 0) {
     seedDemoActivities(azienda.uuid)
     console.log('[db] seed dimostrativo: aggiunte attività e ore della Pizzeria DaProd')
+  }
+
+  // Versione 1.3.0: documenti, richieste e i dati dello studio.
+  const portale = db
+    .prepare(
+      `SELECT (SELECT count(*) FROM documents WHERE company_uuid = ?)
+            + (SELECT count(*) FROM requests WHERE company_uuid = ?) AS n`
+    )
+    .get(azienda.uuid, azienda.uuid) as { n: number }
+  if (portale.n === 0) {
+    const utente = (username: string): { uuid: string; name: string } | undefined =>
+      db
+        .prepare('SELECT uuid, full_name AS name FROM users WHERE username = ? AND deleted = 0')
+        .get(username) as { uuid: string; name: string } | undefined
+    const consulente = utente(DEMO_ACCOUNTS[0].username)
+    const operatore = utente(DEMO_ACCOUNTS[1].username)
+    if (consulente && operatore) {
+      db.prepare(`UPDATE users SET phone = coalesce(phone, ?) WHERE uuid = ?`).run('081 555 1234', operatore.uuid)
+      saveAppSettings({ studio: STUDIO_DEMO })
+      await seedDemoPortal(azienda.uuid, consulente, operatore)
+      console.log('[db] seed dimostrativo: aggiunti documenti e richieste della Pizzeria DaProd')
+    }
   }
 }

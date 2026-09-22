@@ -18,6 +18,9 @@ import { SimulationView } from './business/SimulationView'
 import { DataView } from './business/DataView'
 import { BloccoPannelli, MenuPannelli } from '../components/Pannelli'
 import { CompanySettingsView } from './business/CompanySettingsView'
+import { CompanyHome } from './business/CompanyHome'
+import { DocumentsView } from './business/DocumentsView'
+import { RequestsBoard } from '../components/RequestsBoard'
 import { IncomeStatementView } from './business/IncomeStatementView'
 import { OverviewView } from './business/OverviewView'
 import { TreasuryView } from './business/TreasuryView'
@@ -53,14 +56,27 @@ const SCENARI: { id: Scenario; label: string }[] = [
  * banche guardano da oggi in avanti; attività e impostazioni sono il lavoro e
  * le regole dello studio, non i conti dell'azienda.
  */
-const SENZA_PERIODO: Vista[] = ['dati', 'tesoreria', 'banche', 'attivita', 'impostazioni-azienda']
+const SENZA_PERIODO: Vista[] = [
+  'dati',
+  'tesoreria',
+  'banche',
+  'attivita',
+  'impostazioni-azienda',
+  'riepilogo',
+  'documenti',
+  'richieste'
+]
+
+/** Viste senza pannelli spostabili: il menu "Pannelli" non ha niente da fare. */
+const SENZA_PANNELLI: Vista[] = ['dati', 'impostazioni-azienda', 'riepilogo', 'documenti', 'richieste']
 
 export function CompanyPage({
   company,
   vista,
   onVista,
   canImport,
-  onCompanyChanged
+  onCompanyChanged,
+  richiestaScelta = null
 }: {
   company: Company
   vista: Vista
@@ -68,6 +84,8 @@ export function CompanyPage({
   canImport: boolean
   /** Dopo una modifica dei dati dell'azienda (Impostazioni dell'azienda). */
   onCompanyChanged?: (company: Company) => void
+  /** Una richiesta da aprire subito (dal campanello). */
+  richiestaScelta?: { companyUuid: string; requestUuid: string } | null
 }): React.JSX.Element {
   // Solo le viste sui bilanci chiedono i periodi: all'operatore Azienda che
   // vede, per esempio, soltanto la tesoreria il server li rifiuterebbe (§10.12).
@@ -148,17 +166,22 @@ export function CompanyPage({
   }, [company.uuid, periodUuid, scenario, scheme, giro])
 
   // La tesoreria guarda avanti da oggi: non dipende dal periodo scelto.
-  const caricaTesoreria = useCallback(async () => {
-    try {
-      setTesoreria(await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Tesoreria non disponibile.')
-    }
-  }, [company.uuid])
+  const caricaTesoreria = useCallback(
+    async (silenzioso = false) => {
+      try {
+        setTesoreria(await api.get<TreasuryPayload>(`/api/companies/${company.uuid}/treasury`))
+      } catch (err) {
+        if (!silenzioso) setError(err instanceof Error ? err.message : 'Tesoreria non disponibile.')
+      }
+    },
+    [company.uuid]
+  )
 
   useEffect(() => {
-    // Anche le simulazioni la usano, per la soglia minima di liquidità.
-    if (vista === 'tesoreria' || vista === 'panoramica' || vista === 'simulazioni') caricaTesoreria()
+    if (vista === 'tesoreria' || vista === 'panoramica') caricaTesoreria()
+    // Le simulazioni la usano solo per la soglia minima di liquidità: a
+    // un'azienda che vede le simulazioni ma non la tesoreria basta farne a meno.
+    if (vista === 'simulazioni') caricaTesoreria(true)
   }, [vista, caricaTesoreria])
 
   const caricaBanche = useCallback(async () => {
@@ -293,12 +316,12 @@ export function CompanyPage({
           </p>
         </div>
 
-        {vista !== 'dati' && vista !== 'impostazioni-azienda' && (
+        {!SENZA_PANNELLI.includes(vista) && (
           <div className={nascosta}>
             <MenuPannelli vista={vista} />
           </div>
         )}
-        {vista !== 'dati' && vista !== 'impostazioni-azienda' && <BloccoPannelli className="md:hidden" />}
+        {!SENZA_PANNELLI.includes(vista) && <BloccoPannelli className="md:hidden" />}
         <button
           type="button"
           onClick={() => apriIntestazione(!intestazione)}
@@ -357,7 +380,12 @@ export function CompanyPage({
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-8 md:py-6">
+      {/* Le richieste hanno elenco e dettaglio che scorrono ognuno per conto suo. */}
+      <div
+        className={`min-h-0 flex-1 px-3 py-4 md:px-8 md:py-6 ${
+          vista === 'richieste' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+        }`}
+      >
         {report && (
           <div className="mb-5">
             <Alert tone="info">{report}</Alert>
@@ -377,6 +405,19 @@ export function CompanyPage({
 
         {vista === 'impostazioni-azienda' && canImport && (
           <CompanySettingsView company={company} onCompanyChanged={(c) => onCompanyChanged?.(c)} />
+        )}
+
+        {vista === 'riepilogo' && <CompanyHome company={company} onVista={onVista} />}
+
+        {vista === 'documenti' && <DocumentsView company={company} />}
+
+        {vista === 'richieste' && (
+          <div className="min-h-0 flex-1">
+            <RequestsBoard
+              companyUuid={company.uuid}
+              selezioneIniziale={richiestaScelta?.companyUuid === company.uuid ? richiestaScelta : null}
+            />
+          </div>
         )}
 
         {vista === 'tesoreria' &&

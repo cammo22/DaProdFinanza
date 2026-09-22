@@ -9,17 +9,18 @@
  */
 export const CREDITI_OPEN_SOURCE: { nome: string; aCosaServe: string; licenza: string }[] = [
   { nome: 'PDF.js (Mozilla)', aCosaServe: 'apre i PDF', licenza: 'Apache-2.0' },
-  { nome: 'SheetJS Community Edition', aCosaServe: 'apre Excel, LibreOffice Calc e CSV', licenza: 'Apache-2.0' },
+  { nome: 'ExcelJS', aCosaServe: 'apre i fogli Excel, importa ed esporta', licenza: 'MIT' },
   { nome: 'docx-preview', aCosaServe: 'apre i documenti Word', licenza: 'Apache-2.0' },
+  { nome: 'JSZip', aCosaServe: 'legge i file di Office (usato da docx-preview)', licenza: 'MIT' },
   { nome: 'pptx-glimpse', aCosaServe: 'apre le presentazioni PowerPoint', licenza: 'MIT' },
-  { nome: 'Carlito e Liberation Sans', aCosaServe: 'caratteri per le presentazioni', licenza: 'SIL OFL 1.1' },
+  { nome: 'opentype.js', aCosaServe: 'disegna i caratteri delle presentazioni', licenza: 'MIT' },
+  { nome: 'Carlito e Arimo (Fontsource)', aCosaServe: 'caratteri compatibili con Calibri e Arial', licenza: 'SIL OFL 1.1' },
   { nome: 'Electron', aCosaServe: 'il programma per computer', licenza: 'MIT' },
   { nome: 'React', aCosaServe: "l'interfaccia", licenza: 'MIT' },
   { nome: 'Recharts', aCosaServe: 'i grafici', licenza: 'MIT' },
   { nome: 'Tailwind CSS', aCosaServe: 'la grafica', licenza: 'MIT' },
   { nome: 'Express', aCosaServe: 'il servizio interno', licenza: 'MIT' },
   { nome: 'better-sqlite3-multiple-ciphers', aCosaServe: 'il database cifrato', licenza: 'MIT' },
-  { nome: 'ExcelJS', aCosaServe: 'import ed export Excel', licenza: 'MIT' },
   { nome: 'sql.js', aCosaServe: 'il database della versione Android', licenza: 'MIT' },
   { nome: 'Capacitor', aCosaServe: 'la versione Android', licenza: 'MIT' }
 ]

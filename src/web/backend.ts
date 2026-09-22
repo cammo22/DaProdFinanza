@@ -24,7 +24,7 @@ export async function avviaBackend(): Promise<void> {
     console.error('[db] database salvato illeggibile, riparto dai dati di esempio:', err)
     apriDatabase(new CompatDatabase(new SQL.Database()))
   }
-  seedDemoData()
+  await seedDemoData()
   await salvaDatabase()
 
   app = createServerApp() as unknown as App

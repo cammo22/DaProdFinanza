@@ -2,11 +2,14 @@
 import { DEMO_BUILD } from './build-flags'
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { copyFile } from 'node:fs/promises'
+import { basename, join, resolve, sep } from 'node:path'
+import { eseguibile } from '@shared/documents'
 import { backupDatabase, closeDatabase, openDatabase } from './db'
 import { seedDemoData } from './db/seed'
 import { avviaBackupAutomatico } from './lib/auto-backup'
-import { dataRoot } from './lib/paths'
+import { companiesRoot, dataRoot } from './lib/paths'
 import { apiBaseUrl, startServer, stopServer } from './server'
 import { registerReportIpc } from './report'
 import { checkForUpdates, downloadUpdate, initUpdates, installUpdate, updateState } from './updates'
@@ -36,6 +39,8 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => mainWindow?.show())
+  // Il lampeggio per una chiamata in arrivo si ferma quando si torna sulla finestra.
+  mainWindow.on('focus', () => mainWindow?.flashFrame(false))
 
   // I link esterni escono nel browser di sistema, mai in una finestra Electron.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -93,6 +98,46 @@ function registerIpc(): void {
     await shell.openPath(path)
   })
 
+  // Cassetto documenti (§10.13): il percorso arriva dal servizio interno, ma qui
+  // si ricontrolla che stia davvero dentro le cartelle delle aziende e che non
+  // sia un programma — un file mandato da fuori non si esegue con un clic.
+  const documentoSicuro = (path: unknown): string => {
+    if (typeof path !== 'string') throw new Error('Percorso non valido.')
+    const file = resolve(path)
+    if (!file.startsWith(resolve(companiesRoot()) + sep) || !existsSync(file)) {
+      throw new Error('Il file non è nel cassetto documenti.')
+    }
+    return file
+  }
+
+  ipcMain.handle('documenti:apri', async (_event, path: unknown) => {
+    const file = documentoSicuro(path)
+    if (eseguibile(file)) throw new Error('Questo è un programma: non si apre da qui. Salvane una copia se ti serve.')
+    const errore = await shell.openPath(file)
+    // openPath risponde con una stringa vuota se è andata bene.
+    if (errore) throw new Error(`Nessun programma sul computer apre questo file (${errore}).`)
+  })
+
+  ipcMain.handle('documenti:salva-copia', async (_event, path: unknown) => {
+    const file = documentoSicuro(path)
+    const scelta = await dialog.showSaveDialog({
+      title: 'Salva una copia',
+      defaultPath: join(app.getPath('downloads'), basename(file))
+    })
+    if (scelta.canceled || !scelta.filePath) return null
+    await copyFile(file, scelta.filePath)
+    return scelta.filePath
+  })
+
+  ipcMain.handle('documenti:mostra', (_event, path: unknown) => {
+    shell.showItemInFolder(documentoSicuro(path))
+  })
+
+  // Chiamata in arrivo: la finestra lampeggia nella barra delle applicazioni.
+  ipcMain.on('finestra:attenzione', () => {
+    if (mainWindow && !mainWindow.isFocused()) mainWindow.flashFrame(true)
+  })
+
   // Aggiornamenti da GitHub (vedi updates.ts).
   ipcMain.handle('update:state', () => updateState())
   ipcMain.handle('update:check', () => checkForUpdates())
@@ -110,7 +155,7 @@ app.whenReady().then(async () => {
 
   try {
     openDatabase()
-    seedDemoData()
+    await seedDemoData()
     await startServer()
   } catch (error) {
     dialog.showErrorBox(

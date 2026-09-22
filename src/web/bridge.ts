@@ -25,14 +25,28 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   const headers: Record<string, string> = {}
   new Headers(init?.headers).forEach((v, k) => (headers[k] = v))
   let body: unknown = undefined
-  if (typeof init?.body === 'string' && init.body) {
+  const grezzo = init?.body
+  if (typeof grezzo === 'string' && grezzo) {
     try {
-      body = JSON.parse(init.body)
+      body = JSON.parse(grezzo)
     } catch {
-      body = init.body
+      body = grezzo
     }
+  } else if (grezzo instanceof Blob) {
+    // Un file caricato nel cassetto: arriva al backend come Uint8Array.
+    body = new Uint8Array(await grezzo.arrayBuffer())
+  } else if (grezzo instanceof ArrayBuffer) {
+    body = new Uint8Array(grezzo)
+  } else if (ArrayBuffer.isView(grezzo)) {
+    body = new Uint8Array(grezzo.buffer, grezzo.byteOffset, grezzo.byteLength)
   }
   const r = await richiesta(init?.method ?? 'GET', url.slice(BASE.length), headers, body)
+  if (r.body instanceof Uint8Array) {
+    return new Response(r.body as Uint8Array<ArrayBuffer>, {
+      status: r.status,
+      headers: { ...(r.intestazioni ?? {}), 'Content-Type': r.tipo ?? 'application/octet-stream' }
+    })
+  }
   return new Response(r.status === 204 ? null : JSON.stringify(r.body), {
     status: r.status,
     headers: { 'Content-Type': 'application/json' }
@@ -44,7 +58,7 @@ function avviso(testo: string): void {
 }
 
 const SOLO_COMPUTER =
-  'Sul telefono questa funzione non c’è: file Excel, backup e report PDF restano nel programma per computer.'
+  'Sul telefono questa funzione non c’è: file Excel, backup, report PDF e apertura dei file con altri programmi restano nel programma per computer.'
 
 // --- aggiornamenti: si controlla GitHub, si scarica dalla pagina della release ---
 
@@ -121,6 +135,23 @@ const api: DaProdApi = {
     set: (factor: number) => {
       zoom = factor
       document.documentElement.style.setProperty('zoom', String(factor))
+    }
+  },
+  // Sul telefono i file del cassetto si aprono solo dentro il programma.
+  documenti: {
+    apri: async () => avviso(SOLO_COMPUTER),
+    salvaCopia: async () => {
+      avviso(SOLO_COMPUTER)
+      return null
+    },
+    mostra: async () => avviso(SOLO_COMPUTER),
+    esterni: false
+  },
+  attenzione: () => {
+    try {
+      navigator.vibrate?.([200, 100, 200])
+    } catch {
+      // niente vibrazione: pazienza
     }
   },
   exportReport: async () => {
