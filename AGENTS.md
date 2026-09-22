@@ -222,6 +222,36 @@ Il lavoro del **consulente** su ogni azienda, non i conti dell'azienda: per ques
 - **Ore per settimana** (ultime 8, fatturabili e no), **tariffa oraria** per azienda, **registro ore** giorno per giorno.
 - Tabelle `tasks`, `time_entries`, `activity_settings` (migrazione 007), stessi campi di sync di tutto il resto (§6). Il riepilogo è una funzione pura (`shared/engine/activities.ts`, con test). Cancellare un'attività lascia le sue ore nel registro, senza attività.
 - **Non fa** (di proposito, per ora): fatture, tracciamento automatico di app/siti o schermate (Ever Teams lo fa; in uno studio è invadente e non richiesto), più persone dello studio con i propri timer — vedi §14 punto 10.
+- **1.3.0**: timer con un tasto grande e attività a pastiglie, *Registra ore* con durate rapide (due tocchi), bacheca/registro/andamento in tre schede, sul telefono una colonna alla volta, pulsanti *Inizia / Da rivedere / Fatta*, voci del registro correggibili (`PUT /time-entries/:id`).
+
+### 10.12 Impostazioni, utenti e accessi (versione 1.3.0)
+Il consulente è l'amministratore. *Impostazioni* (menu in basso) ha le schede Generale (tema, colore d'accento, avvisi, backup automatico giornaliero con quante copie tenere, controllo aggiornamenti, dati dello studio mostrati alle aziende), Moduli (interruttori: documenti, richieste, personale, fiscale, marginalità, simulazioni, attività), Utenti e accessi (consulenti e accessi delle aziende: crea, disattiva, cambia password, elimina — non si disattiva l'ultimo consulente né sé stessi), Il mio profilo, Informazioni (crediti open source). Per ogni azienda, *Impostazioni dell'azienda* decide **cosa vede** (viste condivisibili: panoramica, conto economico, stato patrimoniale, circolante, tesoreria, banche, simulazioni, personale, fiscale, marginalità) e **cosa può fare** (mandare documenti, chiedere chiamate, scrivere). Il server lo fa rispettare (`middleware/portal.ts`, 403 con un messaggio chiaro), non solo il menu. Un accesso disattivato esce subito. Tabella `settings` (migrazione 008) con ambiti `app` / `user` / `company`, valori JSON normalizzati in `shared/settings.ts`.
+
+### 10.13 Cassetto documenti (versione 1.3.0)
+File per azienda, caricati da studio e azienda (trascinati o scelti, 50 MB sul computer, 15 sul telefono). Si aprono **dentro il programma**: PDF (PDF.js), Excel e CSV (ExcelJS), Word (docx-preview in un iframe senza script), PowerPoint (pptx-glimpse, SVG in `<img>`, caratteri Carlito e Arimo inclusi), immagini, testo, audio e video; oppure col programma del computer (i programmi, .exe e simili, non si aprono con un clic). Lo studio può tenere documenti riservati; l'azienda vede quando lo studio ha aperto ciò che ha mandato. File su disco in `aziende/<codice>/documenti/<uuid>/` (controllo di percorso nel servizio e nell'IPC), sul telefono in IndexedDB. Tabella `documents` (migrazione 009). `.xls`, `.ods`, `.doc` si aprono solo col programma del computer (§14 punto 16).
+
+### 10.14 Richieste e chiamate (versione 1.3.0)
+Il filo fra azienda e studio: **chiamata** (motivo, numero, quando preferisce, urgente), **domanda**, **documenti**; lo studio può aprirne una ("mi servono gli estratti conto"). Stati: inviata → vista → presa in carico → in attesa dell'azienda → risolta (o annullata), con la storia di chi ha fatto cosa (`request_events`). Lo studio risponde anche solo per scritto e ha i pulsanti *Chiamo ora* (apre `tel:`), *Richiamo…*, *Chiamata fatta* (esito e minuti, che finiscono in Attività e Tempi), *Non risponde*, *Prendo in carico*, *Aspetto l'azienda*, *Risolta*, *Affida a…*. Chiamate in arrivo: riquadro con squillo, notifica di sistema e finestra che lampeggia (riducibile a una pastiglia); campanello con le novità (sondaggio ogni 8 secondi). Tabelle `requests`, `request_events` (migrazione 009).
+
+### 10.15 Riepilogo dell'azienda (versione 1.3.0)
+La prima pagina dell'accesso Azienda: chi la segue (studio e consulenti), i pulsanti per chiedere una chiamata, mandare documenti, scrivere; i numeri principali delle sole viste condivise (cassa oggi e fra 30 giorni, ricavi e risultato dell'ultimo mese), le tasse da mettere da parte (se l'Area fiscale è condivisa), le richieste e i documenti nuovi. Lo calcola il server (`portal.service.ts`): un numero di una vista spenta non parte nemmeno.
+
+### 10.16 Personale (versione 1.3.0)
+Persone con mansione, reparto, contratto (indeterminato, determinato, apprendistato, collaborazione), ore settimanali, RAL, mensilità (12-14), contributi e INAIL propri se diversi da quelli dell'azienda, altri costi, diretto/indiretto, assunzione e fine. **Costo aziendale** = RAL + contributi INPS azienda (30% di partenza) + INAIL (1%) + TFR (RAL/13,5; non per i collaboratori) + altri costi; **costo orario** = costo / ore lavorate in un anno (1.720 per un tempo pieno, in proporzione alle ore). Riepilogo per reparto, diretti/indiretti, costo orario medio dei diretti (è la manodopera della Marginalità), confronto col costo del personale nel conto economico degli ultimi 12 mesi. **Tesoreria** (interruttore, spento di partenza): netto il giorno scelto del mese dopo, F24 (trattenute + contributi) il 16, tredicesima e quattordicesima nei loro mesi, INAIL il 16 febbraio; il TFR non esce di cassa. Motore `shared/engine/personale.ts`, tabella `employees` (migrazione 010). Condivisibile con l'azienda, spento di partenza (sono stipendi).
+
+### 10.17 Area fiscale e contributi (versione 1.3.0)
+Una **stima** per mettere da parte i soldi giusti, non la dichiarazione (niente detrazioni personali né crediti d'imposta). Regime indovinato dalla forma giuridica e cambiabile: società di capitali (IRES 24% sull'utile rettificato, IRAP 3,9% sul reddito operativo), società di persone (IRAP; reddito diviso fra i soci, ognuno IRPEF a scaglioni 2026 23/33/43, addizionali, INPS sulla sua quota), ditta individuale (IRPEF, addizionali, INPS; niente IRAP), forfettario (ricavi × coefficiente meno contributi, imposta sostitutiva 15% o 5%, riduzione INPS del 35%). INPS artigiani/commercianti: fissi sul minimale e percentuale oltre fino al massimale (valori 2025, da aggiornare); gestione separata. Parte dall'utile degli ultimi 12 mesi (`bilancio.service.ts`) o dall'ultimo anno, o da un reddito scritto a mano; rettifiche in aumento/diminuzione e IRAP. **Scadenze** col metodo storico: acconti 40/60 (50/50 con gli ISA) al 30 giugno e 30 novembre, saldo il 30 giugno dopo, INPS fissi in quattro rate, INPS oltre il minimale 50/50. Accantonamento mensile = totale / 12. **Tesoreria** con interruttore. Motore `shared/engine/fiscale.ts`; impostazioni nella tabella `settings`, chiave `fiscale`.
+
+### 10.18 Marginalità (versione 1.3.0)
+Prende la forma dell'attività (indovinata dal *tipo di attività* dell'anagrafica): **ristorazione** (ricette, ingredienti, food cost, menu engineering di Kasavana e Smith: stelle, cavalli da lavoro, enigmi, cani), **produzione** (distinta base), **commercio** (ricarico), **servizi ed edilizia** (commesse con preventivo e consuntivo). Listino con unità, costo e scarto (costo utile = costo / (1 − scarto)); ogni voce è fatta di materiali, manodopera (costo orario dal Personale, per persona o medio dei diretti, o scritto nelle impostazioni), lavorazioni esterne, altro. Costo diretto, costi generali in % del diretto, costo pieno, margine di contribuzione e netto, food cost %, ricarico, prezzo consigliato per stare nell'obiettivo; ricette e prodotti per porzione (resa). Prezzi IVA esclusa, l'IVA serve solo al prezzo in carta. Motore `shared/engine/marginalita.ts`; tabelle `margin_materials`, `margin_items`, `margin_lines` (migrazione 011). Resta aperto l'uso delle % di costo diretto per conto nel conto economico (§14 punto 15).
+
+### 10.19 L'interfaccia (versione 1.3.0)
+- **Comandi rapidi** da ogni schermata (Ctrl+K): aziende, sezioni, azioni. Pulsante *Nuovo* con le azioni della schermata (sul telefono il tondo in basso a destra). Registro in `lib/comandi.tsx`; le azioni per schermate non ancora aperte passano da `richiediAzione`/`useAzione` (valide 6 secondi).
+- **Intestazione**: cambio d'azienda con le recenti (si resta sulla stessa sezione), ricerca, *Nuovo*, timer, campanello, menu utente (profilo, impostazioni, tema, esci).
+- **Menu laterale** richiudibile a icone (Ctrl+B) e da allargare trascinando il bordo; **pannelli** da comprimere e nascondere, rimessi dal menu *Pannelli*.
+- **Telefono**: barra delle sezioni in basso (Analisi, Cassa, Piani, Lavoro, Dati / per l'azienda Riepilogo, Documenti, Richieste, Numeri), sezioni vicine in pastiglie, periodo e scenario in un foglio dal basso, barra di stato nel menu, finestre che salgono dal basso, tabelle che scorrono dentro il riquadro.
+- **Aspetto**: colore d'accento (blu, turchese, viola, indaco), icone SVG al posto delle emoji (`components/icone.tsx`), avvisi brevi (`Avvisi.tsx`), scheletri di caricamento.
+- **Velocità**: sezioni pesanti con `React.lazy`, dati già letti mostrati subito (`lib/memoria.ts`), la pagina dell'azienda riparte da zero cambiando azienda.
 
 ---
 
@@ -728,6 +758,19 @@ esistono.
 - **Provarla senza telefono**: `npm run android:web` e `npm run android:preview`, poi
   il browser su `http://localhost:4173` (ridotto a larghezza di telefono).
 
+### Versione 1.3.0 — interfaccia più semplice, portale dell'azienda, costi, margini e tasse
+
+Quattro pezzi, una PR ciascuno (#21, #22, #40, #41), roadmap su GitHub nell'issue fissata #39.
+
+| Pezzo | Cosa c'è |
+|---|---|
+| Impostazioni e accessi | §10.12. `shared/settings.ts`, migrazione 008, `settings.service.ts`, `middleware/portal.ts`, `SettingsPage`, `CompanySettingsView`, backup automatico (`lib/auto-backup.ts`) |
+| Documenti, richieste, riepilogo | §10.13-§10.15. Migrazione 009, `documents.service.ts`, `requests.service.ts`, `portal.service.ts`, `components/viewer/*`, `RequestsBoard`, `IncomingCalls`, `CompanyHome`; file dimostrativi veri generati da `db/demo-files.ts` |
+| Interfaccia | §10.19. `Guscio.tsx`, `TavolozzaComandi.tsx`, `lib/comandi.tsx`, `Sidebar` richiudibile, `Pannelli` con nascosti/compressi, Simulazioni e Attività rifatte, tabelle che scorrono, `lib/memoria.ts` |
+| Personale, fiscale, marginalità | §10.16-§10.18. Motori in `shared/engine/`, migrazioni 010-011, `bilancio.service.ts` (conto economico degli ultimi 12 mesi), flussi di tesoreria calcolati con fonti `personale` e `fiscale` |
+
+Controlli: 146 test (i motori nuovi su conti fatti a mano), `verify:schema` 86/86 su un database nuovo, anteprime provate in Electron compilato e nella versione web (stesso codice dell'APK), a 375 e a 1440 px.
+
 ---
 
 ## 14. Punti aperti
@@ -751,6 +794,11 @@ esistono.
 8. **Nome dell'app Cliente**: per coerenza con `IrideeCRM` / `IrideeCRM Satellite`, proposta `DaProdFinanza` / `DaProdFinanza Cliente` — confermare.
 10. **Attività e Tempi per più persone**: oggi il timer e le ore sono del consulente (uno solo). Se nello studio lavorano più persone, servono ore per persona e magari una vista "chi sta facendo cosa" (come in Ever Teams). E l'azienda cliente deve poter vedere le attività che la riguardano (es. "documenti da mandare")? Da chiedere al consulente.
 11. **Demo Android**: provata nel browser a larghezza di telefono e l'APK della CI sull'emulatore (Android 14: installazione, accesso demo, cruscotto, menu, Attività e Tempi). Va provata su qualche telefono vero, con versioni di Android diverse.
+12. **LibreOffice facoltativo**: per aprire e modificare `.xls`, `.ods`, `.doc` anche dove Office non c'è. Non si include nell'installazione (circa 350 MB): da valutare lo scaricamento su richiesta (issue #38).
+13. **Chiamate vocali dentro il programma**: oggi la chiamata richiesta si fa col telefono (`tel:`). Chiamare dal programma richiede il collegamento fra studio e aziende della fase 8 (issue #37).
+14. **Aliquote e minimali**: l'Area fiscale parte dai valori INPS 2025 e dagli scaglioni IRPEF 2026; vanno aggiornati ogni anno (sono impostazioni dell'azienda, ma i valori di partenza stanno in `shared/engine/fiscale.ts`).
+15. **% di costo diretto per conto**: salvate da sempre (`direct_cost_pct`, `company_section_settings`) ma lo schema "a margine di contribuzione" usa ancora la divisione per sezione. Da decidere col consulente se usarle conto per conto.
+16. **Anteprima di `.xls` e `.ods`**: la libreria che le legge (SheetJS) si installa solo dal suo sito, e la configurazione npm dello sviluppatore rifiuta i pacchetti da indirizzi remoti — di proposito, e resta così. Oggi quei file si aprono col programma del computer.
 
 ---
 
