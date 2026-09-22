@@ -22,6 +22,14 @@ export interface User extends BaseRecord {
   company_uuid: string | null
   active: 0 | 1
   last_login: string | null
+  /** Per le richieste di chiamata: a che numero richiamare (migrazione 008). */
+  phone: string | null
+  email: string | null
+}
+
+/** Un utente nell'elenco delle impostazioni: senza password, con la sua azienda. */
+export interface UserListItem extends Omit<User, 'deleted' | 'synced'> {
+  company_name: string | null
 }
 
 /** Cliente dello studio: può possedere più Aziende — AGENTS.md §1-bis. */
@@ -64,6 +72,12 @@ export interface SessionUser {
   full_name: string
   role: Role
   company_uuid: string | null
+}
+
+/** Il profilo di chi è entrato: la sessione più i recapiti che può cambiare da sé. */
+export interface Profile extends SessionUser {
+  phone: string | null
+  email: string | null
 }
 
 export interface LoginResponse {

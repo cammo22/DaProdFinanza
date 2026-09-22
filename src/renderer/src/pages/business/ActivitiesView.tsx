@@ -665,24 +665,24 @@ export function ActivitiesView({ company }: { company: Company }): React.JSX.Ele
             <div className="px-3 py-4">
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={grafico} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                  <CartesianGrid stroke="#1d2636" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid stroke="var(--color-ink-700)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: 'var(--color-ink-400)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis
-                    tick={{ fill: '#64748b', fontSize: 11 }}
+                    tick={{ fill: 'var(--color-ink-400)', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                     width={32}
                     tickFormatter={(v: number) => `${v}h`}
                   />
                   <Tooltip
-                    cursor={{ fill: '#1d2636', opacity: 0.4 }}
-                    contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
+                    cursor={{ fill: 'var(--color-ink-700)', opacity: 0.4 }}
+                    contentStyle={{ background: 'var(--color-ink-850)', border: '1px solid var(--color-ink-600)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v) => `${String(v).replace('.', ',')} h`}
                     labelFormatter={(l) => `Settimana del ${l}`}
                   />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar name="Fatturabili" dataKey="fatturabili" stackId="ore" fill={COLORI.ricavi} />
-                  <Bar name="Non fatturabili" dataKey="altre" stackId="ore" fill="#475569" radius={[3, 3, 0, 0]} />
+                  <Bar name="Non fatturabili" dataKey="altre" stackId="ore" fill="var(--color-ink-500)" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

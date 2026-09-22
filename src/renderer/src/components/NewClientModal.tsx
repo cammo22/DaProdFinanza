@@ -3,21 +3,23 @@ import type { Client } from '@shared/types'
 import { api } from '../lib/api'
 import { Alert, Button, Field, Modal, TextInput } from './ui'
 
-/** "+ Nuovo cliente" — AGENTS.md §10.1. */
+/** "+ Nuovo cliente" — AGENTS.md §10.1. Con `client` modifica quello esistente (1.3.0). */
 export function NewClientModal({
+  client,
   onClose,
   onCreated
 }: {
+  client?: Client
   onClose: () => void
   onCreated: (client: Client) => void
 }): React.JSX.Element {
   const [form, setForm] = useState({
-    name: '',
-    contact_person: '',
-    email: '',
-    phone: '',
-    start_date: '',
-    notes: ''
+    name: client?.name ?? '',
+    contact_person: client?.contact_person ?? '',
+    email: client?.email ?? '',
+    phone: client?.phone ?? '',
+    start_date: client?.start_date ?? '',
+    notes: client?.notes ?? ''
   })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -30,9 +32,13 @@ export function NewClientModal({
     setError(null)
     setBusy(true)
     try {
-      onCreated(await api.post<Client>('/api/clients', form))
+      onCreated(
+        client
+          ? await api.put<Client>(`/api/clients/${client.uuid}`, form)
+          : await api.post<Client>('/api/clients', form)
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Creazione non riuscita.')
+      setError(err instanceof Error ? err.message : 'Salvataggio non riuscito.')
     } finally {
       setBusy(false)
     }
@@ -40,7 +46,7 @@ export function NewClientModal({
 
   return (
     <Modal
-      title="Nuovo cliente"
+      title={client ? `Modifica ${client.code}` : 'Nuovo cliente'}
       subtitle="Un cliente dello studio: può possedere più aziende."
       onClose={onClose}
     >
@@ -104,7 +110,7 @@ export function NewClientModal({
             Annulla
           </Button>
           <Button type="submit" variant="primary" disabled={busy}>
-            {busy ? 'Creazione…' : 'Crea cliente'}
+            {busy ? 'Salvataggio…' : client ? 'Salva' : 'Crea cliente'}
           </Button>
         </footer>
       </form>

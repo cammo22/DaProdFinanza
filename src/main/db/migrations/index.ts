@@ -6,6 +6,7 @@ import { up as up004 } from './004_treasury'
 import { up as up005 } from './005_banks'
 import { up as up006 } from './006_simulation_scenarios'
 import { up as up007 } from './007_activities'
+import { up as up008 } from './008_settings_users'
 
 export interface Migration {
   version: number
@@ -25,7 +26,8 @@ export const MIGRATIONS: Migration[] = [
   { version: 4, name: '004_treasury', up: up004 },
   { version: 5, name: '005_banks', up: up005 },
   { version: 6, name: '006_simulation_scenarios', up: up006 },
-  { version: 7, name: '007_activities', up: up007 }
+  { version: 7, name: '007_activities', up: up007 },
+  { version: 8, name: '008_settings_users', up: up008 }
 ]
 
 export function runMigrations(db: Database): number {

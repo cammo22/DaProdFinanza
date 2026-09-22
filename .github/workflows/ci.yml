@@ -25,6 +25,11 @@ jobs:
       - name: Controllo dei tipi
         run: npm run typecheck
 
+      # Le prove del motore di calcolo (formule, cassa, finanziamenti, impostazioni):
+      # prima giravano solo in locale dentro `npm run build`.
+      - name: Test
+        run: npm run test
+
       - name: Build (main + preload + renderer)
         run: npx electron-vite build
 

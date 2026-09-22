@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express'
 import { requireAuth, requireRole } from '../middleware/auth'
-import { HttpError } from '../http-error'
+import { vistaAzienda } from '../middleware/portal'
 import {
   bankingView,
   deleteBank,
@@ -25,12 +25,9 @@ function param(req: Request, name: string): string {
   return Array.isArray(value) ? (value[0] ?? '') : (value ?? '')
 }
 
-banksRouter.get('/banking', (req, res) => {
-  const companyUuid = param(req, 'uuid')
-  if (req.auth!.role === 'company' && req.auth!.company_uuid !== companyUuid) {
-    throw new HttpError(403, 'Operazione non consentita per questo ruolo.')
-  }
-  res.json(bankingView(companyUuid, todayLocal()))
+// L'operatore Azienda legge solo se il consulente gli ha acceso la sezione (§10.12).
+banksRouter.get('/banking', vistaAzienda('banche'), (req, res) => {
+  res.json(bankingView(param(req, 'uuid'), todayLocal()))
 })
 
 const scrittura = requireRole('consultant')

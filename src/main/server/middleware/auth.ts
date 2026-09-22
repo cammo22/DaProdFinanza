@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express'
 import type { Role } from '@shared/enums'
 import { verifyToken, type TokenPayload } from '../../lib/tokens'
 import { HttpError } from '../http-error'
+import { isUserActive } from '../services/auth.service'
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -20,6 +21,11 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 
   const payload = verifyToken(token)
   if (!payload) return next(new HttpError(401, 'Sessione scaduta o non valida.'))
+  // Un accesso disattivato da un consulente smette di funzionare subito, non
+  // fra dodici ore alla scadenza della sessione.
+  if (!isUserActive(payload.sub)) {
+    return next(new HttpError(401, 'Questo accesso è stato disattivato da un consulente dello studio.'))
+  }
 
   req.auth = payload
   next()

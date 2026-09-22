@@ -1,6 +1,7 @@
 import { Router, type Request } from 'express'
 import type { Scenario } from '@shared/types'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { vistaAzienda } from '../middleware/portal'
 import { HttpError } from '../http-error'
 import {
   createItem,
@@ -36,7 +37,8 @@ function assertCanRead(req: Request): string {
   return companyUuid
 }
 
-treasuryRouter.get('/periods/:periodUuid/working-capital', (req, res) => {
+// Per l'operatore Azienda, solo le sezioni che il consulente gli ha acceso (§10.12).
+treasuryRouter.get('/periods/:periodUuid/working-capital', vistaAzienda('capitale-circolante'), (req, res) => {
   res.json(
     workingCapitalView(assertCanRead(req), param(req, 'periodUuid'), {
       scenario: (req.query.scenario as Scenario) ?? undefined
@@ -44,7 +46,8 @@ treasuryRouter.get('/periods/:periodUuid/working-capital', (req, res) => {
   )
 })
 
-treasuryRouter.get('/treasury', (req, res) => {
+// La Panoramica mostra la liquidità prevista: le serve la stessa previsione.
+treasuryRouter.get('/treasury', vistaAzienda('tesoreria', 'panoramica'), (req, res) => {
   res.json(treasuryView(assertCanRead(req)))
 })
 

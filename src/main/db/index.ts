@@ -72,10 +72,10 @@ export function closeDatabase(): void {
  * Usa l'API di backup online di SQLite via VACUUM INTO: il file prodotto resta cifrato
  * con la stessa chiave, quindi è leggibile solo da questa installazione.
  */
-export function backupDatabase(): string {
+export function backupDatabase(
+  target = join(backupRoot(), `daprodfinanza-${new Date().toISOString().replace(/[:.]/g, '-')}.db`)
+): string {
   const db = getDatabase()
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const target = join(backupRoot(), `daprodfinanza-${stamp}.db`)
 
   try {
     db.exec(`VACUUM INTO '${target.replace(/'/g, "''")}'`)

@@ -3,6 +3,7 @@ import { ROLE_LABELS, type Role } from '@shared/enums'
 import type { Company } from '@shared/types'
 import { api } from './lib/api'
 import { AuthProvider, useAuth } from './lib/auth'
+import { ImpostazioniProvider, useImpostazioni } from './lib/impostazioni'
 import { Sidebar, type Vista } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TimerBar } from './components/TimerBar'
@@ -11,6 +12,7 @@ import { LoginScreen, SetupScreen } from './pages/AuthScreen'
 import { CompanyPage } from './pages/CompanyPage'
 import { RegistryPage } from './pages/RegistryPage'
 import { RoleGate } from './pages/RoleGate'
+import { SettingsPage } from './pages/SettingsPage'
 
 /**
  * Guscio dell'applicazione: menu laterale, contenuto, status bar.
@@ -20,6 +22,7 @@ import { RoleGate } from './pages/RoleGate'
  */
 function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   const { user, version } = useAuth()
+  const { pronte, portale, moduloAttivo } = useImpostazioni()
   const consulente = user?.role === 'consultant'
 
   const [company, setCompany] = useState<Company | null>(null)
@@ -27,6 +30,16 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   // Menu laterale sul telefono (sul computer è sempre aperto).
   const [menu, setMenu] = useState(false)
+
+  // L'operatore Azienda vede solo le viste che il consulente gli ha acceso
+  // (§10.12): se quella aperta non c'è più, si va sulla prima disponibile.
+  const visteAzienda = portale?.viste ?? []
+  useEffect(() => {
+    if (consulente || !pronte || vista === 'profilo') return
+    if (!visteAzienda.includes(vista as never)) {
+      setVista((visteAzienda[0] as Vista | undefined) ?? 'profilo')
+    }
+  }, [consulente, pronte, vista, visteAzienda])
 
   // L'operatore Azienda entra direttamente nella propria azienda (§4).
   useEffect(() => {
@@ -68,8 +81,9 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
             setVista('anagrafica')
             setMenu(false)
           }}
-          mostraAnagrafica={consulente}
-          mostraImport={consulente}
+          consulente={consulente}
+          moduloAttivo={moduloAttivo}
+          visteAzienda={visteAzienda}
           version={version}
           aperta={menu}
           onChiudi={() => setMenu(false)}
@@ -102,12 +116,19 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
               <div className="p-8">
                 <Alert>{error}</Alert>
               </div>
+            ) : vista === 'impostazioni' && consulente ? (
+              <SettingsPage />
+            ) : vista === 'profilo' ? (
+              <SettingsPage soloProfilo />
+            ) : !pronte ? (
+              <p className="p-8 text-sm text-ink-400">Caricamento…</p>
             ) : company ? (
               <CompanyPage
                 company={company}
                 vista={vista}
                 onVista={setVista}
                 canImport={consulente}
+                onCompanyChanged={setCompany}
               />
             ) : consulente ? (
               <RegistryPage onOpenCompany={apriAzienda} />
@@ -124,7 +145,7 @@ function Workspace({ onLogout }: { onLogout: () => void }): React.JSX.Element {
 }
 
 function Root(): React.JSX.Element {
-  const { ready, configured, demo, user, version, logout } = useAuth()
+  const { ready, configured, demo, user, version, logout, motivoUscita } = useAuth()
   // La scelta iniziale Consulente/Azienda: decide solo quale login mostrare.
   const [role, setRole] = useState<Role | null>(null)
 
@@ -140,22 +161,36 @@ function Root(): React.JSX.Element {
   if (!configured) return <SetupScreen />
 
   if (!user) {
-    return role ? (
-      <LoginScreen role={role} onBack={() => setRole(null)} />
-    ) : (
-      <RoleGate version={version} demo={demo} onPick={setRole} />
+    return (
+      <div className="flex h-full flex-col">
+        {/* Sessione scaduta o accesso disattivato: si dice perché si è qui. */}
+        {motivoUscita && (
+          <div className="shrink-0 border-b border-warning/30 bg-warning/10 px-4 py-2 text-center text-xs text-warning">
+            {motivoUscita}
+            {/scadut/i.test(motivoUscita) ? ' Entra di nuovo per continuare.' : ''}
+          </div>
+        )}
+        <div className="min-h-0 flex-1">
+          {role ? (
+            <LoginScreen role={role} onBack={() => setRole(null)} />
+          ) : (
+            <RoleGate version={version} demo={demo} onPick={setRole} />
+          )}
+        </div>
+      </div>
     )
   }
 
   // Uscendo si torna alla scelta iniziale, non al login dell'ultimo ruolo usato.
   return (
-    <Workspace
-      key={user.uuid}
-      onLogout={() => {
-        logout()
-        setRole(null)
-      }}
-    />
+    <ImpostazioniProvider key={user.uuid}>
+      <Workspace
+        onLogout={() => {
+          logout()
+          setRole(null)
+        }}
+      />
+    </ImpostazioniProvider>
   )
 }
 

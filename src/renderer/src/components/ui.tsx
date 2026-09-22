@@ -145,6 +145,94 @@ export function Alert({
   )
 }
 
+/**
+ * Interruttore acceso/spento, per le impostazioni. È un vero `<button
+ * role="switch">`: si usa anche da tastiera e i lettori di schermo lo annunciano.
+ */
+export function Interruttore({
+  acceso,
+  onChange,
+  label,
+  descrizione,
+  disabled = false
+}: {
+  acceso: boolean
+  onChange: (acceso: boolean) => void
+  label: string
+  descrizione?: ReactNode
+  disabled?: boolean
+}): React.JSX.Element {
+  return (
+    <div className={`flex items-start gap-4 py-3 ${disabled ? 'opacity-50' : ''}`}>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-ink-100">{label}</p>
+        {descrizione && <p className="mt-0.5 text-xs text-ink-400">{descrizione}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={acceso}
+        aria-label={label}
+        disabled={disabled}
+        onClick={() => onChange(!acceso)}
+        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors disabled:cursor-not-allowed ${
+          acceso ? 'border-brand-500 bg-brand-500' : 'border-ink-600 bg-ink-700'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 h-4.5 w-4.5 rounded-full bg-white shadow transition-transform ${
+            acceso ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
+/** Schede orizzontali in cima a una pagina: sul telefono scorrono di lato. */
+export function Schede<T extends string>({
+  schede,
+  attiva,
+  onChange
+}: {
+  schede: { id: T; label: string; conteggio?: number }[]
+  attiva: T
+  onChange: (id: T) => void
+}): React.JSX.Element {
+  return (
+    <div className="flex gap-1 overflow-x-auto border-b border-ink-700" role="tablist">
+      {schede.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          role="tab"
+          aria-selected={attiva === s.id}
+          onClick={() => onChange(s.id)}
+          className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm transition-colors ${
+            attiva === s.id
+              ? 'border-brand-400 font-medium text-brand-300'
+              : 'border-transparent text-ink-300 hover:text-ink-100'
+          }`}
+        >
+          {s.label}
+          {s.conteggio !== undefined && s.conteggio > 0 && (
+            <span className="ml-2 rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              {s.conteggio}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function TextArea({
+  className = '',
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>): React.JSX.Element {
+  return <textarea {...props} className={`${CONTROL} min-h-20 resize-y ${className}`} />
+}
+
 export function EmptyState({
   title,
   description,

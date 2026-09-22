@@ -1,5 +1,6 @@
 import { Router, type Request } from 'express'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { vistaAzienda } from '../middleware/portal'
 import { HttpError } from '../http-error'
 import {
   createStarterChart,
@@ -34,8 +35,10 @@ function lettura(req: Request): string {
 }
 
 const scrittura = requireRole('consultant')
+// Conti e saldi grezzi: per l'operatore Azienda solo se vede i prospetti (§10.12).
+const prospetti = vistaAzienda('conto-economico', 'stato-patrimoniale')
 
-ledgerRouter.get('/accounts', (req, res) => {
+ledgerRouter.get('/accounts', prospetti, (req, res) => {
   res.json(listAccounts(lettura(req)))
 })
 ledgerRouter.post('/accounts', scrittura, (req, res) => {
@@ -51,7 +54,7 @@ ledgerRouter.delete('/accounts/:id', scrittura, (req, res) => {
   res.json(deleteAccount(param(req, 'uuid'), param(req, 'id')))
 })
 
-ledgerRouter.get('/balances', (req, res) => {
+ledgerRouter.get('/balances', prospetti, (req, res) => {
   res.json(getBalances(lettura(req), req.query))
 })
 ledgerRouter.put('/balances', scrittura, (req, res) => {

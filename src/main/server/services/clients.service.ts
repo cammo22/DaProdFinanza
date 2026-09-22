@@ -85,6 +85,32 @@ export function createClient(input: CreateClientInput): Client {
   return client
 }
 
+/** Modifica dei dati di un cliente (versione 1.3.0). Il codice `CLI-…` non cambia. */
+export function updateClient(uuid: string, input: Partial<CreateClientInput>): Client {
+  const current = getClient(uuid)
+  const pick = (key: keyof CreateClientInput): string | null | undefined =>
+    input[key] === undefined ? (current[key] as string | null) : input[key]
+  const name = (pick('name') ?? '').trim()
+  if (!name) throw new HttpError(400, 'La denominazione del cliente è obbligatoria.')
+  getDatabase()
+    .prepare(
+      `UPDATE clients SET name = ?, contact_person = ?, email = ?, phone = ?, notes = ?, start_date = ?,
+              updated_at = ?, synced = 0
+        WHERE uuid = ?`
+    )
+    .run(
+      name,
+      nullable(pick('contact_person')),
+      nullable(pick('email')),
+      nullable(pick('phone')),
+      nullable(pick('notes')),
+      nullable(pick('start_date')),
+      nowIso(),
+      uuid
+    )
+  return getClient(uuid)
+}
+
 export function setClientArchived(uuid: string, archived: boolean): Client {
   getClient(uuid)
   getDatabase()

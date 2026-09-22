@@ -33,6 +33,39 @@
     'Segoe UI', Inter, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/*
+ * Tema chiaro (Impostazioni → Generale, versione 1.3.0). Le utility di Tailwind
+ * leggono queste variabili, quindi basta ridefinirle: la scala degli "ink" si
+ * rovescia (fondi chiari, testi scuri) e gli accenti si scuriscono quanto basta
+ * per restare leggibili sul bianco.
+ */
+:root[data-theme='light'] {
+  --color-ink-950: #e9eef5;
+  --color-ink-900: #f6f8fb;
+  --color-ink-850: #ffffff;
+  --color-ink-800: #eef2f7;
+  --color-ink-700: #d9e1ec;
+  --color-ink-600: #c2ccd9;
+  --color-ink-500: #8a97aa;
+  --color-ink-400: #5f6d82;
+  --color-ink-300: #45526a;
+  --color-ink-200: #2c374b;
+  --color-ink-100: #0f172a;
+
+  --color-brand-300: #0369a1;
+  --color-brand-200: #075985;
+
+  --color-positive: #047857;
+  --color-negative: #dc2626;
+  --color-warning: #b45309;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {

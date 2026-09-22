@@ -8,6 +8,7 @@ import {
   writeChartOfAccountsTemplate
 } from '../services/import.service'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { vistaAzienda } from '../middleware/portal'
 import { HttpError } from '../http-error'
 
 /**
@@ -34,15 +35,27 @@ function assertCanRead(req: Request): string {
   return companyUuid
 }
 
-analysisRouter.get('/periods', (req, res) => {
+/**
+ * Periodi e analisi servono a tutte le viste sui bilanci: per l'operatore
+ * Azienda basta che il consulente gliene abbia accesa una (§10.12).
+ */
+const bilanci = vistaAzienda(
+  'panoramica',
+  'conto-economico',
+  'stato-patrimoniale',
+  'capitale-circolante',
+  'simulazioni'
+)
+
+analysisRouter.get('/periods', bilanci, (req, res) => {
   res.json(listPeriods(assertCanRead(req)))
 })
 
-analysisRouter.get('/series', (req, res) => {
+analysisRouter.get('/series', bilanci, (req, res) => {
   res.json(series(assertCanRead(req), { scenario: (req.query.scenario as Scenario) ?? undefined }))
 })
 
-analysisRouter.get('/periods/:periodUuid/analysis', (req, res) => {
+analysisRouter.get('/periods/:periodUuid/analysis', bilanci, (req, res) => {
   const companyUuid = assertCanRead(req)
   res.json(
     analyse(companyUuid, param(req, 'periodUuid'), {
