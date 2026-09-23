@@ -127,9 +127,11 @@ che i numeri di un'azienda escano dal computer di chi ha il diritto di vederli.
 | Cosa fa | Configura, riclassifica, simula scenari | Carica i propri dati, consulta i propri KPI |
 | Se salta la rete | Continua a funzionare | Continua a funzionare |
 
-I due programmi si parlano su una rete privata (Tailscale, con un collegamento di
-riserva per quando un'azienda non riesce a configurarlo). Nessun server pubblico,
-nessun dominio da comprare, nessun dato che passa da terzi per l'uso quotidiano.
+I due programmi si parleranno (è il prossimo passo, la fase 8) su un canale privato
+e cifrato, senza account da creare: lo studio mostra un codice, l'azienda lo
+inserisce. Nessun server pubblico, nessun dominio da comprare, e chi sta in mezzo
+vede solo dati cifrati. Oggi il programma Azienda funziona sullo stesso computer
+dello studio, con il suo accesso.
 
 ## Novità della 1.3.1
 
@@ -467,7 +469,7 @@ nell'IndexedDB; Express è un piccolo router compatibile (`src/web/shims/express
 e le chiamate `fetch` all'indirizzo del backend restano nella pagina
 (`src/web/bridge.ts`). Capacitor la impacchetta in un APK sulla CI di GitHub
 (`.github/workflows/android-demo.yml`), a ogni release. Dettagli in
-[`AGENTS.md`](./AGENTS.md), versione 1.2.0.
+[`AGENTS.md`](./AGENTS.md).
 
 ### L'interfaccia (1.3.0)
 

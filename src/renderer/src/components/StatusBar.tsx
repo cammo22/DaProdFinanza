@@ -7,7 +7,7 @@ import { applicaZoom, useZoom, ZOOM_MAX, ZOOM_MIN, ZOOM_PASSO } from '../lib/zoo
 
 /**
  * Status bar sempre visibile in basso — AGENTS.md §7.
- * Tailscale e "ultima sync" restano grigi finché non arriva la Fase 8.
+ * Collegamento e "ultima sync" restano grigi finché non arriva la Fase 8.
  */
 type Tone = 'ok' | 'warn' | 'off'
 
@@ -17,9 +17,17 @@ const DOT: Record<Tone, string> = {
   off: 'bg-ink-600'
 }
 
-function Indicator({ tone, label }: { tone: Tone; label: string }): React.JSX.Element {
+function Indicator({
+  tone,
+  label,
+  title
+}: {
+  tone: Tone
+  label: string
+  title?: string
+}): React.JSX.Element {
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="flex items-center gap-1.5" title={title}>
       <span className={`h-2 w-2 rounded-full ${DOT[tone]}`} />
       <span className={tone === 'off' ? 'text-ink-400' : 'text-ink-300'}>{label}</span>
     </span>
@@ -72,8 +80,12 @@ export function StatusBar({ version }: { version: string }): React.JSX.Element {
       <Indicator tone={dbTone} label="Database" />
       <span className="hidden md:contents">
         <Indicator tone={serverTone} label="Server" />
-        {/* Fase 8: qui comparirà "via Tailscale" o "via fallback" (§7). */}
-        <Indicator tone="off" label="Tailscale" />
+        {/* Fase 8: qui comparirà lo stato del canale con le aziende (§3, §7). */}
+        <Indicator
+          tone="off"
+          label="Collegamento"
+          title="Il collegamento fra studio e aziende arriva con la fase 8."
+        />
         <span className="text-ink-400">
           Ultima sync: {health?.last_sync ?? 'mai sincronizzato'}
         </span>

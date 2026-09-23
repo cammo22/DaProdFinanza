@@ -1,14 +1,14 @@
 /**
- * Avvia la build di produzione con il seed dimostrativo attivo
- * (account `cammo` e `Pizzeria DaProd`, password `1234`).
+ * Avvia la build compilata (`out/`) fuori pacchetto, quindi con il seed
+ * dimostrativo attivo (account `cammo` e `Pizzeria DaProd`, password `1234`).
  *
- * In `npm run dev` il seed è già attivo di suo: questo script serve solo per
- * provare l'app compilata senza passare dal wizard di primo avvio.
+ * Serve a provare l'app compilata senza passare dal wizard di primo avvio.
+ * Il seed si accende perché l'app non è impacchettata, non per una variabile
+ * d'ambiente: un eseguibile vero non lo accende mai (vedi db/seed.ts).
  */
 import { spawn } from 'node:child_process'
 import electron from 'electron'
 
 spawn(electron, ['.'], {
-  stdio: 'inherit',
-  env: { ...process.env, DAPROD_DEMO: '1' }
+  stdio: 'inherit'
 }).on('exit', (code) => process.exit(code ?? 0))

@@ -33,3 +33,6 @@ Thumbs.db
 
 # --- Android: il progetto si genera nella CI (npx cap add android) ---
 /android/
+
+# --- Configurazione locale di Claude Code (anteprime) ---
+.claude/
