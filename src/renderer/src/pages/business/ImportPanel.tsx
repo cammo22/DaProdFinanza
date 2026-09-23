@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Company } from '@shared/types'
+import type { AccountSection, Company } from '@shared/types'
 import { api, ApiRequestError } from '../../lib/api'
 import { euro } from '../../lib/format'
 import { Alert, Button, Card, Field, Select, TextInput } from '../../components/ui'
@@ -10,13 +10,25 @@ import { Alert, Button, Card, Field, Select, TextInput } from '../../components/
  * Il passaggio obbligato è l'anteprima: il consulente vede quante righe sono
  * state riconosciute e quante no *prima* che qualcosa venga scritto. Il
  * pulsante che importa davvero compare solo dopo.
+ *
+ * Un file che non ha esattamente la forma del modello (fase 9) non si
+ * rifiuta: si sceglie il foglio, e le sezioni che non si riconoscono si
+ * abbinano a mano. Ogni scelta rifà l'anteprima, e l'import scrive con le
+ * stesse scelte.
  */
 
 interface Preview {
   file: { name: string; sha256: string; sheet: string }
+  availableSheets: string[]
   valueColumn: string | null
   availableValueColumns: string[]
-  sections: { label: string; section_code: string | null; rows: number; withValue: number }[]
+  sections: {
+    label: string
+    section_code: string | null
+    manual: boolean
+    rows: number
+    withValue: number
+  }[]
   accounts: { code: string; name: string; section_label: string; amount_cents: number | null }[]
   unmapped: { row: number; reason: string; code: string | null; name: string | null }[]
   templateRows: number
@@ -97,16 +109,26 @@ const MESI = [
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ]
 
+/** Scelte fatte sull'anteprima, rimandate uguali all'import. */
+interface Scelte {
+  valueColumn?: string
+  sheet?: string
+  sectionMap: Record<string, string>
+}
+
 export function ImportPanel({
   company,
+  sections,
   onImported
 }: {
   company: Company
+  /** Catalogo delle sezioni, per abbinare a mano quelle che il file chiama in un altro modo. */
+  sections: AccountSection[]
   onImported: () => void
 }): React.JSX.Element {
   const [filePath, setFilePath] = useState<string | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
-  const [valueColumn, setValueColumn] = useState<string>('')
+  const [scelte, setScelte] = useState<Scelte>({ sectionMap: {} })
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [month, setMonth] = useState('') // vuoto = periodo annuale
   const [scenario, setScenario] = useState<'actual' | 'budget' | 'forecast'>('actual')
@@ -114,17 +136,22 @@ export function ImportPanel({
   const [esito, setEsito] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const caricaAnteprima = async (path: string, colonna?: string): Promise<void> => {
+  const caricaAnteprima = async (path: string, nuove: Scelte = { sectionMap: {} }): Promise<void> => {
     setError(null)
     setEsito(null)
     setBusy(true)
     try {
       const result = await api.post<Preview>(
         `/api/companies/${company.uuid}/import/chart-of-accounts/preview`,
-        { filePath: path, valueColumn: colonna }
+        { filePath: path, ...nuove }
       )
       setPreview(result)
-      setValueColumn(result.valueColumn ?? '')
+      // Quello che il server ha scelto davvero diventa la scelta di partenza.
+      setScelte({
+        ...nuove,
+        valueColumn: result.valueColumn ?? undefined,
+        sheet: result.file.sheet
+      })
     } catch (err) {
       setPreview(null)
       setError(err instanceof Error ? err.message : 'Lettura del file non riuscita.')
@@ -140,6 +167,18 @@ export function ImportPanel({
     await caricaAnteprima(path)
   }
 
+  const cambia = (modifica: Partial<Scelte>): void => {
+    if (!filePath) return
+    void caricaAnteprima(filePath, { ...scelte, ...modifica })
+  }
+
+  const abbina = (label: string, code: string): void => {
+    const sectionMap = { ...scelte.sectionMap }
+    if (code) sectionMap[label] = code
+    else delete sectionMap[label]
+    cambia({ sectionMap })
+  }
+
   const importa = async (overwrite = false): Promise<void> => {
     if (!filePath) return
     setError(null)
@@ -151,7 +190,7 @@ export function ImportPanel({
         balances_written: number
       }>(`/api/companies/${company.uuid}/import/chart-of-accounts`, {
         filePath,
-        valueColumn,
+        ...scelte,
         year: Number(year),
         month: month ? Number(month) : null,
         scenario,
@@ -177,6 +216,9 @@ export function ImportPanel({
   }
 
   const conValore = preview?.accounts.filter((a) => a.amount_cents !== null).length ?? 0
+  // Sezioni da abbinare: quelle che il file chiama in un modo che non si
+  // riconosce, e quelle già abbinate a mano (per poter cambiare idea).
+  const daAbbinare = preview?.sections.filter((s) => s.section_code === null || s.manual) ?? []
   const importabile = preview !== null && conValore > 0 && preview.duplicates.length === 0
 
   return (
@@ -211,6 +253,22 @@ export function ImportPanel({
           <span className="text-sm text-ink-400">
             {filePath ? filePath.split(/[\\/]/).pop() : 'Nessun file selezionato.'}
           </span>
+          {preview && preview.availableSheets.length > 1 && (
+            <label className="ml-auto flex items-center gap-2 text-sm text-ink-400">
+              Foglio
+              <Select
+                value={scelte.sheet ?? ''}
+                disabled={busy}
+                onChange={(e) => cambia({ sheet: e.target.value, sectionMap: {} })}
+              >
+                {preview.availableSheets.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          )}
         </div>
 
         {!preview && !busy && (
@@ -258,6 +316,46 @@ export function ImportPanel({
               ))}
             </div>
 
+            {daAbbinare.length > 0 && (
+              <div className="border-t border-ink-700 px-5 py-4">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-warning">
+                  Sezioni da abbinare
+                </h3>
+                <p className="mb-3 text-xs text-ink-400">
+                  Il file le chiama in un modo che il programma non conosce. Scegli a quale sezione
+                  del bilancio corrispondono: i loro conti entrano nel riepilogo.
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {daAbbinare.map((sezione) => (
+                    <li
+                      key={sezione.label}
+                      className="flex flex-wrap items-center gap-3 text-sm text-ink-100"
+                    >
+                      <span className="min-w-48 flex-1">
+                        {sezione.label}
+                        <span className="ml-2 text-xs text-ink-400">
+                          {sezione.rows} {sezione.rows === 1 ? 'riga' : 'righe'}
+                        </span>
+                      </span>
+                      <Select
+                        value={scelte.sectionMap[sezione.label] ?? ''}
+                        disabled={busy}
+                        onChange={(e) => abbina(sezione.label, e.target.value)}
+                      >
+                        <option value="">— non abbinata —</option>
+                        {sections.map((s) => (
+                          <option key={s.code} value={s.code}>
+                            {s.statement === 'CE' ? 'Conto economico' : 'Stato patrimoniale'} ·{' '}
+                            {s.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {preview.unmapped.length > 0 && (
               <div className="border-t border-ink-700 px-5 py-4">
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-negative">
@@ -282,11 +380,9 @@ export function ImportPanel({
             <div className="grid grid-cols-4 gap-4 px-5 py-4">
               <Field label="Colonna valore">
                 <Select
-                  value={valueColumn}
-                  onChange={(e) => {
-                    setValueColumn(e.target.value)
-                    if (filePath) void caricaAnteprima(filePath, e.target.value)
-                  }}
+                  value={scelte.valueColumn ?? ''}
+                  disabled={busy}
+                  onChange={(e) => cambia({ valueColumn: e.target.value })}
                 >
                   {preview.availableValueColumns.map((c) => (
                     <option key={c} value={c}>
