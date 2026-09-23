@@ -5,6 +5,7 @@ import { analyse, listPeriods, series } from '../services/analysis.service'
 import {
   applyChartOfAccounts,
   previewChartOfAccounts,
+  type PreviewChoices,
   writeChartOfAccountsTemplate
 } from '../services/import.service'
 import { requireAuth, requireRole } from '../middleware/auth'
@@ -65,22 +66,35 @@ analysisRouter.get('/periods/:periodUuid/analysis', bilanci, (req, res) => {
   )
 })
 
+/** Foglio, colonna valore e sezioni abbinate a mano, come arrivano dal modulo. */
+function previewChoices(body: unknown): PreviewChoices {
+  const b = (body ?? {}) as Record<string, unknown>
+  const text = (v: unknown): string | undefined => (typeof v === 'string' && v ? v : undefined)
+  const sectionMap: Record<string, string> = {}
+  if (b.sectionMap && typeof b.sectionMap === 'object') {
+    for (const [label, code] of Object.entries(b.sectionMap as Record<string, unknown>)) {
+      if (typeof code === 'string' && code) sectionMap[label] = code
+    }
+  }
+  return { valueColumn: text(b.valueColumn), sheet: text(b.sheet), sectionMap }
+}
+
 /** Anteprima: legge il file e non scrive nulla (§11.1). */
 analysisRouter.post('/import/chart-of-accounts/preview', requireRole('consultant'), async (req, res) => {
-  const { filePath, valueColumn } = req.body ?? {}
+  const { filePath } = req.body ?? {}
   if (!filePath) throw new HttpError(400, 'Manca il percorso del file da importare.')
-  res.json(await previewChartOfAccounts(param(req, 'uuid'), filePath, valueColumn))
+  res.json(await previewChartOfAccounts(param(req, 'uuid'), filePath, previewChoices(req.body)))
 })
 
 /** Scrittura: solo dopo che il consulente ha visto l'anteprima. */
 analysisRouter.post('/import/chart-of-accounts', requireRole('consultant'), async (req, res) => {
-  const { filePath, valueColumn, year, month, scenario, overwrite } = req.body ?? {}
+  const { filePath, year, month, scenario, overwrite } = req.body ?? {}
   if (!filePath) throw new HttpError(400, 'Manca il percorso del file da importare.')
   if (!Number.isInteger(year)) throw new HttpError(400, "Indicare l'anno del periodo da importare.")
 
   res.status(201).json(
     await applyChartOfAccounts(param(req, 'uuid'), filePath, {
-      valueColumn,
+      ...previewChoices(req.body),
       year,
       month: month ?? null,
       scenario,

@@ -4,7 +4,7 @@ import type { AccountType } from '@shared/types'
 import { getDatabase } from '../../db'
 import { newUuid, nowIso } from '../../lib/ids'
 import { companyFolder } from '../../lib/paths'
-import { readPreview, type ImportPreview } from '../../import/chart-of-accounts'
+import { readPreview, type ImportPreview, type ReadOptions } from '../../import/chart-of-accounts'
 import { buildTemplate, type TemplateAccount } from '../../import/template'
 import { HttpError } from '../http-error'
 import { getCompany } from './companies.service'
@@ -23,13 +23,21 @@ export interface PreviewResult extends ImportPreview {
   alreadyImported: { filename: string; imported_at: string } | null
 }
 
+/** Scelte fatte nell'anteprima: foglio, colonna valore, sezioni abbinate a mano. */
+export type PreviewChoices = Pick<ReadOptions, 'valueColumn' | 'sheet' | 'sectionMap'>
+
 export async function previewChartOfAccounts(
   companyUuid: string,
   filePath: string,
-  valueColumn?: string
+  choices: PreviewChoices = {}
 ): Promise<PreviewResult> {
   getCompany(companyUuid)
-  const preview = await readPreview(filePath, { valueColumn })
+  const preview = await readPreview(filePath, {
+    valueColumn: choices.valueColumn,
+    sheet: choices.sheet,
+    sectionMap: choices.sectionMap,
+    sections: listSections()
+  })
 
   const previous = getDatabase()
     .prepare(
@@ -41,8 +49,7 @@ export async function previewChartOfAccounts(
   return { ...preview, alreadyImported: previous ?? null }
 }
 
-export interface ApplyOptions {
-  valueColumn?: string
+export interface ApplyOptions extends PreviewChoices {
   year: number
   /** null = periodo annuale. */
   month?: number | null
@@ -68,7 +75,13 @@ export async function applyChartOfAccounts(
 ): Promise<ApplyResult> {
   const company = getCompany(companyUuid)
   const db = getDatabase()
-  const preview = await previewChartOfAccounts(companyUuid, filePath, options.valueColumn)
+  // L'anteprima si rifà con le stesse scelte: si scrive esattamente quello che
+  // il consulente ha visto.
+  const preview = await previewChartOfAccounts(companyUuid, filePath, {
+    valueColumn: options.valueColumn,
+    sheet: options.sheet,
+    sectionMap: options.sectionMap
+  })
 
   if (preview.duplicates.length > 0) {
     throw new HttpError(
@@ -166,7 +179,12 @@ export async function applyChartOfAccounts(
       preview.file.sha256,
       archivedTo,
       preview.accounts.length,
-      `Foglio "${preview.file.sheet}", colonna valore "${preview.valueColumn}".`,
+      [
+        `Foglio "${preview.file.sheet}", colonna valore "${preview.valueColumn}".`,
+        ...preview.sections
+          .filter((section) => section.manual)
+          .map((section) => `"${section.label}" abbinata a mano a ${section.section_code}.`)
+      ].join(' '),
       now,
       now,
       now
