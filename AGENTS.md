@@ -262,6 +262,15 @@ Prende la forma dell'attività (indovinata dal *tipo di attività* dell'anagrafi
 
 ⚠️ **"Simili" implica variabilità** — file di clienti/periodi diversi non saranno byte-identici (righe compilate diverse, forse qualche colonna in più/meno, intestazioni leggermente diverse). L'importer **non deve fare affidamento su numeri di riga fissi**: deve riconoscere le sezioni dalle intestazioni di categoria (colonna `Descrizione`, es. "RICAVI OPERATIVI", "COSTI MATERIE PRIME"...) e dai nomi di colonna in riga 1, con un **riepilogo pre-conferma** (righe riconosciute / non riconosciute / da mappare a mano) prima di scrivere sul database — mai un import "silenzioso" su dati contabili. Questo è ora un requisito, non solo una buona pratica.
 
+**Fase 9 — cosa tollera oggi** (`src/main/import/chart-of-accounts.ts`, test in `chart-of-accounts.tolerance.test.ts`):
+- **Dove sta la tabella**: la riga di intestazione si cerca nelle prime 20 righe (sopra ci possono essere titolo, azienda, data) e il foglio fra tutti quelli del file: prima quello scelto, poi "PIANO DEI CONTI", poi il primo con la colonna TIPO, poi il primo con codice e descrizione. Se i fogli buoni sono più d'uno, la schermata fa scegliere.
+- **Intestazioni con altre parole**: "Tipologia", "Codice", "Descrizione conto", "Saldo", "Importo", "% diretto", "Crediti verso clienti"… Maiuscole, accenti, parentesi, punti e "v/" non contano.
+- **Sezioni numerate o con sinonimi**: "1. Ricavi operativi:", "B) Costi del personale", "Debiti a m/l termine". Una sezione che non si riconosce **si abbina a mano** dalla schermata: l'anteprima si rifà, e l'import scrive con lo stesso abbinamento (annotato nel documento di origine).
+- **TIPO mancante**: un conto senza TIPO prende quello della sua sezione, e il riepilogo lo dice. Un TIPO **incoerente** con la sezione (un RICAVO fra i costi del personale) si ferma nel riepilogo: finirebbe nel bilancio col segno sbagliato.
+- **Importi scritti come testo**: "1.234,56", "1.234" (migliaia), "(1.234,56)" e "1.234,56-" negativi, "-" vuoto. Una percentuale in una cella formattata "%" (0,7) diventa 70.
+
+Quello che non si riconosce non si indovina: si chiede. La prova su più file veri di studi diversi resta da fare (§13, fase 9).
+
 ### 11.2 Import XML fatture elettroniche (FatturaPA) — non richiesto ora, resta come idea futura
 Il "file XML" annunciato nel brief iniziale **non esisteva**: il cliente ha confermato che si trattava di un refuso e intendeva l'Excel (§11.1). Non c'è quindi, al momento, una richiesta reale di import FatturaPA — la ricerca fatta sul tracciato (blocchi `FatturaElettronicaHeader`/`FatturaElettronicaBody`, `TipoDocumento` TD01/TD04/TD05, oltre 200 campi) resta valida **se e quando** servirà, ma va trattata come idea di Fase futura (collegata al Cassetto Fiscale, §11.4) e non come requisito MVP. Non investire tempo di progettazione qui finché non arriva una richiesta esplicita con un file reale.
 
@@ -308,7 +317,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ✅ **Fatta** (sessione 2) |
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ✅ **Fatta** (sessione 2) |
 | **8** | Collegamento Consulente↔Azienda (§3, §6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ Prossima (issue #43) |
-| **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
+| **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | 🟡 **Fatta la tolleranza** (versione 1.4.0, §11.1): intestazioni e fogli ovunque, sinonimi, sezioni da abbinare a mano, TIPO dalla sezione, importi all'italiana. Manca la prova su file veri di più studi |
 | **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, collegamento incluso | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e il collegamento incluso, che hanno senso solo dopo la Fase 8. **Regola del cliente (2026-09-16): una release a ogni aggiornamento importante, sempre con i tre eseguibili — installer, portable e demo** (`npm run dist` e `npm run dist:demo`). La prima così è la v0.0.5, con le Fasi 5 e 6 |
 | **A** | Attività e Tempi (§10.11), idea presa da Ever Teams | Bacheca, timer, ore e valore per azienda | ✅ **Fatta** (versione 1.2.0) |
 | **B** | Demo per Android (§13, versione 1.2.0) | APK con i dati di esempio, dalla release | ✅ **Fatta** (versione 1.2.0) — da provare su più telefoni |

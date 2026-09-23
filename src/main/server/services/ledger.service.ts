@@ -7,6 +7,7 @@ import type {
   Scenario
 } from '@shared/types'
 import { getDatabase } from '../../db'
+import { typesForSection } from '../../import/chart-of-accounts'
 import { newUuid, nowIso } from '../../lib/ids'
 import { HttpError } from '../http-error'
 import { getCompany } from './companies.service'
@@ -64,15 +65,6 @@ function getAccount(companyUuid: string, uuid: string): AccountRow {
   const account = listAccounts(companyUuid).find((a) => a.uuid === uuid)
   if (!account) throw new HttpError(404, 'Conto non trovato.')
   return account
-}
-
-/**
- * Il tipo di un conto segue la sezione. L'unica scelta è nelle sezioni
- * dell'attivo, dove un fondo (ammortamento, svalutazione) è ATTIVITA' NEGATIVO
- * e si sottrae (§1).
- */
-export function typesForSection(sectionType: AccountType): AccountType[] {
-  return sectionType === "ATTIVITA'" ? ["ATTIVITA'", "ATTIVITA' NEGATIVO"] : [sectionType]
 }
 
 export function saveAccount(companyUuid: string, input: Row, uuid?: string): AccountRow {

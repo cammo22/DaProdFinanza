@@ -123,7 +123,7 @@ export function DataView({
             Facoltativo: se hai già il piano dei conti in un file Excel lo puoi caricare da qui. Il
             modello scaricabile ha le colonne giuste; dopo l’import tutto si modifica nel programma.
           </Alert>
-          <ImportPanel company={company} onImported={dopoModifica} />
+          <ImportPanel company={company} sections={sections} onImported={dopoModifica} />
         </div>
       )}
     </div>
