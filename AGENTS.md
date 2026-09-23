@@ -767,6 +767,22 @@ esistono.
 - **Provarla senza telefono**: `npm run android:web` e `npm run android:preview`, poi
   il browser su `http://localhost:4173` (ridotto a larghezza di telefono).
 
+### Versione 1.4.0 — import tollerante e sistemazioni
+
+Tre PR (#51, #52, #53), dopo un giro su quello che era rimasto indietro.
+
+| Pezzo | Cosa c'è |
+|---|---|
+| Import Excel tollerante (fase 9, #47) | §11.1 "Fase 9 — cosa tollera oggi". `chart-of-accounts.ts` (intestazione e foglio cercati, sinonimi, `sectionMap`, TIPO dalla sezione, `parseAmount`), `import.service.ts` e rotta che passano foglio e abbinamenti, `ImportPanel` con scelta del foglio e sezioni da abbinare. `typesForSection` ora vive nel parser e il ledger la riusa |
+| Seed | `isDemoMode()` = flag di build o app fuori pacchetto: `DAPROD_DEMO=1` non accende più il seed in un eseguibile vero (§13-bis) |
+| Collegamento | Documenti e barra di stato allineati alla decisione Tailcat del 18/9 (§1, §2, §3, §7, §12, §14) |
+| Dipendenze | Electron 44.4.5, vitest 5.0.1, `uuid` 11.1.1 forzato sotto exceljs (`overrides`): 0 vulnerabilità |
+| Area fiscale | Valori INPS 2026 (circolare n. 14/2026): minimale 18.808 €, massimale 122.295 € |
+
+Controlli: 172 test (24 nuovi sull'import, 2 sui valori 2026), typecheck, file "di un altro studio" importato nell'app compilata via API. La schermata nuova dell'import non è stata guardata a occhio: da controllare alla prima prova.
+
+⚠️ **Nota per chi sviluppa**: la configurazione npm dello sviluppatore blocca gli script d'installazione non approvati. Dopo un `npm install` che reinstalla Electron, se `node_modules/electron/dist` manca: `node node_modules/electron/install.js`. Il modulo del database cifrato ha i binari già compilati in `prebuilds/`.
+
 ### Versione 1.3.1 — avvio e chiusura
 
 Fix dell'avvio (una PR). Prima c'erano problemi all'apertura: nessun blocco d'istanza, quindi un secondo doppio clic, o la versione nuova lanciata dall'aggiornamento mentre la vecchia si chiudeva, apriva lo stesso database cifrato in due processi (migrazioni e seed demo in parallelo, `database is locked`, copie rimaste in background).
