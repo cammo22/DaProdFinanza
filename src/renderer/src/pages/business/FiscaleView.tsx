@@ -283,7 +283,7 @@ export function FiscaleView({ company, canEdit }: { company: Company; canEdit: b
                   </Riga>
                   {(bozza.gestioneInps === 'artigiani' || bozza.gestioneInps === 'commercianti') && (
                     <>
-                      <Percento label="Aliquota" valore={bozza.inpsAliquota} onChange={(v) => set({ inpsAliquota: v })} aiuto="artigiani 24%, commercianti 24,48% (2025)" />
+                      <Percento label="Aliquota" valore={bozza.inpsAliquota} onChange={(v) => set({ inpsAliquota: v })} aiuto="artigiani 24%, commercianti 24,48% (2026)" />
                       <Euro label="Reddito minimale" valore={bozza.inpsMinimaleCents} onChange={(v) => set({ inpsMinimaleCents: v ?? 0 })} />
                     </>
                   )}

@@ -10,9 +10,37 @@ import {
   type ImpostazioniFiscali
 } from './fiscale'
 
-const imp = (p: Partial<ImpostazioniFiscali>): ImpostazioniFiscali => ({ ...FISCALE_PREDEFINITO, ...p })
+/**
+ * I conti a mano qui sotto sono fatti con minimale e massimale INPS 2025: si
+ * fissano qui, così restano validi anche quando i valori di partenza cambiano
+ * anno. I valori 2026 hanno il loro test.
+ */
+const INPS_2025 = { inpsMinimaleCents: 1_855_500, inpsMassimaleCents: 12_060_700 }
+const imp = (p: Partial<ImpostazioniFiscali>): ImpostazioniFiscali => ({
+  ...FISCALE_PREDEFINITO,
+  ...INPS_2025,
+  ...p
+})
 const importo = (s: ReturnType<typeof stimaFiscale>, chiave: string): number | undefined =>
   s.righe.find((r) => r.chiave === chiave)?.importo
+
+describe('valori di partenza 2026', () => {
+  it('INPS artigiani e commercianti dalla circolare n. 14/2026', () => {
+    expect(FISCALE_PREDEFINITO.inpsMinimaleCents).toBe(1_880_800)
+    expect(FISCALE_PREDEFINITO.inpsMassimaleCents).toBe(12_229_500)
+    expect(FISCALE_PREDEFINITO.inpsAliquota).toBe(24.48)
+  })
+
+  it('ditta individuale di commercianti con i valori 2026', () => {
+    const s = stimaFiscale(
+      { utileAnteImposte: 4_000_000, ebit: 4_200_000, ricavi: 0 },
+      { ...FISCALE_PREDEFINITO, regime: 'individuale', gestioneInps: 'commercianti' }
+    )
+    // Fissi: 18.808 × 24,48% = 4.604,20 · oltre il minimale: 21.192 × 24,48% = 5.187,80
+    expect(importo(s, 'inps-fissi')).toBe(460_420)
+    expect(importo(s, 'inps-eccedenza')).toBe(518_780)
+  })
+})
 
 describe('stima di imposte e contributi (conti fatti a mano)', () => {
   it('IRPEF a scaglioni 2026', () => {

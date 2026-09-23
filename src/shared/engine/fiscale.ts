@@ -7,8 +7,10 @@ import type { TreasuryItemInput } from './treasury'
  * da parte ogni mese e quando si paga. Non è la dichiarazione dei redditi:
  * niente detrazioni personali, crediti d'imposta o agevolazioni, che dipendono
  * dalla persona e dall'anno. Le aliquote sono modificabili; i valori di
- * partenza sono quelli in vigore per il 2026 dove noti (IRPEF 23/33/43), per
- * i contributi INPS quelli pubblicati per il 2025, da aggiornare ogni anno.
+ * partenza sono quelli del 2026: IRPEF 23/33/43 e, per artigiani e
+ * commercianti, la circolare INPS n. 14 del 9 febbraio 2026 (minimale 18.808 €,
+ * massimale 122.295 € per chi non ha anzianità prima del 1996). Vanno
+ * aggiornati ogni anno (issue #46); un'azienda che li ha già salvati tiene i suoi.
  *
  * Regimi:
  * - **società di capitali** (SRL, SPA): IRES sul reddito, IRAP sul valore
@@ -101,9 +103,9 @@ export const FISCALE_PREDEFINITO: ImpostazioniFiscali = {
   irapPct: 3.9,
   addizionaliPct: 2,
   gestioneInps: 'commercianti',
-  inpsMinimaleCents: 1_855_500,
+  inpsMinimaleCents: 1_880_800,
   inpsAliquota: 24.48,
-  inpsMassimaleCents: 12_060_700,
+  inpsMassimaleCents: 12_229_500,
   gestioneSeparataPct: 26.07,
   forfettarioCoeff: 40,
   forfettarioAliquota: 15,
