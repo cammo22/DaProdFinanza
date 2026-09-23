@@ -8,7 +8,7 @@ Un gestionale desktop per consulenti finanziari aziendali: riclassifica il bilan
 calcola gli indici che contano, previene le tensioni di cassa prima che arrivino,
 e risponde a "cosa succede se" senza toccare un foglio Excel.
 
-![stato](https://img.shields.io/badge/versione-1.3.1-3ddbff)
+![stato](https://img.shields.io/badge/versione-1.4.0-3ddbff)
 ![piattaforma](https://img.shields.io/badge/Windows-x64-3ddbff)
 ![demo mac](https://img.shields.io/badge/demo-macOS-3ddbff)
 ![demo android](https://img.shields.io/badge/demo-Android-3ddbff)
@@ -132,6 +132,21 @@ e cifrato, senza account da creare: lo studio mostra un codice, l'azienda lo
 inserisce. Nessun server pubblico, nessun dominio da comprare, e chi sta in mezzo
 vede solo dati cifrati. Oggi il programma Azienda funziona sullo stesso computer
 dello studio, con il suo accesso.
+
+## Novità della 1.4.0
+
+- **Il file Excel di un altro studio si carica lo stesso.** Prima l'import voleva il
+  file esattamente come il modello; ora trova la tabella anche se sopra c'è un titolo o
+  se sta su un altro foglio, capisce le colonne scritte con altre parole ("Codice",
+  "Saldo", "Tipologia"…), le sezioni numerate ("1. Ricavi operativi") e gli importi
+  scritti all'italiana, anche negativi fra parentesi. Una sezione che non riconosce la
+  chiede: si sceglie a quale corrisponde e l'anteprima si rifà. Come sempre, niente
+  si scrive prima della conferma.
+- **Area fiscale coi contributi INPS 2026** (minimale 18.808 €), non più quelli del 2025.
+- **Più sicuro**: un'installazione vera non può più ricevere per sbaglio gli account
+  dimostrativi; Electron aggiornato; zero avvisi di sicurezza nelle dipendenze.
+- In basso, il pallino del collegamento con le aziende si chiama **Collegamento**: è il
+  prossimo passo.
 
 ## Novità della 1.3.1
 
@@ -311,7 +326,8 @@ due programmi.
 | 1.1 | Pannelli liberi e ridimensionabili, zoom, scenari pronti, demo per Mac | ✅ Versione 1.1.0 |
 | 1.2 | Attività e Tempi (bacheca, timer, ore), demo per Android | ✅ Versione 1.2.0 |
 | 1.3 | Interfaccia più semplice (Ctrl+K, telefono), impostazioni, documenti, richieste e chiamate, Personale, Area fiscale, Marginalità | ✅ Versione 1.3.1 |
-| 8-9 | Collegamento fra i due programmi (senza account), import Excel più tollerante | ⬜ Prossima |
+| 9 | Import Excel tollerante: file di altri studi, sezioni da abbinare a mano | ✅ Versione 1.4.0 — da provare su file veri di più studi |
+| 8 | Collegamento fra i due programmi (senza account) | ⬜ Prossima |
 | 10 | Eseguibili: installer, portable, demo | 🟡 Pubblicati a ogni aggiornamento importante; mancano le varianti Consulente/Azienda |
 
 La roadmap viva sta su GitHub, nell'issue fissata
