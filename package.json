@@ -54,7 +54,7 @@
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^5.1.0",
     "docx-preview": "^0.4.1",
-    "electron": "^44.3.0",
+    "electron": "^44.4.5",
     "electron-builder": "^26.0.12",
     "electron-vite": "^5.0.0",
     "jszip": "^3.10.2",
@@ -66,6 +66,11 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^7.1.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   }
 }

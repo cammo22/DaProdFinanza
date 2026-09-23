@@ -18,7 +18,7 @@ import { settingsRouter } from './routes/settings.routes'
  * Backend REST embedded nel processo main — AGENTS.md §2/§3.
  *
  * In Fase 1 ascolta solo su 127.0.0.1 con porta effimera: è la UI locale a
- * consumarlo. L'esposizione verso le app Azienda via Tailscale è Fase 8 (§13) —
+ * consumarlo. L'esposizione verso le app Azienda (canale cifrato, §3) è Fase 8 —
  * qui non si apre nulla verso la rete.
  */
 const HOST = '127.0.0.1'

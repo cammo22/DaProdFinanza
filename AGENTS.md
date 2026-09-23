@@ -2,7 +2,7 @@
 
 > Documento master di progetto — generato da sessione di analisi e pianificazione DaProdProduzioni
 > Settore: software di controllo di gestione per consulenti finanziari aziendali (commercialisti, advisor, temporary manager)
-> Stato: **in sviluppo — Fasi 0, 1, 2 e 4 completate, Fase 3 quasi** (impalcatura, auth, anagrafica, motore di calcolo, prime tre schermate). Prossima: Fase 5. Dettaglio in §13-bis.
+> Stato: **in produzione — versione 1.4.0.** Fasi 0-7 fatte, 9 (import tollerante) fatta nel codice, 10 parziale, più Attività e Tempi, demo Android e Mac, portale dell'azienda, Personale, Area fiscale, Marginalità. Prossima: **Fase 8, collegamento studio ↔ aziende** (issue #43). Storia in §13-bis e seguenti, roadmap viva nell'issue #39.
 > Lingua progetto: codice EN, UI IT (convenzione DaProd, come IrideeCRM)
 
 ---
@@ -42,7 +42,7 @@ Punti fermi dati dal cliente (testuali, dal brief):
   - **DaProdFinanza** (Consulente / *Master*) — l'app del professionista: gestisce tutti i clienti/aziende, tutta la suite Business, configurazione, import, simulazioni, vista aggregata multi-azienda.
   - **DaProdFinanza Cliente** (Azienda / *Satellite*) — app leggera installata presso ogni azienda cliente: serve a **caricare i dati** (fatture XML, estratti conto, inserimenti manuali) e a **tenere traccia** dei propri numeri (dashboard di sola lettura). Nessun accesso alla configurazione del piano dei conti né ai dati di altre aziende.
 - Interfaccia: un menu iniziale per **aggiungere/rimuovere Clienti e Aziende**, creazione rapida di una nuova azienda, poi dentro l'azienda la suite "Business" (screenshot analizzati, §10).
-- Scambio dati **Consulente ↔ Azienda** sempre via **Tailscale** (da confermare "Tailscale" vs "Tailcat" — §14).
+- Scambio dati **Consulente ↔ Azienda** su un canale privato cifrato, **senza account da creare**: si valuta **Tailcat** (deciso il 2026-09-18, dettaglio in §3 e §13 "Versione 1.1.0").
 
 ---
 
@@ -73,13 +73,13 @@ Stesso pattern validato in produzione su **IrideeCRM** — non ripartiamo da zer
 | Backend interno | **Node.js + Express** | Embedded nell'app Electron (REST sul Master) |
 | Database | **SQLite cifrato** — `better-sqlite3-multiple-ciphers` (SQLCipher) ✅ *deciso, §14.9* | dati finanziari (saldi banca, fidi, ricavi) più sensibili dei dati IRIS: DB cifrato a riposo fin dalla Fase 0, non solo DPAPI sui segreti |
 | Auth | **JWT** | Token con ruolo embedded |
-| Networking | **Tailscale** (primario) + **fallback** (es. Cloudflare Tunnel) | Tailscale come rete privata di default (come IrideeCRM); se l'azienda cliente non riesce a configurarlo, un secondo trasporto di riserva — pattern già usato sul telefono di DaProdSuite ("si fa trovare dalla rete di casa, dal tunnel di Cloudflare o da Tailscale, e il client tiene quello che risponde") |
-| Installer | **electron-builder** | Installer `.exe` offline, Tailscale bundled come in IRIS |
-| Grafici | **Recharts** o **ECharts** | Per le viste a barre/linee/donut viste negli screenshot (12 grafici diversi tra le 7 schermate) |
-| Import Excel | **exceljs** o **SheetJS (xlsx)** | Deve leggere il formato "Piano dei Conti" del cliente (§11.1) |
-| Import XML | **fast-xml-parser** | Fatture elettroniche FatturaPA (§11.2) — schema da confermare appena arriva un file reale |
+| Networking | **Tailcat** (da valutare in Fase 8) | Canale WireGuard cifrato senza account: il consulente mostra un indirizzo-codice, l'azienda lo inserisce. Sostituisce l'idea iniziale "Tailscale + fallback", scartata il 2026-09-18 perché chiedeva un account condiviso. Il trasporto sta dietro un'interfaccia, così si può cambiare |
+| Installer | **electron-builder** | Installer NSIS, portable e demo per Windows; demo DMG per Mac e APK per Android costruiti da GitHub Actions. Il componente di collegamento si includerà con la Fase 8 |
+| Grafici | **Recharts** ✅ | Tutti i grafici delle viste e del report PDF |
+| Import Excel | **exceljs** ✅ | Legge il "Piano dei Conti" del cliente e le sue varianti (§11.1). SheetJS resta fuori: si installa solo dal suo sito (§14 punto 16) |
+| Import XML | — | FatturaPA non è richiesta (§11.2): nessuna libreria finché non arriva un file vero |
 
-**Differenza voluta rispetto a IRIS**: dati più sensibili (bilanci, fidi bancari, cassa) → vale la pena valutare cifratura del DB a riposo fin dalla Fase 2, non solo cifratura delle credenziali.
+**Differenza voluta rispetto a IRIS**: dati più sensibili (bilanci, fidi bancari, cassa) → database **cifrato a riposo dalla Fase 0** (§12, §14 punto 9), non solo le credenziali.
 
 ---
 
@@ -87,14 +87,14 @@ Stesso pattern validato in produzione su **IrideeCRM** — non ripartiamo da zer
 
 ```
 [Azienda Cliente 1 - EXE]  ──┐
-[Azienda Cliente 2 - EXE]  ──┤── REST via Tailscale (o fallback) ──►  [CONSULENTE - EXE + Express + SQLite centrale]
+[Azienda Cliente 2 - EXE]  ──┤── REST su canale cifrato (Tailcat) ──►  [CONSULENTE - EXE + Express + SQLite centrale]
 [Azienda Cliente N - EXE]  ──┘                                          PC/studio del consulente · archivio completo
 ```
 
 - Ogni Azienda ha SQLite locale → può inserire dati e consultare i propri KPI **anche offline**.
 - Direzione prevalente del traffico: **Azienda → Consulente** (invio Excel/fatture, estratti conto, inserimenti manuali, chart of accounts aggiornato). Il Consulente elabora (riclassifica, configura le % dirette/indirette, lancia simulazioni) e i risultati elaborati sono visibili all'Azienda in sola lettura sul proprio Cliente.
 - **Aggiornamenti software**: come IRIS, il Master può distribuire l'installer aggiornato dell'app Cliente alle Aziende (stessa meccanica della cartella "aggiornamenti" scoperta in automatico) — risponde a "*app... per caricare aggiornamenti*" nel senso di "ricevere l'ultima versione", che coesiste con il senso di "caricare i propri dati" (assunzione, da confermare — §14).
-- **Trasporto — deciso col cliente**: **Tailscale primario + fallback** (es. Cloudflare Tunnel, stesso pattern del telefono DaProdSuite). L'app Cliente prova Tailscale per primo (IP fisso, più sicuro, coerente con IRIS); se non raggiungibile (azienda che non ha/non sa configurare Tailscale) usa il trasporto di riserva. La status bar (§7) deve indicare **quale dei due è attivo**, non solo "connesso/offline". Tailscale resta comunque un prerequisito installato dall'installer, come in IrideeCRM; il fallback va progettato in Fase 8 insieme al resto del sync — non è detto serva fin dalla Fase 0.
+- **Trasporto — deciso col cliente il 2026-09-18**: niente account Tailscale da far creare alle aziende. Si valuta **Tailcat** (dettaglio e limiti in §13 "Versione 1.1.0"): nessun account, un indirizzo-codice che lo studio mostra e l'azienda inserisce, canale WireGuard cifrato, porte TCP inoltrate. Passa dai relay gratuiti di Tailscale (si può mettere un relay proprio). La scelta iniziale "Tailscale primario + fallback" resta come ripiego se Tailcat non regge. La status bar (§7) deve dire **se il collegamento è attivo e da quando**, non solo "connesso/offline". Tutto si progetta in Fase 8 (issue #43).
 
 ---
 
@@ -138,13 +138,13 @@ Stesso pattern validato in produzione su **IrideeCRM** — non ripartiamo da zer
 
 ## 7. Status bar (sempre visibile, in basso — pattern IRIS confermato dagli screenshot)
 
-Negli screenshot analizzati è già presente in basso: `v1.5.0 · ● Database · ● Server · ● Tailscale · [prodotto] · [Backup] [↻ Aggiorna]`. Riprendiamo lo stesso pattern:
+Negli screenshot analizzati è già presente in basso: `v1.5.0 · ● Database · ● Server · ● Tailscale · [prodotto] · [Backup] [↻ Aggiorna]`. Riprendiamo lo stesso pattern, con "Collegamento" al posto di "Tailscale" (§3):
 
 | Indicatore | Verde | Giallo | Rosso |
 |---|---|---|---|
 | Database locale | Connesso | — | Errore |
-| Connessione Consulente (solo lato Azienda) | Online (specificare **via Tailscale** o **via fallback**) | Lenta | Offline |
-| Tailscale | Attivo | Non attivo ma fallback in uso | Non attivo, nessun fallback disponibile |
+| Connessione Consulente (solo lato Azienda) | Online | Lenta | Offline |
+| Collegamento (Fase 8) | Canale attivo | In riconnessione | Non attivo |
 | Ultima sync | Timestamp | — | Mai sincronizzato |
 
 Pulsanti sempre presenti in basso a destra: **Backup** e **↻ Aggiorna** (refresh dati / pull aggiornamenti) — confermato identico in tutti e 7 gli screenshot.
@@ -290,7 +290,7 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 - Password: **scrypt** (come IRIS). Sessione: **JWT** con segreto per-installazione.
 - Credenziali di sync cifrate con **DPAPI** (`safeStorage` Electron), mai in chiaro su disco — come IRIS.
 - **Novità rispetto a IRIS — decisa e implementata in Fase 0**: dati finanziari (saldi banca, fidi, utili) sono più sensibili di un CRM fotografico → **SQLite cifrato** con `better-sqlite3-multiple-ciphers` (SQLCipher) invece di `better-sqlite3` in chiaro. La chiave a 256 bit è generata al primo avvio e protetta da DPAPI; i backup ereditano la stessa cifratura.
-- Comunicazione Consulente↔Azienda solo su rete privata Tailscale (mai esposto su internet pubblico).
+- Comunicazione Consulente↔Azienda solo su canale privato cifrato (Tailcat, §3), mai un server esposto su internet pubblico.
 - File importati (XML/Excel) conservati come originali in `import/` per audit — mai solo il dato estratto.
 
 ---
@@ -307,9 +307,9 @@ La nota *"se i numeri sono questi cosa devo fare per crescere?"* suggerisce un l
 | **5** | UI Capitale Circolante + Tesoreria/Cash Flow + Scadenziario (§10.5-10.6) | Previsione di cassa funzionante su dati reali | ✅ **Fatta** (sessione 2) |
 | **6** | UI Banche e Finanziamenti (§10.7) + collegamento rate→Cash Flow | Fidi/finanziamenti con impatto visibile in Tesoreria | ✅ **Fatta** (sessione 2) |
 | **7** | Analisi & Simulazioni (§10.8) | Scenario what-if salvabile e confrontabile | ✅ **Fatta** (sessione 2) |
-| **8** | Sync Consulente↔Azienda via Tailscale (§6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ Prossima |
+| **8** | Collegamento Consulente↔Azienda (§3, §6) + status bar (§7) | Due installazioni reali che si scambiano dati | ⬜ Prossima (issue #43) |
 | **9** | Import Excel avanzato: tolleranza a varianti di formato tra clienti/periodi (§11.1) | Import robusto su più file Excel reali diversi tra loro | ⬜ |
-| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, Tailscale bundled | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e Tailscale bundled, che hanno senso solo dopo la Fase 8. **Regola del cliente (2026-09-16): una release a ogni aggiornamento importante, sempre con i tre eseguibili — installer, portable e demo** (`npm run dist` e `npm run dist:demo`). La prima così è la v0.0.5, con le Fasi 5 e 6 |
+| **10** | Installer offline (electron-builder) per Consulente e Azienda | `.exe` funzionanti, collegamento incluso | 🟡 **Parziale**: `.exe` installabile, portable e demo funzionanti. Mancano le due varianti separate e il collegamento incluso, che hanno senso solo dopo la Fase 8. **Regola del cliente (2026-09-16): una release a ogni aggiornamento importante, sempre con i tre eseguibili — installer, portable e demo** (`npm run dist` e `npm run dist:demo`). La prima così è la v0.0.5, con le Fasi 5 e 6 |
 | **A** | Attività e Tempi (§10.11), idea presa da Ever Teams | Bacheca, timer, ore e valore per azienda | ✅ **Fatta** (versione 1.2.0) |
 | **B** | Demo per Android (§13, versione 1.2.0) | APK con i dati di esempio, dalla release | ✅ **Fatta** (versione 1.2.0) — da provare su più telefoni |
 | **11+** | Integrazioni Fase futura: connettore IRIS, Cassetto Fiscale, Open Banking, pianificazione fiscale, marginalità multi-dimensionale, assistente numeri | Una alla volta, dopo validazione col cliente | ⬜ |
@@ -340,7 +340,7 @@ src/
 - **Anagrafica Clienti/Aziende (§10.1)**: elenco clienti con le rispettive aziende, wizard "+ Nuovo cliente" e "+ Nuova azienda" (ragione sociale, P.IVA/CF, forma giuridica, tipo di attività, data inizio collaborazione), archiviazione e rimozione (soft delete di §6), ricerca, creazione delle credenziali per l'app Azienda.
 - Codici leggibili progressivi di §5: `CLI-0001`, `CLI-0001-AZ-01`. P.IVA univoca quando presente.
 - Cartelle di lavoro di §8 create automaticamente alla nascita di un'azienda (`import/`, `export/`, `backup/`).
-- **Status bar di §7** con indicatori Database/Server/Tailscale e i pulsanti Backup e ↻ Aggiorna. Il backup produce un file cifrato in `Documenti/DaProdFinanza/backup/`.
+- **Status bar di §7** con indicatori Database/Server/Collegamento e i pulsanti Backup e ↻ Aggiorna. Il backup produce un file cifrato in `Documenti/DaProdFinanza/backup/`.
 
 **Account dimostrativi (`src/main/db/seed.ts`)**
 
@@ -351,7 +351,7 @@ src/
 
 Insieme creano il cliente *Gruppo DaProd* e l'azienda *Pizzeria DaProd S.r.l.*, e le credenziali sono mostrate direttamente sulle card di scelta ruolo (con un pulsante che compila e accede).
 
-⚠️ **Il seed non deve finire in un'installazione reale**: sono credenziali note, con password sotto la policy degli 8 caratteri. Gira solo con `npm run dev` oppure `npm run demo` (che imposta `DAPROD_DEMO=1`), e solo su un database ancora vuoto. Le password create dalla UI restano soggette alla policy. **Da rimuovere prima della Fase 10 (installer).**
+⚠️ **Il seed non deve finire in un'installazione reale**: sono credenziali note, con password sotto la policy degli 8 caratteri. Gira solo fuori pacchetto (`npm run dev`, `npm run demo`) e nella versione demo (flag di build `__DEMO_BUILD__`), e solo su un database ancora vuoto. Dalla 1.4.0 nessuna variabile d'ambiente lo accende in un eseguibile vero: prima `DAPROD_DEMO=1` al primo avvio bastava. Le password create dalla UI restano soggette alla policy.
 
 **Eseguibili (anticipo parziale della Fase 10)**
 
@@ -373,7 +373,7 @@ Il binding nativo del database cifrato sta fuori dall'archivio `asar` (`asarUnpa
 **Cosa è volutamente un segnaposto**
 
 - Le sette viste Business (§10.2-§10.8) mostrano solo l'elenco dei moduli con la fase in cui arriveranno: senza motore di riclassificazione, riempirle di dati finti su un gestionale contabile sarebbe fuorviante.
-- L'indicatore Tailscale resta grigio: il trasporto Consulente↔Azienda è Fase 8. Il server Express ascolta oggi **solo su 127.0.0.1** con porta effimera.
+- L'indicatore del collegamento resta grigio: il trasporto Consulente↔Azienda è Fase 8. Il server Express ascolta oggi **solo su 127.0.0.1** con porta effimera.
 
 **Fase 2 — schema del motore finanziario** (migrazione `002_financial_model`)
 
@@ -789,7 +789,7 @@ Controlli: 146 test (i motori nuovi su conti fatti a mano), `verify:schema` 86/8
 **Risolti (sessione di analisi iniziale):**
 
 1. ~~File XML di esempio mancante~~ → **chiarito**: era un refuso, il cliente intendeva l'Excel (§11.1). Nessun file XML esiste o è richiesto ora; FatturaPA resta solo un'idea di fase futura (§11.2).
-2. ~~"Tailscale" o "Tailcat"?~~ → **deciso**: Tailscale primario + trasporto di fallback (tipo Cloudflare Tunnel). Dettaglio in §2/§3/§7.
+2. ~~"Tailscale" o "Tailcat"?~~ → **deciso due volte**: prima Tailscale primario + fallback; poi, il 2026-09-18, niente account Tailscale e si valuta **Tailcat** (§3, §13 "Versione 1.1.0"). Si conferma o si cambia in Fase 8.
 3. ~~Licenza e visibilità della repo pubblica~~ → **deciso**: repo pubblica, licenza **MIT**, metodologia inclusa senza restrizioni in `docs/MODELLO_FINANZIARIO.md`. Resta comunque valida la regola di §0: i **file originali** (screenshot con branding IRIS, Excel col nome del cliente reale "Indy") non vanno mai committati — è una questione di riservatezza del singolo cliente del consulente, non di apertura della metodologia in sé.
 
 **Risolti (sessione 1 — Fasi 0/1):**

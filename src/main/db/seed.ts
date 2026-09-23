@@ -18,10 +18,12 @@ import { saveAppSettings } from '../server/services/settings.service'
  * provare i ruoli di AGENTS.md §4 senza passare dal wizard di primo avvio.
  *
  * ⚠️ Non deve MAI finire in un'installazione reale: sono credenziali note e con
- * password fuori policy. Gira solo in sviluppo (`npm run dev`) oppure con
- * `DAPROD_DEMO=1` impostata a mano, nella versione demo costruita da
- * `npm run dist:demo`, e solo su un database ancora vuoto. La versione demo usa
- * una cartella dati tutta sua (vedi build-flags.ts).
+ * password fuori policy. Gira solo fuori pacchetto (`npm run dev`, `npm run
+ * demo`) e nella versione demo costruita da `npm run dist:demo`, e solo su un
+ * database ancora vuoto. La versione demo usa una cartella dati tutta sua (vedi
+ * build-flags.ts). In un eseguibile vero nessuna variabile d'ambiente lo
+ * accende: prima bastava `DAPROD_DEMO=1` al primo avvio per ritrovarsi
+ * `cammo / 1234` in un'installazione reale.
  */
 export const DEMO_PASSWORD = '1234'
 
@@ -37,7 +39,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
 ]
 
 export function isDemoMode(): boolean {
-  return DEMO_BUILD || is.dev || process.env['DAPROD_DEMO'] === '1'
+  return DEMO_BUILD || is.dev
 }
 
 /** true quando il seed è attivo e i dati sono effettivamente presenti. */
