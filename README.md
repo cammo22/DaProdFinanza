@@ -14,6 +14,7 @@ e risponde a "cosa succede se" senza toccare un foglio Excel.
 ![demo android](https://img.shields.io/badge/demo-Android-3ddbff)
 [![release](https://img.shields.io/github/v/release/cammo22/DaProdFinanza?label=scarica&color=5cff9d)](https://github.com/cammo22/DaProdFinanza/releases/latest)
 [![licenza](https://img.shields.io/badge/licenza-MIT-5cff9d)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-DaProd-5865F2?logo=discord&logoColor=white)](https://discord.gg/Njs52aacwq)
 
 </div>
 
